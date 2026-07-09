@@ -1,0 +1,14 @@
+{
+  "name": "claude-dev-kit",
+  "owner": {
+    "name": "The Agile Monkeys",
+    "email": "ataman@theagilemonkeys.com"
+  },
+  "plugins": [
+    {
+      "name": "fullstack-dev-kit",
+      "source": "./",
+      "description": "Jira-to-PR workflow kit for C# (.NET) + Angular teams: Jira/Figma fetch, coverage gate >95%, Playwright/Selenium e2e generation, PR creation and review."
+    }
+  ]
+}
