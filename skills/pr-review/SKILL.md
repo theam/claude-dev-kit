@@ -43,6 +43,7 @@ Acceptance criteria: <met / partially met (which ones missing)>
 
 ## Rules
 
+- **Report first, publish only with consent.** Findings are delivered in the conversation. Never submit a GitHub review verdict (approve / request changes) and never post comments on the PR without the user's explicit confirmation — show exactly what would be posted and wait. This applies doubly to PRs authored by other people.
 - Every finding cites file and line. No finding without a concrete failure scenario or rule reference.
 - Do not pad: if the diff is clean, say so and approve — a review's value is its signal ratio.
 - Never approve with unresolved blocking findings, and never report a criterion as met without seeing the code that implements it.

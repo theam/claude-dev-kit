@@ -23,7 +23,7 @@ For each blocking finding:
 
 1. Fix it in code, following the repo's conventions and the kit instructions (`instructions/secure-coding.md`, `instructions/testing-standards.md`).
 2. Add or update the tests that prove the fix; keep touched files at ≥ 95% coverage.
-3. If you believe a finding is wrong, do not ignore it — reply on the thread with the reasoning and let the reviewer decide.
+3. If you believe a finding is wrong, do not ignore it — draft a reasoned reply, **show it to the user and get confirmation before posting it** on a human reviewer's thread (in `--auto-approve` pipeline runs, post it and flag it prominently in the final report instead). Let the reviewer decide.
 
 For non-blocking findings: apply the cheap ones, answer the rest on their threads. Never resolve someone else's thread without either a fix or a reply.
 

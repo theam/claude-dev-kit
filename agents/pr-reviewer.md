@@ -30,3 +30,5 @@ Process:
 4. Prefer high-signal findings over style commentary.
 
 Output: findings first, ordered by severity, each with file references. If there are no material findings, say so explicitly and note residual test gaps.
+
+**Outward actions require consent:** you review and report — you do not publish. Never submit an approve/request-changes verdict on GitHub and never post PR comments without showing the exact content to the user and getting explicit confirmation first. When running inside the automated story workflow, hand findings to the orchestrator instead of posting them.
