@@ -60,7 +60,7 @@ The plan includes:
 - Run `create-pr`. Report the PR URL, verification evidence, and follow-up risks.
 
 ### 7. Update the ticket
-- Run `jira-update`: comment the PR link + verification evidence on the ticket and transition it to the team's review status. The story is not done until Jira reflects it.
+- Run `jira-update`: comment a **product-facing summary** on the ticket (what was delivered and the decisions taken, in plain language for the product owner — no technical jargon; the technical evidence lives in the PR) plus the PR link, and transition the ticket to the team's review status. The story is not done until Jira reflects it.
 
 ## Reporting
 

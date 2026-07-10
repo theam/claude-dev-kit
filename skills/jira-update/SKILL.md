@@ -11,27 +11,30 @@ Close the loop: after the code ships, the ticket must reflect it without anyone 
 
 - `.claude/dev-kit.json` exists (otherwise run `dev-kit-setup` first).
 - The Atlassian MCP is authenticated (otherwise tell the user to run `/mcp` and stop).
-- A PR URL and the verification evidence are available from `create-pr`.
+- A PR URL and a product-facing summary of the delivered work are available from the delivery flow.
 
 ## Steps
 
 ### 1. Comment the delivery summary on the ticket
+
+**Audience: product owners and other non-technical readers.** The Jira comment explains what was delivered and why, in user terms — no test counts, coverage percentages, lint, or tooling jargon. All technical evidence lives in the PR, which is linked.
 
 Add a comment via the Atlassian MCP containing:
 
 ```
 Pull request: <PR URL>
 
-Verification:
-- Unit tests: <result>
-- Coverage on touched files: <summary, all >= 95%>
-- E2E: <suites run + result>
-- Lint: clean
+What was delivered:
+- <the new behavior, described as a user would experience it — one bullet per acceptance criterion addressed>
 
-<one-line note of any follow-up risks, or "No follow-up risks.">
+Decisions taken:
+- <each meaningful decision or interpretation made during implementation, in plain language, with the reason — e.g. "The filters are kept in the page address, so a filtered view can be shared by copying the link">
+
+Out of scope / follow-ups:
+- <anything deliberately left out or worth a future ticket, or "Nothing pending.">
 ```
 
-Keep it factual — the evidence must match what was actually run, never a template filled with assumptions.
+Keep it factual and grounded in what was actually built — never a template filled with assumptions. If an acceptance criterion was NOT met, say so here plainly.
 
 ### 2. Transition the ticket to review
 

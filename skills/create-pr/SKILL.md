@@ -28,7 +28,13 @@ If any gate fails, stop and report what is missing instead of opening the PR.
 Open with `gh pr create` (or the repo's tooling). The body must include:
 
 ```
+![AI-generated](https://img.shields.io/badge/%F0%9F%A4%96_AI--generated-Claude_Code_%C2%B7_fullstack--dev--kit-8A2BE2)
+
 ## <TICKET-KEY>: <story title>
+
+### Summary
+<the product-facing summary: what was delivered in user terms and the
+decisions taken, plain language — same content as the Jira comment>
 
 ### What changed
 - ...
@@ -37,15 +43,25 @@ Open with `gh pr create` (or the repo's tooling). The body must include:
 - Unit tests: <command + result>
 - Coverage on touched files: <summary, all ≥ 95%>
 - E2E: <suites run + result>
+- Security pass: <verdict>
 - Lint: clean
 
 ### Notes for reviewers
-- <risks, follow-ups, decisions taken>
+- <risks, follow-ups, technical decisions>
 
 Jira: <link to ticket>
+
+---
+🤖 Generated with [Claude Code](https://claude.com/claude-code) via the
+fullstack-dev-kit plugin. Plan approved by a human before implementation;
+human review still required before merge.
 ```
 
-Use the repo's PR template instead if one exists (`.github/PULL_REQUEST_TEMPLATE.md`), adding the verification evidence into it.
+Use the repo's PR template instead if one exists (`.github/PULL_REQUEST_TEMPLATE.md`), adding the badge, summary, verification evidence, and AI footer into it.
+
+**AI traceability metadata**, best effort after creation:
+
+- Add the label `ai-generated` to the PR (`gh pr edit <url> --add-label ai-generated`). If the label does not exist and you have permission, create it once (`gh label create ai-generated --color 8A2BE2 --description "Opened by an AI agent"`); if no permission, skip silently — the badge and footer already carry the signal.
 
 ## After creation
 
