@@ -21,14 +21,64 @@ Give the `coding-agent` a user story ID and it orchestrates the whole flow:
 
 ## Install (each developer, once)
 
-```
-/plugin marketplace add <org>/claude-dev-kit
-/plugin install fullstack-dev-kit
+**Prerequisites:** the [Claude Code CLI](https://code.claude.com) (`claude --version`), the [GitHub CLI](https://cli.github.com) authenticated (`gh auth status`), and read access to this repository.
+
+From a terminal (plugin management is CLI-only — the VS Code chat panel will reject `/plugin` commands):
+
+```bash
+claude plugin marketplace add theam/claude-dev-kit
+claude plugin install fullstack-dev-kit@claude-dev-kit
 ```
 
-Then authorize the connectors (one-time, interactive):
+Installation is **user-level and permanent**: every future session (CLI or VS Code extension) loads the kit automatically — you never reinstall per session or per window.
 
-- **Atlassian (Jira)** and **Figma** MCP servers are declared by the plugin. Run `/mcp` in Claude Code and complete the OAuth flow for each. No URLs or tokens to configure.
+Then authorize the connectors (one-time):
+
+1. Open a Claude Code session in your project (`claude` in the terminal, or the VS Code panel — restart it if it was open during the install).
+2. Run `/mcp` → select **`atlassian`** (the plain one declared by the plugin — not a "claude.ai Atlassian" account connector) → **Authenticate** → complete the browser OAuth **immediately**, picking your Jira site. Don't reuse old browser tabs and don't restart the session mid-flow: the OAuth link is tied to a live local callback and expires with it.
+3. Optional: repeat for `figma`.
+
+Finally, enable updates: `/plugin` → **Marketplaces** tab → `claude-dev-kit` → **Enable auto-update**. New kit versions will then arrive at session startup; without it, pull them manually with `claude plugin marketplace update claude-dev-kit`.
+
+## First use — verify the setup
+
+In a Claude session inside your project, just ask for a ticket:
+
+```
+fetch PROJ-1234
+```
+
+The kit will notice there is no configuration yet, discover your Jira site, project key, and custom fields via MCP, persist them to `.claude/dev-kit.json` (no secrets — commit it so teammates skip this step), and show the ticket summary. If that works, everything works.
+
+## Day-to-day usage
+
+| You want to… | Type |
+|---|---|
+| Work a story end to end (current window) | `/fullstack-dev-kit:work-story PROJ-1234` |
+| Work a story in a new self-starting VS Code window | `/fullstack-dev-kit:launch-story PROJ-1234` |
+| Unattended run (no plan gate — pipelines only) | append `--auto-approve` |
+| Review a PR or your current diff | `/fullstack-dev-kit:pr-review #42` |
+| Fix the findings on an existing PR | `/fullstack-dev-kit:fix-pr #42` |
+| Anything else | plain language — e.g. *"use the pr-reviewer agent on PR #42"* |
+
+Notes:
+
+- Plugin **commands and skills** are namespaced under `/fullstack-dev-kit:` (type `/` and search). **Agents** never appear in that list — invoke them in plain language or let the orchestrator delegate to them (`/agents` shows them).
+- `work-story` presents its implementation plan **in the chat** and waits for your explicit approval before writing any code.
+- Reviews report in the conversation; nothing is approved or commented on GitHub without your confirmation.
+
+## Troubleshooting
+
+| Symptom | Cause / fix |
+|---|---|
+| `/plugin isn't available in this environment` | You're in the VS Code chat panel — run plugin commands from a terminal with `claude plugin …` |
+| `Unknown command: /work-story` | Session started before the install/update — restart the session (VS Code: *Developer: Reload Window*); remember the namespace `/fullstack-dev-kit:work-story` |
+| OAuth callback lands on a dead `localhost:<port>` | The link expired (session restarted mid-flow) — run `/mcp` again and complete the fresh link immediately |
+| Update pulled but behavior unchanged | `claude plugin install fullstack-dev-kit@claude-dev-kit` to force the new version, then restart the session; check `~/.claude/plugins/cache/claude-dev-kit/fullstack-dev-kit/` for the active version |
+
+## Releasing (kit maintainers)
+
+Users only receive changes when `version` in `.claude-plugin/plugin.json` is **bumped** — pushing commits without a bump updates nobody. Release = edit files → bump version → commit → push to `main`.
 
 ## Parallel stories — one worktree per story
 
