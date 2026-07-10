@@ -27,7 +27,13 @@ The kit's always-on rules live in `instructions/secure-coding.md` and `instructi
 - Read the consuming repo's `CLAUDE.md` files (root, backend, frontend) for project-specific rules and commands.
 
 ### 2. Plan — WAIT FOR APPROVAL
-Present a structured plan and **do not write any code until the user explicitly approves it** (e.g. "looks good", "go ahead", "approved"), unless the invocation explicitly states the plan is pre-approved (e.g. an automated pipeline run):
+Build a structured plan. **No code is written until the user explicitly approves it**, unless the invocation states the plan is pre-approved (e.g. an automated pipeline run).
+
+**If you are running as a subagent** (your caller relays to the user): return the ticket summary and the FULL plan as your result and stop — your caller shows it to the user and resumes you with the decision. Do not ask for approval yourself: the user cannot read your output directly, and approving an unseen plan is worthless.
+
+**If you are running in the main conversation**: present the plan in the chat and wait for the user's explicit approval (e.g. "looks good", "go ahead", "approved").
+
+The plan includes:
 
 - **Understanding**: one paragraph restating the goal and acceptance criteria.
 - **Affected areas**: specific files, endpoints, components, services, and routes to create or modify.
