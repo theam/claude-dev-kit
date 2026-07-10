@@ -63,6 +63,7 @@ There is nothing to configure by hand. On first use in a repo, the kit bootstrap
 | `coverage-check` | skill | Runs .NET + Angular coverage, enforces the 95% gate |
 | `e2e-generate` | skill | Playbook for creating/updating e2e tests |
 | `create-pr` | skill | Branch, commit, and PR — only after all gates pass |
+| `pr-review` | skill | Review playbook: findings by dimension, verdict, AC check |
 | `fix-pr` | skill | Playbook: findings → fixes → re-verified gates → push |
 | `jira-update` | skill | Comment PR + evidence on the ticket, transition to review |
 | `instructions/` | rules | Always-on Tier-1 rules: secure coding, testing standards |
