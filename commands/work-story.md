@@ -10,7 +10,7 @@ Rules:
 
 - If no ticket key matching `[A-Z][A-Z0-9]+-\d+` is present in the arguments, ask for one — do not guess.
 
-**Isolation — one worktree per story.** Spawn the coding-agent with **worktree isolation** (the Agent tool's `isolation: "worktree"` option) so the story runs in its own git worktree, keeping the main checkout untouched and allowing several stories to run in parallel from separate conversations. If worktree isolation is unavailable in this environment, create one manually before delegating (`git worktree add ../<repo>-<TICKET-KEY> -b <type>/<TICKET-KEY>-<slug>`) and tell the agent to work there.
+**Isolation — one worktree per story.** If the arguments contain `--in-place`, skip isolation: the current directory is already a dedicated worktree (opened via `/launch-story`) — work right here. Otherwise, spawn the coding-agent with **worktree isolation** (the Agent tool's `isolation: "worktree"` option) so the story runs in its own git worktree, keeping the main checkout untouched and allowing several stories to run in parallel from separate conversations. If worktree isolation is unavailable in this environment, create one manually before delegating (`git worktree add ../<repo>-<TICKET-KEY> -b <type>/<TICKET-KEY>-<slug>`) and tell the agent to work there.
 
 **Phase 1 — context and plan.** Instruct the coding-agent to fetch the ticket (and any linked designs), build its implementation plan, and RETURN the ticket summary and the full plan as its result — telling it explicitly NOT to ask for approval itself and NOT to write any code yet.
 
