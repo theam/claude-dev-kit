@@ -30,6 +30,12 @@ Then authorize the connectors (one-time, interactive):
 
 - **Atlassian (Jira)** and **Figma** MCP servers are declared by the plugin. Run `/mcp` in Claude Code and complete the OAuth flow for each. No URLs or tokens to configure.
 
+## Parallel stories — one worktree per story
+
+`/work-story` runs each story in its **own git worktree** (isolated from your main checkout), so you can work several stories at once: open one Claude conversation per story and launch one `/work-story` in each. Your working directory never gets dirtied by agent work, and each PR branch is built in isolation.
+
+> Caveat: stories whose e2e gates boot dev servers on fixed ports can collide if run at the exact same time — run e2e-heavy stories staggered, or parameterize ports in the consuming repo.
+
 ## Zero-config first use
 
 There is nothing to configure by hand. On first use in a repo, the kit bootstraps itself (`dev-kit-setup`):
