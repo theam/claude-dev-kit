@@ -36,13 +36,17 @@ Out of scope / follow-ups:
 
 Keep it factual and grounded in what was actually built — never a template filled with assumptions. If an acceptance criterion was NOT met, say so here plainly.
 
-### 2. Transition the ticket to review
+### 2. Ensure the ticket has a named owner
+
+Every issue carries a named owner: if the ticket has no assignee, assign it to the current user (look up their account via the MCP). Agents act on a person's behalf — the ticket must always show whose behalf that is.
+
+### 3. Transition the ticket to review
 
 1. Fetch the available transitions for the ticket via the MCP (transition IDs vary per tenant and workflow — **never hardcode them**).
 2. Pick the transition whose target status matches, in order of preference: a status named like "In Review" / "Code Review" / "Review"; otherwise ask the user which transition to use and remember the choice by persisting it under `jira.transitions.review` in `.claude/dev-kit.json`.
 3. Apply the transition.
 
-### 3. Report
+### 4. Report
 
 Tell the user: comment posted (link), transition applied (from → to), and anything that could not be done with the reason.
 

@@ -27,6 +27,8 @@ The kit's always-on rules live in `instructions/secure-coding.md` and `instructi
 - Read the consuming repo's `CLAUDE.md` files (root, backend, frontend) for project-specific rules and commands.
 
 ### 2. Plan — WAIT FOR APPROVAL
+
+**Validate assumptions against the live product when feasible**: before writing the plan, boot the app (seeded data) and exercise the affected flow — a browser for UI stories, the API for backend ones. A plan checked against the running product beats one inferred from reading code. Skip only when booting is impractical, and say so in the plan.
 Build a structured plan. **No code is written until the user explicitly approves it**, unless the invocation states the plan is pre-approved (e.g. an automated pipeline run).
 
 **If you are running as a subagent** (your caller relays to the user): return the ticket summary and the FULL plan as your result and stop — your caller shows it to the user and resumes you with the decision. Do not ask for approval yourself: the user cannot read your output directly, and approving an unseen plan is worthless.
