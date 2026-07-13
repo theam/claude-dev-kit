@@ -82,7 +82,7 @@ Users only receive changes when `version` in `.claude-plugin/plugin.json` is **b
 
 ## Parallel stories — one worktree per story
 
-`/work-story` runs each story in its **own git worktree** (isolated from your main checkout), so you can work several stories at once: open one Claude conversation per story and launch one `/work-story` in each. Or use `/launch-story PROJ-1234`: it creates the worktree, opens a **new VS Code window on it**, and hands you the exact command to paste there (`/fullstack-dev-kit:work-story PROJ-1234 --in-place`). Your working directory never gets dirtied by agent work, and each PR branch is built in isolation.
+`/work-story` works **in the current directory**. To work several stories at once, use `/launch-story PROJ-1234` per story: it creates a dedicated git worktree, opens a **new VS Code window on it**, and hands you the `work-story` command to paste there. Each story builds its branch in its own worktree; your main checkout stays untouched.
 
 > Caveat: stories whose e2e gates boot dev servers on fixed ports can collide if run at the exact same time — run e2e-heavy stories staggered, or parameterize ports in the consuming repo.
 

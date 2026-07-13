@@ -18,7 +18,7 @@ You are the launcher — you do NOT work the story yourself. Steps:
 
 4. **Report** the worktree path and branch, and give the user the exact next step to run in the NEW window's Claude session, ready to copy:
    ```
-   /fullstack-dev-kit:work-story <TICKET-KEY> --in-place
+   /fullstack-dev-kit:work-story <TICKET-KEY>
    ```
    Also remind them: when the PR is merged, remove the worktree with `git worktree remove <path>`.
 

@@ -46,7 +46,7 @@ The plan includes:
 
 ### 3. Implement
 
-**Isolation first (regardless of how you were invoked):** before writing any code, make sure you are working inside a dedicated story worktree — never in the team's main checkout. If you are in the main checkout, create one now (`git worktree add ../<repo>-<TICKET-KEY> -b <type>/<TICKET-KEY>-<slug>`) and do ALL subsequent work (edits, tests, commits) inside it, reporting its path to the user. Skip only if the current directory already is a dedicated worktree.
+Work in the current directory. (Parallel/isolated workspaces are `/launch-story`'s job — it prepares a dedicated worktree and window before this pipeline starts.)
 - Delegate backend work to the `backend-implementer` subagent and frontend work to the `frontend-implementer` subagent when they are available in the consuming repo; otherwise implement directly following the repo's conventions.
 - Treat the API contract as the boundary: when a payload, route, enum, or validation rule changes, update both sides in the same task.
 - Keep the diff scoped to the story. No opportunistic refactors.
