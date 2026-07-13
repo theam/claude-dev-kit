@@ -1,6 +1,6 @@
 {
   "name": "fullstack-dev-kit",
-  "version": "0.2.9",
+  "version": "0.2.10",
   "description": "Jira-to-PR workflow kit for C# (.NET) + Angular teams. Fetch Jira stories and Figma designs, implement with plan approval, enforce >95% coverage and a security pass, generate Playwright/Selenium e2e tests, open the PR, fix review findings, and move the ticket to review.",
   "author": {
     "name": "The Agile Monkeys",

@@ -48,7 +48,7 @@ Every issue carries a named owner: if the ticket has no assignee, assign it to t
 
 ### 4. Report
 
-Tell the user: comment posted (link), transition applied (from → to), and anything that could not be done with the reason.
+Tell the user, explicitly and always covering all three: comment posted (link), **owner ensured (who — or why it could not be assigned)**, and transition applied (from → to). Anything that could not be done gets a reason — no step is ever skipped silently.
 
 ## Failure handling
 
