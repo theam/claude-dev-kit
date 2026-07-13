@@ -116,6 +116,7 @@ There is nothing to configure by hand. On first use in a repo, the kit bootstrap
 | `pr-review` | skill | Review playbook: findings by dimension, verdict, AC check |
 | `fix-pr` | skill | Playbook: findings → fixes → re-verified gates → push |
 | `jira-update` | skill | Comment PR + evidence on the ticket, transition to review |
+| `demo-recording` | skill | Records the happy path with Playwright, embeds a GIF in the PR |
 | `instructions/` | rules | Always-on Tier-1 rules: secure coding, testing standards |
 | `/work-story` | command | Entry point: `/work-story PROJ-1234` |
 | `/launch-story` | command | Creates a story worktree and opens a new VS Code window on it, ready to run the pipeline |

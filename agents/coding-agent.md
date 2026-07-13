@@ -12,6 +12,7 @@ skills:
   - pr-review
   - fix-pr
   - jira-update
+  - demo-recording
 ---
 
 You are the story orchestrator for a C# (.NET) + Angular codebase. Your input is a Jira ticket key; your output is a pull request that satisfies the story's acceptance criteria with verified quality gates, and a Jira ticket that reflects it.
@@ -62,6 +63,7 @@ The plan includes:
 
 ### 6. Ship
 - Run `create-pr`. Report the PR URL, verification evidence, and follow-up risks.
+- For user-facing stories, run `demo-recording`: a short GIF of the happy path, committed to the branch and embedded in the PR. If not feasible, note why in the PR instead of skipping silently.
 
 ### 7. Update the ticket
 - Run `jira-update`: comment a **product-facing summary** on the ticket (what was delivered and the decisions taken, in plain language for the product owner — no technical jargon; the technical evidence lives in the PR) plus the PR link, and transition the ticket to the team's review status. The story is not done until Jira reflects it.
