@@ -82,7 +82,7 @@ Users only receive changes when `version` in `.claude-plugin/plugin.json` is **b
 
 ## Parallel stories — one worktree per story
 
-`/work-story` runs each story in its **own git worktree** (isolated from your main checkout), so you can work several stories at once: open one Claude conversation per story and launch one `/work-story` in each. Or go one better with `/launch-story PROJ-1234`: it creates the worktree, opens a **new VS Code window on it, and the pipeline starts automatically there** (first time only, VS Code asks to trust the folder and allow automatic tasks). Your working directory never gets dirtied by agent work, and each PR branch is built in isolation.
+`/work-story` runs each story in its **own git worktree** (isolated from your main checkout), so you can work several stories at once: open one Claude conversation per story and launch one `/work-story` in each. Or use `/launch-story PROJ-1234`: it creates the worktree, opens a **new VS Code window on it**, and hands you the exact command to paste there (`/fullstack-dev-kit:work-story PROJ-1234 --in-place`). Your working directory never gets dirtied by agent work, and each PR branch is built in isolation.
 
 > Caveat: stories whose e2e gates boot dev servers on fixed ports can collide if run at the exact same time — run e2e-heavy stories staggered, or parameterize ports in the consuming repo.
 
@@ -118,7 +118,7 @@ There is nothing to configure by hand. On first use in a repo, the kit bootstrap
 | `jira-update` | skill | Comment PR + evidence on the ticket, transition to review |
 | `instructions/` | rules | Always-on Tier-1 rules: secure coding, testing standards |
 | `/work-story` | command | Entry point: `/work-story PROJ-1234` |
-| `/launch-story` | command | Opens a new VS Code window on a fresh worktree that starts the pipeline by itself |
+| `/launch-story` | command | Creates a story worktree and opens a new VS Code window on it, ready to run the pipeline |
 
 ## Quality gates (non-negotiable)
 
