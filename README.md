@@ -55,7 +55,7 @@ The kit will notice there is no configuration yet, discover your Jira site, proj
 | You want to… | Type |
 |---|---|
 | Work a story end to end (current window) | `/fullstack-dev-kit:work-story PROJ-1234` |
-| Work a story in a new self-starting VS Code window | `/fullstack-dev-kit:launch-story PROJ-1234` |
+| Prepare a story worktree + new VS Code window | `/fullstack-dev-kit:launch-story PROJ-1234` |
 | Unattended run (no plan gate — pipelines only) | append `--auto-approve` |
 | Review a PR or your current diff | `/fullstack-dev-kit:pr-review #42` |
 | Fix the findings on an existing PR | `/fullstack-dev-kit:fix-pr #42` |
