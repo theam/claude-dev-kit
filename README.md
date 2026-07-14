@@ -97,7 +97,7 @@ There is nothing to configure by hand. On first use in a repo, the kit bootstrap
 
 > Headless/CI runs can't do OAuth. If automated pipeline runs become a requirement, a REST + token fallback can be added to `jira-fetch`/`figma-fetch` later.
 
-**Optional — demo recordings as Jira attachments:** the Atlassian MCP cannot upload files, so `demo-recording` attaches the GIF to the ticket only when the repo's git-ignored `.env` defines `JIRA_USERNAME` and `JIRA_API_TOKEN` ([create a token](https://id.atlassian.com/manage-profile/security/api-tokens)). Without it, the GIF is committed to the PR branch and linked instead.
+**Demo recordings:** the Atlassian MCP cannot upload files, so by default `demo-recording` leaves the GIF at `docs/demos/<TICKET>.gif`, reveals it in Finder, and asks you to **drag it into the Jira ticket or a PR comment** (5 seconds; PR-comment uploads render inline even on private repos). Optional automation: define `JIRA_USERNAME` + `JIRA_API_TOKEN` in the repo's git-ignored `.env` and the attach happens by itself.
 
 ## What's inside
 
