@@ -97,6 +97,8 @@ There is nothing to configure by hand. On first use in a repo, the kit bootstrap
 
 > Headless/CI runs can't do OAuth. If automated pipeline runs become a requirement, a REST + token fallback can be added to `jira-fetch`/`figma-fetch` later.
 
+**Optional — demo recordings as Jira attachments:** the Atlassian MCP cannot upload files, so `demo-recording` attaches the GIF to the ticket only when the repo's git-ignored `.env` defines `JIRA_USERNAME` and `JIRA_API_TOKEN` ([create a token](https://id.atlassian.com/manage-profile/security/api-tokens)). Without it, the GIF is committed to the PR branch and linked instead.
+
 ## What's inside
 
 | Component | Type | Purpose |
@@ -116,7 +118,7 @@ There is nothing to configure by hand. On first use in a repo, the kit bootstrap
 | `pr-review` | skill | Review playbook: findings by dimension, verdict, AC check |
 | `fix-pr` | skill | Playbook: findings → fixes → re-verified gates → push |
 | `jira-update` | skill | Comment PR + evidence on the ticket, transition to review |
-| `demo-recording` | skill | Records the happy path with Playwright, embeds a GIF in the PR |
+| `demo-recording` | skill | Records the happy path with Playwright, attaches the GIF to the Jira ticket |
 | `instructions/` | rules | Always-on Tier-1 rules: secure coding, testing standards |
 | `/work-story` | command | Entry point: `/work-story PROJ-1234` |
 | `/launch-story` | command | Creates a story worktree and opens a new VS Code window on it, ready to run the pipeline |

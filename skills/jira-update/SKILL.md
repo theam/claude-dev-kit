@@ -34,6 +34,8 @@ Out of scope / follow-ups:
 - <anything deliberately left out or worth a future ticket, or "Nothing pending.">
 ```
 
+If a demo recording was attached to the ticket (`demo-recording` skill), add one line: `Demo recording attached: <TICKET-KEY>.gif`.
+
 Keep it factual and grounded in what was actually built — never a template filled with assumptions. If an acceptance criterion was NOT met, say so here plainly.
 
 ### 2. Ensure the ticket has a named owner

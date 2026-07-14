@@ -14,11 +14,12 @@ The story is worked **in the current directory** — no worktree is created here
 
 **Phase 1 — context and plan.** Instruct the coding-agent to fetch the ticket (and any linked designs), build its implementation plan, and RETURN the ticket summary and the full plan as its result — telling it explicitly NOT to ask for approval itself and NOT to write any code yet.
 
-**Plan-approval gate (in the main conversation, where the user can read):**
+**Plan-approval gate — two separate steps, in this exact order:**
 
-- Render the coding-agent's ticket summary and FULL plan to the user verbatim in the conversation. Never ask for approval through a dialog alone — the user must be able to read the complete plan in the chat before deciding.
-- Then ask the user to approve, adjust, or cancel.
-- Only if the arguments contain `--auto-approve` (for automated/pipeline runs), skip the gate and proceed directly.
+1. **FIRST, print the plan**: write a normal assistant message to the conversation containing the ticket summary and the coding-agent's FULL plan, verbatim. This message is a hard requirement — a selection dialog is NOT a substitute for it, and putting the plan only inside a dialog's option text does not count: the user must be able to read the complete plan in the chat before any question appears.
+2. **THEN, and only after that message is visible**, ask the user to approve, adjust, or cancel (plain question or dialog — either is fine at this point).
+
+Never collapse these two steps into one dialog. Only if the arguments contain `--auto-approve` (for automated/pipeline runs), skip the gate and proceed directly.
 
 **Phase 2 — execution.** On approval (or auto-approve), continue the SAME coding-agent (resume it with the approval and any user adjustments) so it keeps its context, and let it run the remaining workflow: implement, verify gates, self-review, create the PR, and update the Jira ticket.
 

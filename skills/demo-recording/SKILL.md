@@ -1,60 +1,63 @@
 ---
 name: demo-recording
-description: Record a short video of the delivered user flow with Playwright, convert it to an embeddable GIF, commit it to the PR branch, and reference it from the PR body and the Jira comment. Use as the optional last delivery step for user-facing stories, or when the user asks for a demo recording of a flow.
+description: Record a short video of the delivered user flow with Playwright, convert it to a GIF, attach it to the Jira ticket, and link it from the PR. Use as the optional last delivery step for user-facing stories, or when the user asks for a demo recording of a flow.
 ---
 
 # Demo Recording
 
-A reviewer (or a product owner) should be able to SEE the delivered behavior without booting anything. Record the story's happy path, embed it in the PR.
+A reviewer (or a product owner) should be able to SEE the delivered behavior without booting anything. Record the story's happy path and put it where people will look: **attached to the Jira ticket**, linked from the PR.
 
 ## When to run
 
-- After all gates pass and before/right after `create-pr`, for stories with a user-facing flow.
-- Skip silently-NOT: if recording is not feasible (no UI change, no ffmpeg, flaky flow), say so in the PR notes instead of pretending.
+- After all gates pass and after `create-pr`, for stories with a user-facing flow.
+- Never skip silently: if recording is not feasible (no UI change, no ffmpeg, flaky flow, no Jira token), say exactly why in the PR notes and the final report.
 
 ## Steps
 
 ### 1. Record with Playwright
 
-Re-run ONLY the story's happy-path e2e spec with video enabled. The consuming repo's Playwright config must support `PW_VIDEO=on` (see note below):
+Re-run ONLY the story's happy-path e2e spec with video enabled (the consuming repo's Playwright config must map `PW_VIDEO=on` to video recording — add that one line as part of the story if missing):
 
 ```bash
 PW_VIDEO=on npx playwright test <the-story-spec> -g "<happy path test name>"
 ```
 
-Videos land in `test-results/**/video.webm`. Pick the one for the happy-path scenario — a good demo is **5–20 seconds** and shows the acceptance criteria happening.
+Videos land in `test-results/**/video.webm`. A good demo is **5–20 seconds** and shows the acceptance criteria happening.
 
-### 2. Convert to GIF (inline-embeddable on GitHub)
+### 2. Convert to GIF
 
 ```bash
-ffmpeg -y -i <video.webm> -vf "fps=8,scale=960:-1:flags=lanczos" -loop 0 docs/demos/<TICKET-KEY>.gif
+ffmpeg -y -i <video.webm> -vf "fps=8,scale=960:-1:flags=lanczos" -loop 0 <TICKET-KEY>.gif
 ```
 
-- Target **< 8 MB** (GitHub renders it inline). If too big: lower fps to 6, scale to 800, or trim with `-ss`/`-t`.
-- No ffmpeg available? Commit the raw `.webm` under `docs/demos/` and link it (it will download rather than play inline) — and note the limitation.
+Target **< 8 MB** (lower fps/scale or trim with `-ss`/`-t` if bigger).
 
-### 3. Commit to the PR branch and embed
+### 3. Attach to the Jira ticket (primary destination)
 
-1. Commit `docs/demos/<TICKET-KEY>.gif` to the story branch and push.
-2. Add to the PR body, right under the Summary:
-   ```markdown
-   ### Demo
-   ![<TICKET-KEY> demo](https://raw.githubusercontent.com/<org>/<repo>/<branch>/docs/demos/<TICKET-KEY>.gif)
-   ```
-3. In the Jira delivery comment (`jira-update`), add one line: `Demo recording: <link to the GIF on the PR branch>` (the Atlassian MCP cannot upload attachments — link, don't pretend to attach).
+The Atlassian MCP cannot upload attachments — use the REST API with a token from the repo's `.env` (git-ignored): `JIRA_USERNAME` and `JIRA_API_TOKEN` (an [Atlassian API token](https://id.atlassian.com/manage-profile/security/api-tokens)). The site URL comes from `.claude/dev-kit.json`.
 
-## Consuming-repo requirement
-
-The repo's `playwright.config.ts` must map an env var to video recording:
-
-```ts
-use: {
-  video: process.env.PW_VIDEO === 'on' ? 'on' : 'off',
-  ...
-}
+```bash
+curl -sS -X POST \
+  -u "$JIRA_USERNAME:$JIRA_API_TOKEN" \
+  -H "X-Atlassian-Token: no-check" \
+  -F "file=@<TICKET-KEY>.gif" \
+  "<site>/rest/api/3/issue/<TICKET-KEY>/attachments"
 ```
 
-If the config lacks it, add it as part of the story (one line, off by default — zero effect on normal runs).
+Then make sure the `jira-update` delivery comment mentions it: `Demo recording attached: <TICKET-KEY>.gif`.
+
+**No token available?** Fall back: commit the GIF to the PR branch under `docs/demos/` and link it from the Jira comment — and tell the user that adding `JIRA_USERNAME`/`JIRA_API_TOKEN` to `.env` enables real attachments.
+
+### 4. Link from the PR
+
+Add under the PR Summary:
+
+```markdown
+### Demo
+Demo recording: attached to [<TICKET-KEY>](<site>/browse/<TICKET-KEY>) (<TICKET-KEY>.gif)
+```
+
+Only embed an inline image in the PR body if the repo is **public** (`gh repo view --json isPrivate`): private-repo `raw.githubusercontent` images do not render for viewers. For private repos, link — never embed a broken image.
 
 ## Rules
 
