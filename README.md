@@ -21,7 +21,7 @@ Give the `coding-agent` a user story ID and it orchestrates the whole flow:
 
 ## Install (each developer, once)
 
-**Prerequisites:** the [Claude Code CLI](https://code.claude.com) (`claude --version`), the [GitHub CLI](https://cli.github.com) authenticated (`gh auth status`), and read access to this repository.
+**Prerequisites:** the [Claude Code CLI](https://code.claude.com) (`claude --version`) and the [GitHub CLI](https://cli.github.com) authenticated (`gh auth status`).
 
 From a terminal (plugin management is CLI-only — the VS Code chat panel will reject `/plugin` commands):
 
@@ -135,3 +135,9 @@ There is nothing to configure by hand. On first use in a repo, the kit bootstrap
 ## Relationship to project repos
 
 This kit is **project-agnostic and self-configuring**. Each consuming repo keeps its own `.claude/` with project-specific rules: build/test commands, architecture conventions, and stack subagents like `backend-implementer` / `frontend-implementer` (see the `dotnet-angular-claude-template` repo). The kit reads the consuming repo's `CLAUDE.md` for those conventions and its own `.claude/dev-kit.json` (auto-generated on first use) for Jira specifics.
+
+## Contributing & license
+
+Issues and PRs are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). The kit ships as *iteration zero*: adapt it to your organization in your own repos, and send back anything generic enough to help every team.
+
+Licensed under the [Apache License 2.0](LICENSE) · © 2026 The Agile Monkeys.
