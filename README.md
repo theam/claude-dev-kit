@@ -194,6 +194,6 @@ The kit can share **anonymous token counts** to [PostHog](https://posthog.com) s
 
 ## License
 
-[MIT](./LICENSE) © The Agile Monkeys.
+[Apache 2.0](./LICENSE) © The Agile Monkeys. See [NOTICE](./NOTICE).
 
 > Headless/CI runs can't do MCP OAuth. If automated pipeline runs become a requirement, a REST + token fallback can be added to the tracker adapters.
