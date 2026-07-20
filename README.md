@@ -85,6 +85,27 @@ claude plugin marketplace update claude-dev-kit
 
 > **Troubleshooting:** if `/work-story` is unknown, the session started before the install — restart it (VS Code: *Developer: Reload Window*) and remember the namespace `/fullstack-dev-kit:work-story`. More cases in [Troubleshooting](#troubleshooting) below.
 
+### Team-wide install (optional — one config for everyone)
+
+Instead of each developer running the two install commands, a consuming repo can commit the marketplace + plugin to its own `.claude/settings.json`. Teammates then get the kit when they open and **trust** the repo — in the CLI and the Desktop app's Code tab alike:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "claude-dev-kit": {
+      "source": { "source": "github", "repo": "theam/claude-dev-kit" }
+    }
+  },
+  "enabledPlugins": {
+    "fullstack-dev-kit@claude-dev-kit": true
+  }
+}
+```
+
+Pin to a release by adding `"ref": "v0.5.0"` (or a `"sha"`) to `source`; omit it to always track the default branch. Requires the marketplace repo to be public (or teammates to have git access to it).
+
+> Heads-up: auto-load on folder-trust is the intended behavior, but a known Claude Code issue ([#32606](https://github.com/anthropics/claude-code/issues/32606)) means some setups still need a one-time manual `claude plugin install fullstack-dev-kit@claude-dev-kit`. Test with one teammate before rolling out to everyone.
+
 ## First use — zero config
 
 There is nothing to configure by hand. On first use in a repo, just ask for a ticket:
