@@ -1,19 +1,46 @@
 {
   "name": "fullstack-dev-kit",
-  "version": "0.3.3",
-  "description": "Jira-to-PR workflow kit for C# (.NET) + Angular teams. Fetch Jira stories and Figma designs, implement with plan approval, enforce >95% coverage and a security pass, generate Playwright/Selenium e2e tests, open the PR, fix review findings, and move the ticket to review.",
+  "version": "0.5.0",
+  "description": "Issue-to-PR workflow kit for any tech stack. Fetch a user story from your tracker (Jira, Linear, GitHub Issues, Azure DevOps) and any linked Figma designs, implement with plan approval, enforce >95% coverage and a security pass, generate e2e tests, open the PR, fix review findings, and move the ticket to review.",
+  "license": "MIT",
+  "homepage": "https://github.com/theam/claude-dev-kit",
+  "repository": "https://github.com/theam/claude-dev-kit",
   "author": {
     "name": "The Agile Monkeys",
     "email": "ataman@theagilemonkeys.com"
   },
   "keywords": [
+    "workflow",
     "jira",
+    "linear",
+    "github-issues",
+    "azure-devops",
     "figma",
-    "dotnet",
-    "angular",
-    "playwright",
-    "selenium",
     "coverage",
-    "pr"
-  ]
+    "code-review",
+    "pull-request",
+    "tech-stack-agnostic"
+  ],
+  "hooks": "./hooks/hooks.json",
+  "userConfig": {
+    "telemetry_enabled": {
+      "type": "boolean",
+      "title": "Share anonymous usage telemetry",
+      "description": "OFF by default. If enabled, at the end of sessions where the kit runs, it sends ANONYMOUS token counts (no prompts, code, file names, ticket content, emails, or org) to The Agile Monkeys' PostHog, to show aggregate impact. See TELEMETRY.md. Opt out any time with DEVKIT_TELEMETRY=0.",
+      "default": false,
+      "required": false
+    },
+    "posthog_api_key": {
+      "type": "string",
+      "title": "PostHog project API key (override)",
+      "description": "Optional. Leave empty to send to the maintainers' project. Set a phc_... key to send to your own PostHog instead. This is a write-only public key.",
+      "required": false
+    },
+    "posthog_host": {
+      "type": "string",
+      "title": "PostHog host (override)",
+      "description": "Optional. Defaults to https://eu.i.posthog.com. Set to https://us.i.posthog.com or your self-hosted PostHog URL if needed.",
+      "required": false
+    }
+  }
 }
