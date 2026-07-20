@@ -34,7 +34,7 @@ Open with `gh pr create` (or the repo's tooling). The body must include:
 
 ### Summary
 <the product-facing summary: what was delivered in user terms and the
-decisions taken, plain language — same content as the Jira comment>
+decisions taken, plain language — same content as the tracker comment>
 
 ### What changed
 - ...
@@ -49,7 +49,7 @@ decisions taken, plain language — same content as the Jira comment>
 ### Notes for reviewers
 - <risks, follow-ups, technical decisions>
 
-Jira: <link to ticket>
+Issue: <link to the tracker item>
 
 ---
 🤖 Generated with [Claude Code](https://claude.com/claude-code) via the

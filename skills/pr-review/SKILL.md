@@ -17,7 +17,7 @@ Produce a high-signal review: findings a reviewer would act on, classified and o
 
 1. **Acceptance criteria**: does the change actually satisfy each criterion? List any criterion not covered.
 2. **Correctness**: behavioral regressions, broken edge cases, wrong logic. Read the code, don't skim the diff.
-3. **API contract drift**: routes, payloads, enums, validation, status codes — both sides (backend/frontend) updated together.
+3. **Contract drift**: routes, payloads, enums, schemas, validation, status codes — every side that depends on the contract updated together.
 4. **Security**: apply the checklist in `instructions/secure-coding.md` (auth on new endpoints, secrets, input validation, data exposure). Any automatic-blocker present is a blocking finding.
 5. **Tests**: every behavioral change has a test that would fail without it; user-facing changes have e2e coverage with edge cases; touched files stay ≥ 95% (run `coverage-check` if evidence is missing). Test-quality violations from `instructions/testing-standards.md` (assertion-free tests, suppressions, deleted/renamed tests) are findings.
 6. **Maintainability**: only issues that materially affect future changes — no style nitpicks a formatter or linter should catch.

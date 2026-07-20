@@ -8,7 +8,7 @@
     {
       "name": "fullstack-dev-kit",
       "source": "./",
-      "description": "Jira-to-PR workflow kit for C# (.NET) + Angular teams: Jira/Figma fetch, coverage gate >95%, Playwright/Selenium e2e generation, PR creation and review."
+      "description": "Issue-to-PR workflow kit for any tech stack: fetch stories from Jira/Linear/GitHub/Azure and Figma designs, plan-approval gate, coverage gate >95%, e2e generation, PR creation and review."
     }
   ]
 }

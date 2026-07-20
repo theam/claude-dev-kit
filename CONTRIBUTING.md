@@ -1,24 +1,45 @@
 # Contributing to claude-dev-kit
 
-Thanks for helping improve the kit. It is intentionally small — agents, skills, commands, and instructions written in Markdown, no build step — and intentionally generic: it ships as "iteration zero" and each organization layers its own rules on top in its consuming repos.
+Thanks for helping improve the kit. It is intentionally small — agents, skills, commands, and instructions written in Markdown, no build step — and intentionally generic: it ships as "iteration zero", carries **no assumptions about language or framework**, and each organization layers its own rules on top in its consuming repos. It is maintained by [The Agile Monkeys](https://www.theagilemonkeys.com) and open to community contributions.
 
 ## Reporting issues
 
 Issues are the most valuable contribution: the kit improves through the friction real teams hit. Please include:
 
-- What you ran (the exact command, e.g. `/fullstack-dev-kit:work-story PROJ-1234`) and where (CLI, VS Code panel, Claude Desktop).
+- What you ran (the exact command, e.g. `/fullstack-dev-kit:work-story PROJ-1234`) and where (CLI, VS Code panel, Claude Desktop Code tab).
 - What happened vs. what you expected — paste the relevant part of the session output.
 - Your environment: `claude --version`, OS, and the active kit version (check `~/.claude/plugins/cache/claude-dev-kit/fullstack-dev-kit/`).
-- Your stack if it is relevant (the kit targets C# (.NET) + Angular by default).
+- Your stack and tracker if relevant (the kit is stack-agnostic and supports Jira / Linear / GitHub Issues / Azure DevOps).
 
 Check the troubleshooting table in the [README](README.md#troubleshooting) first — several common symptoms are covered there.
 
+## Repo layout
+
+| Path | What it holds |
+|---|---|
+| `agents/` | Subagent definitions (orchestrator, reviewers, fixers) |
+| `skills/` | Skill playbooks — one folder per skill, each with a `SKILL.md` |
+| `commands/` | Slash commands (`/work-story`, `/launch-story`) |
+| `instructions/` | Always-on, language-agnostic rules (secure coding, testing standards) |
+| `hooks/` + `scripts/` | Opt-in telemetry hook and its script (see [TELEMETRY.md](TELEMETRY.md)) |
+| `.claude-plugin/` | Plugin + marketplace manifests |
+| `.mcp.json` | Declared MCP servers (trackers, design tools) |
+
 ## Proposing changes
 
-- **Keep the kit project-agnostic.** Nothing client-, company-, or project-specific may land here. Build/test commands, architecture conventions, and stack subagents belong in the consuming repo's `.claude/`, not in the kit.
+- **Keep the kit project-agnostic and stack-agnostic.** Nothing client-, company-, or project-specific may land here, and no skill or agent should hardcode a language, framework, or test runner. Build/test/coverage commands, architecture conventions, and stack subagents belong in the consuming repo's `.claude/`, not in the kit. (The one exception is the tracker/PR-host/design *adapters*, which are explicitly enumerated.)
+- **Adapters are additive.** Adding a tracker (or PR host, or design tool) means adding an adapter section to the relevant skill and a detection branch to `dev-kit-setup` — not rewiring the workflow.
 - **One concern per pull request.** Small, reviewable diffs.
 - **Words are the code.** Agents and skills are prompts: keep instructions imperative and short, match the existing tone, and avoid adding rules that duplicate what another file already enforces.
 - **Don't weaken the gates.** The quality gates (plan approval, coverage ≥ 95%, e2e, security pass) are the product. Changes that relax them need a strong case in the PR description.
+- **Docs travel with behavior.** A change to a skill/agent updates the `README.md` "What's inside" table and any affected flow description in the same PR.
+
+## Adding a tracker adapter (worked example)
+
+1. Add a `### <Tracker> (\`type: "..."\`)` section to both `skills/issue-fetch/SKILL.md` and `skills/issue-update/SKILL.md`, describing exactly how to fetch/comment/transition via that tracker's MCP or CLI.
+2. Add a detection branch and a config shape to `skills/dev-kit-setup/SKILL.md`.
+3. If it uses an HTTP MCP, declare it in `.mcp.json`. If it uses a CLI (like `gh`), note the auth step instead.
+4. Update the reference-shape table in `issue-fetch` and the `README.md`.
 
 ## Testing your changes locally
 

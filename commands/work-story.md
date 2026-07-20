@@ -1,14 +1,14 @@
 ---
-description: Work a Jira user story end to end — fetch the ticket, plan, implement, verify gates, and open the PR. Usage - /work-story PROJ-1234 [--auto-approve]
+description: Work a user story end to end — fetch the ticket, plan, implement, verify gates, and open the PR. Usage - /work-story PROJ-1234 [--auto-approve]
 ---
 
-Work the Jira user story given in the arguments: $ARGUMENTS
+Work the user story given in the arguments: $ARGUMENTS
 
-Delegate the workflow to the `coding-agent` subagent in two phases, passing the ticket key and any extra instructions from the arguments.
+Delegate the workflow to the `coding-agent` subagent in two phases, passing the issue key and any extra instructions from the arguments.
 
 Rules:
 
-- If no ticket key matching `[A-Z][A-Z0-9]+-\d+` is present in the arguments, ask for one — do not guess.
+- If no issue reference is present in the arguments, ask for one — do not guess. Accept the reference shapes the configured tracker uses (e.g. `PROJ-1234` for Jira, `ENG-42` for Linear, `#123` for GitHub Issues / Azure DevOps).
 
 The story is worked **in the current directory** — no worktree is created here. To run several stories in parallel, use `/launch-story` first: it prepares a dedicated worktree and opens a new window, and this command runs inside it.
 
@@ -21,7 +21,7 @@ The story is worked **in the current directory** — no worktree is created here
 
 Never collapse these two steps into one dialog. Only if the arguments contain `--auto-approve` (for automated/pipeline runs), skip the gate and proceed directly.
 
-**Phase 2 — execution.** On approval (or auto-approve), continue the SAME coding-agent (resume it with the approval and any user adjustments) so it keeps its context, and let it run the remaining workflow: implement, verify gates, self-review, create the PR, and update the Jira ticket.
+**Phase 2 — execution.** On approval (or auto-approve), continue the SAME coding-agent (resume it with the approval and any user adjustments) so it keeps its context, and let it run the remaining workflow: implement, verify gates, self-review, create the PR, and update the tracker ticket.
 
-- Relay the coding-agent's final report to the user: PR URL, verification evidence (unit tests, coverage table, e2e results, lint, security pass), Jira transition applied, and follow-up risks.
+- Relay the coding-agent's final report to the user: PR URL, verification evidence (unit tests, coverage table, e2e results, lint, security pass), tracker transition applied, and follow-up risks.
 - If the current directory is a `/launch-story` worktree, remind the user to remove it (`git worktree remove <path>`) once the PR merges.

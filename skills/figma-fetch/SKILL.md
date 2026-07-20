@@ -1,6 +1,6 @@
 ---
 name: figma-fetch
-description: Extract frame/component structure and all visible text from a Figma design URL. Use whenever a prompt or a fetched Jira ticket contains a figma.com/design or figma.com/file link.
+description: Extract frame/component structure and all visible text from a Figma design URL. Use whenever a prompt or a fetched issue contains a figma.com/design or figma.com/file link.
 ---
 
 # Figma Fetch
