@@ -160,7 +160,7 @@ Adding a tracker, PR host, or design tool is an **adapter**, not a rewrite — s
 
 ## Telemetry (anonymous, opt-in, OFF by default)
 
-The kit can share **anonymous token counts** to [PostHog](https://posthog.com) so the maintainers can show aggregate impact. It is **off by default** and sends **only** when a developer enables it (`telemetry_enabled`). Events are anonymous (a random `installId`, no person profile); it never sends prompts, code, file names, ticket contents, emails, or org — and only counts sessions where the kit actually ran. The whole implementation is one auditable file, [`scripts/telemetry.mjs`](./scripts/telemetry.mjs). Kill switch: `DEVKIT_TELEMETRY=0`. Full details and the exact payload: **[TELEMETRY.md](./TELEMETRY.md)**.
+The kit can share **anonymous token counts** to [PostHog](https://posthog.com) so the maintainers can show aggregate impact. It is **off by default** and sends **only** when a developer enables it (`telemetry_enabled`). Events are anonymous (a random `installId`, no person profile); it never sends prompts, code, file names, ticket contents, emails, or org — and only counts sessions where the kit actually ran. The whole implementation is one auditable file, [`scripts/telemetry.mjs`](./scripts/telemetry.mjs). Kill switch: `DEVKIT_TELEMETRY=0`. It runs in the CLI, the IDE extensions, and the Desktop app's **Code tab** (local/SSH sessions), and needs Node on `PATH` (restart the desktop app if it can't find Node). Full details and the exact payload: **[TELEMETRY.md](./TELEMETRY.md)**.
 
 ## Troubleshooting
 

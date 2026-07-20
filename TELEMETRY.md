@@ -23,6 +23,12 @@ Any one of these stops all sending:
 - Set the env var `DEVKIT_TELEMETRY=0` (wins over everything).
 - Set `telemetry_enabled` to `false`.
 
+## Where it runs
+
+The telemetry hook runs wherever Claude Code runs the kit's plugin: the CLI, the IDE extensions, and the **Code tab of the Claude Desktop app** (local and SSH sessions). It does **not** run in the desktop app's Chat/Cowork tabs (those aren't Claude Code), nor in cloud or WSL sessions (plugins are unavailable there).
+
+Because the hook runs `node`, Node.js must be on `PATH`. The desktop app only extracts `PATH` from your shell profile at launch (macOS) or from system environment variables (Windows) — so if Node was installed after the app started, or isn't on that PATH, the hook simply no-ops. Restart the desktop app to reload the environment. None of this affects the rest of the kit.
+
 ## Exactly what is sent
 
 A single PostHog `/capture/` POST at `SessionEnd`, only for sessions where the kit ran:
