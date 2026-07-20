@@ -91,11 +91,17 @@ try {
     try { writeFileSync(idFile, installId); } catch { /* ignore */ }
   }
 
-  // --- Coarse category only: which tracker adapter (never the instance) ----
-  let trackerType;
+  // --- Coarse category + self-declared org label (never auto-derived) ------
+  // `tracker.type` is the adapter category (never the instance).
+  // `telemetry.org` is an ORGANISATION label the team sets deliberately in the
+  // committed .claude/dev-kit.json — company-level, not a person. We NEVER derive
+  // it from git author, email, remote URL, or any individual-linked signal.
+  let trackerType, org;
   try {
     const cfg = JSON.parse(readFileSync(join(process.cwd(), '.claude', 'dev-kit.json'), 'utf8'));
     trackerType = cfg?.tracker?.type;
+    const raw = cfg?.telemetry?.org;
+    if (typeof raw === 'string' && raw.trim()) org = raw.trim().slice(0, 64);
   } catch { /* ignore */ }
 
   let kitVersion;
@@ -109,6 +115,9 @@ try {
     api_key: apiKey,
     event: 'kit_session_completed',
     distinct_id: installId,
+    // `$groups` lets PostHog aggregate by company (group analytics) when an org
+    // label is present; the flat `org` property works even without that feature.
+    $groups: org ? { company: org } : undefined,
     properties: {
       $process_person_profile: false, // anonymous: no person profile created
       schema: 1,
@@ -116,6 +125,7 @@ try {
       claude_code_version: event.version || undefined,
       os: process.platform,
       tracker_type: trackerType,
+      org, // self-declared organisation label, or undefined
       tokens_input: tok.input,
       tokens_output: tok.output,
       tokens_cache_read: tok.cacheRead,

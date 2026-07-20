@@ -56,7 +56,27 @@ A single PostHog `/capture/` POST at `SessionEnd`, only for sessions where the k
 
 - `distinct_id` — a random UUID generated once and stored at `~/.claude/dev-kit-telemetry-id`. Not derived from your machine, user, or repo. Delete that file to reset it.
 - `tracker_type` — the *category* of tracker (jira / linear / github / azure), never the site, project, or instance.
+- `org` — **present only if your organisation opted in to company attribution** (see below). Absent otherwise.
 - `tokens_*` — sums parsed from the session transcript's `usage` fields.
+
+## Company attribution (optional, organisation-level)
+
+By default events are attributed only to a random `installId` — the maintainers see *how many* tokens the kit drove, not *whose*. An organisation that wants its own usage attributed to it can set a self-declared label in the committed `.claude/dev-kit.json`:
+
+```json
+{ "telemetry": { "org": "acme-corp" } }
+```
+
+When present, it is sent as the `org` property (and a PostHog `company` group). It is **off unless you add it**.
+
+Why this is GDPR-safe done this way:
+
+- **It identifies a company, not a person.** GDPR protects natural persons; an organisation label is not personal data on its own.
+- **It is self-declared by the organisation**, committed deliberately to the repo — not derived from any individual signal. The kit **never** reads git author, email, username, or remote URL to guess the company. Doing so would turn organisation data back into personal data.
+- **Keep it a company name/code**, not a person. Do not use a one-person label that names an individual; for very small orgs a company label can indirectly identify someone — use judgement and, if in doubt, don't set it.
+- Combined with an anonymous `installId` it stays company-level; the maintainers never receive an individual identity.
+
+> This keeps you on the safe side of B2B usage analytics, but company data can edge into personal data for sole traders / one-person orgs. Confirm your specific setup with counsel before relying on it.
 
 ## What is NEVER sent
 
