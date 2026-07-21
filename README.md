@@ -19,6 +19,14 @@ Give the `coding-agent` a user story ID from your tracker and it orchestrates th
    └─ issue-update        → comment PR link on the ticket + move it to review
 ```
 
+**Install in one command:**
+
+```bash
+npm create @theam/dev-kit
+```
+
+Interactive setup — tracker, Figma, telemetry consent, org — then it installs the plugin for you. Full options in [Installing in Claude Code](#installing-in-claude-code).
+
 ## Stack-agnostic by design
 
 The kit carries **no assumptions about language, framework, or test runner**. It reads everything stack-specific — build/test/lint/coverage commands, architecture conventions, and any implementer subagents — from the **consuming repo's `CLAUDE.md` and `.claude/`**, and detects conventions from the project when they aren't declared. Use it with .NET, Node, Python, Go, Rust, Java, or anything else.
@@ -35,47 +43,48 @@ It integrates with your tools through **adapters**, not hardcoded dependencies:
 
 The kit is a Claude Code **plugin**. Install it once per developer; it then loads in every session across every surface — the [CLI](https://code.claude.com), the desktop app, the VS Code / JetBrains extensions, and the web app (claude.ai/code).
 
-**Prerequisites**
+**Prerequisites:** [Claude Code](https://code.claude.com) (`claude --version`) and the [GitHub CLI](https://cli.github.com) authenticated (`gh auth status`).
 
-- [Claude Code](https://code.claude.com) installed and signed in — verify with `claude --version`.
-- [GitHub CLI](https://cli.github.com) authenticated — verify with `gh auth status`.
+### Install with npm (recommended)
 
-### 1. Add the marketplace and install the plugin
+```bash
+npm create @theam/dev-kit
+```
 
-Run these from a **terminal**. Plugin management is CLI-only — the VS Code / JetBrains chat panels reject `/plugin` commands.
+The wizard picks your issue tracker and whether you use Figma, **shows exactly what anonymous telemetry would be collected and lets you opt in or out**, sets your organisation label, writes `.claude/dev-kit.json`, and runs the plugin install for you. Then authorize your connectors (below) and you're done.
+
+### Manual install (what the wizard automates)
+
+From a **terminal** — plugin management is CLI-only; the VS Code / JetBrains chat panels reject `/plugin` commands:
 
 ```bash
 claude plugin marketplace add theam/claude-dev-kit
 claude plugin install fullstack-dev-kit@claude-dev-kit
 ```
 
-This is **user-level and permanent**: every future session (CLI or IDE extension) loads the kit automatically — you never reinstall per session, per window, or per project.
+Installation is **user-level and permanent** — every future session (CLI or IDE extension) loads the kit automatically, no reinstall per session or project. Verify with `claude plugin list`, or type `/` in a session and search `fullstack-dev-kit:` (you should see `work-story`, `launch-story`, and the skills; agents show under `/agents`).
 
-### 2. Verify it loaded
+### Authorize the connectors your team uses (one-time)
 
-Start a session (`claude` in a terminal, or the IDE panel — reload the window if it was open during the install) and confirm the plugin is active:
+The plugin **declares** the tracker/design MCP servers (`atlassian`, `linear`, `figma`) — you don't add them by hand, you just **authorize** the ones you use. Three ways, pick whichever fits:
 
-```bash
-claude plugin list          # fullstack-dev-kit should appear as installed + enabled
-```
+- **In a Claude Code session** (CLI, IDE panel, or the Desktop app's Code tab): run `/mcp`, pick the server (e.g. `atlassian`), and complete the OAuth in the browser.
+- **From the terminal:** `claude mcp login atlassian` (and `claude mcp list` to check status — plugin-declared servers show ⏸ *pending approval* until first approved inside a session).
+- **Already connected in Claude Desktop?** Import those connectors into Claude Code with `claude mcp add-from-claude-desktop` (macOS/WSL).
 
-In a session, type `/` and search for `fullstack-dev-kit:` — you should see `work-story`, `launch-story`, and the skills. (Agents don't appear in that list; `/agents` shows them.)
-
-### 3. Authorize the connectors your team uses (one-time)
-
-Run `/mcp` in a session, or use your claude.ai connector settings:
-
-| Tool | Connector | Auth |
+| Tool | Connector | Authorize with |
 |---|---|---|
-| Jira | `atlassian` MCP | `/mcp` → OAuth |
-| Linear | `linear` MCP | `/mcp` → OAuth |
+| Jira | `atlassian` MCP | `/mcp` · `claude mcp login atlassian` |
+| Linear | `linear` MCP | `/mcp` · `claude mcp login linear` |
 | GitHub Issues | — (uses `gh`) | `gh auth login` |
 | Azure DevOps | — (uses `az`) | `az login` |
-| Figma *(optional)* | `figma` MCP | `/mcp` → OAuth |
+| Figma *(optional)* | `figma` MCP | `/mcp` · `claude mcp login figma` |
+
+Authorization is **per developer, one-time** — it persists across sessions. The kit then discovers the rest (Jira site, project key, field IDs) automatically on first use via `dev-kit-setup`.
 
 > When authorizing an MCP via OAuth, complete the browser flow **immediately** — the link is tied to a live local callback and expires with it. Don't reuse old tabs or restart the session mid-flow.
 
-### 4. Enable auto-update
+### Enable auto-update
 
 `/plugin` → **Marketplaces** tab → `claude-dev-kit` → **Enable auto-update**. New versions then arrive at session startup. To pull manually instead:
 
@@ -181,7 +190,7 @@ Adding a tracker, PR host, or design tool is an **adapter**, not a rewrite — s
 
 ## Telemetry (anonymous, opt-in, OFF by default)
 
-The kit can share **anonymous token counts** to [PostHog](https://posthog.com) so the maintainers can show aggregate impact. It is **off by default** and sends **only** when a developer enables it (`telemetry_enabled`). Events are anonymous (a random `installId`, no person profile); it never sends prompts, code, file names, ticket contents, emails, or org — and only counts sessions where the kit actually ran. The whole implementation is one auditable file, [`scripts/telemetry.mjs`](./scripts/telemetry.mjs). Kill switch: `DEVKIT_TELEMETRY=0`. It runs in the CLI, the IDE extensions, and the Desktop app's **Code tab** (local/SSH sessions), and needs Node on `PATH` (restart the desktop app if it can't find Node). Full details and the exact payload: **[TELEMETRY.md](./TELEMETRY.md)**.
+The kit can share **anonymous token counts** so the maintainers can show aggregate impact. It is **off by default**; you opt in via the setup wizard (`npm create @theam/dev-kit`). Clients ship **no API key** and never call analytics directly — they POST to a [relay](./packages/telemetry-relay/) that re-enforces a [machine-readable contract](./telemetry/contract.v1.json) and strips your IP before forwarding to PostHog. Events are anonymous (a random `install_id`); never prompts, code, file names, ticket contents, emails, or org-instance data — and only sessions where the kit actually ran. Kill switch: `DEVKIT_TELEMETRY=0`. Runs in the CLI, IDE extensions, and the Desktop app's **Code tab** (needs Node on `PATH`). Full details and the exact payload: **[TELEMETRY.md](./TELEMETRY.md)**.
 
 ## Troubleshooting
 

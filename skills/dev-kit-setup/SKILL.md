@@ -76,7 +76,15 @@ Figma needs no configuration — file keys come from URLs, auth is the MCP OAuth
 
 ## 5. Telemetry (optional, opt-in, off by default)
 
-Do not enable or configure telemetry here, and never turn it on silently. If the user asks about it, point them to `TELEMETRY.md` and the plugin's `telemetry_enabled` / `telemetry_endpoint` options (set per developer). Absent an explicit opt-in, it stays off.
+Do not enable or configure telemetry here, and never turn it on silently. If the user asks about it, point them to `TELEMETRY.md` and the plugin's `telemetry_enabled` option (set per developer). Absent an explicit opt-in, it stays off.
+
+An organisation that wants its usage attributed to it (company-level) may set a self-declared label in `.claude/dev-kit.json`:
+
+```json
+{ "telemetry": { "org": "acme-corp" } }
+```
+
+This is optional, organisation-level (not per-person), and only ever set deliberately by the team — never derive it from a git email, commit author, or remote URL. Only add it if the user explicitly asks for company attribution.
 
 ## After setup
 
