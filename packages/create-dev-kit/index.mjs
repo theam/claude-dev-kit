@@ -44,7 +44,11 @@ async function main() {
   // 1. Issue tracker
   console.log(b('1. Issue tracker'));
   const trackers = { 1: 'jira', 2: 'linear', 3: 'github', 4: 'azure', 5: null };
-  console.log('   1) Jira   2) Linear   3) GitHub Issues   4) Azure DevOps   5) None');
+  console.log('   1) Jira');
+  console.log('   2) Linear');
+  console.log('   3) GitHub Issues');
+  console.log('   4) Azure DevOps');
+  console.log('   5) None');
   let tChoice = await ask('   Which tracker does this repo use?', '1');
   const tracker = trackers[tChoice] ?? 'jira';
 
