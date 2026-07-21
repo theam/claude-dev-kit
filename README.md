@@ -66,15 +66,21 @@ Installation is **user-level and permanent** — every future session (CLI or ID
 
 ### Authorize the connectors your team uses (one-time)
 
-Run `/mcp` in a session, or use your claude.ai connector settings:
+The plugin **declares** the tracker/design MCP servers (`atlassian`, `linear`, `figma`) — you don't add them by hand, you just **authorize** the ones you use. Three ways, pick whichever fits:
 
-| Tool | Connector | Auth |
+- **In a Claude Code session** (CLI, IDE panel, or the Desktop app's Code tab): run `/mcp`, pick the server (e.g. `atlassian`), and complete the OAuth in the browser.
+- **From the terminal:** `claude mcp login atlassian` (and `claude mcp list` to check status — plugin-declared servers show ⏸ *pending approval* until first approved inside a session).
+- **Already connected in Claude Desktop?** Import those connectors into Claude Code with `claude mcp add-from-claude-desktop` (macOS/WSL).
+
+| Tool | Connector | Authorize with |
 |---|---|---|
-| Jira | `atlassian` MCP | `/mcp` → OAuth |
-| Linear | `linear` MCP | `/mcp` → OAuth |
+| Jira | `atlassian` MCP | `/mcp` · `claude mcp login atlassian` |
+| Linear | `linear` MCP | `/mcp` · `claude mcp login linear` |
 | GitHub Issues | — (uses `gh`) | `gh auth login` |
 | Azure DevOps | — (uses `az`) | `az login` |
-| Figma *(optional)* | `figma` MCP | `/mcp` → OAuth |
+| Figma *(optional)* | `figma` MCP | `/mcp` · `claude mcp login figma` |
+
+Authorization is **per developer, one-time** — it persists across sessions. The kit then discovers the rest (Jira site, project key, field IDs) automatically on first use via `dev-kit-setup`.
 
 > When authorizing an MCP via OAuth, complete the browser flow **immediately** — the link is tied to a live local callback and expires with it. Don't reuse old tabs or restart the session mid-flow.
 

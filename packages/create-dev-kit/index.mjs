@@ -52,6 +52,14 @@ async function main() {
   let tChoice = await ask('   Which tracker does this repo use?', '1');
   const tracker = trackers[tChoice] ?? 'jira';
 
+  const TRACKER_HINT = {
+    jira: 'To connect Jira, authorize the Atlassian MCP after installing:\n     • in a Claude Code session: /mcp → authorize "atlassian"\n     • or from the terminal: claude mcp login atlassian\n     • already connected in Claude Desktop? claude mcp add-from-claude-desktop',
+    linear: 'To connect Linear, authorize the Linear MCP after installing:\n     • /mcp → authorize "linear"   (or: claude mcp login linear)',
+    github: 'To connect GitHub Issues, just authenticate the GitHub CLI:\n     • gh auth login   (no MCP needed)',
+    azure: 'To connect Azure DevOps, authenticate the Azure CLI:\n     • az login   (no MCP needed)',
+  };
+  if (TRACKER_HINT[tracker]) console.log(dim('   → ' + TRACKER_HINT[tracker]));
+
   // 2. Figma
   console.log(`\n${b('2. Design')}`);
   const figma = await yn('   Will you link Figma designs in tickets?', false);
