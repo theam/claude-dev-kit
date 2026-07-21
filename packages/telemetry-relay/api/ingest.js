@@ -16,7 +16,17 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const contract = JSON.parse(readFileSync(join(__dirname, '..', 'contract.v1.json'), 'utf8'));
+
+// Load the contract from whichever location survives serverless bundling.
+// (vercel.json `includeFiles` bundles contract.v1.json alongside the function.)
+let contract = null;
+for (const p of [
+  join(__dirname, '..', 'contract.v1.json'),
+  join(__dirname, 'contract.v1.json'),
+  join(process.cwd(), 'contract.v1.json'),
+]) {
+  try { contract = JSON.parse(readFileSync(p, 'utf8')); break; } catch { /* try next */ }
+}
 
 const POSTHOG_HOST = (process.env.POSTHOG_HOST || 'https://eu.i.posthog.com').replace(/\/+$/, '');
 const POSTHOG_API_KEY = process.env.POSTHOG_API_KEY || '';
@@ -50,6 +60,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'method_not_allowed' });
   if (!POSTHOG_API_KEY) return res.status(503).json({ error: 'relay_not_configured' });
+  if (!contract) return res.status(503).json({ error: 'contract_unavailable' });
 
   let body = req.body;
   try { if (typeof body === 'string') body = JSON.parse(body); } catch { body = null; }

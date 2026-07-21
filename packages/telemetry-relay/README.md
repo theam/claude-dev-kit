@@ -13,6 +13,12 @@ This mirrors the relay pattern used by [theam/limina](https://github.com/theam/l
 
 ## Deploy (Vercel)
 
+This lives inside the `claude-dev-kit` monorepo and deploys **from this subdirectory** — no separate repo needed.
+
+**Dashboard:** New Project → import `theam/claude-dev-kit` → set **Root Directory = `packages/telemetry-relay`** → deploy. Vercel serves `api/ingest.js` at `/api/ingest` (the path the kit posts to), and `vercel.json` bundles `contract.v1.json` alongside the function.
+
+**CLI:**
+
 ```bash
 cd packages/telemetry-relay
 vercel deploy --prod
