@@ -19,6 +19,14 @@ Give the `coding-agent` a user story ID from your tracker and it orchestrates th
    └─ issue-update        → comment PR link on the ticket + move it to review
 ```
 
+**Install in one command:**
+
+```bash
+npm create @theam/dev-kit
+```
+
+Interactive setup — tracker, Figma, telemetry consent, org — then it installs the plugin for you. Full options in [Installing in Claude Code](#installing-in-claude-code).
+
 ## Stack-agnostic by design
 
 The kit carries **no assumptions about language, framework, or test runner**. It reads everything stack-specific — build/test/lint/coverage commands, architecture conventions, and any implementer subagents — from the **consuming repo's `CLAUDE.md` and `.claude/`**, and detects conventions from the project when they aren't declared. Use it with .NET, Node, Python, Go, Rust, Java, or anything else.
@@ -35,41 +43,28 @@ It integrates with your tools through **adapters**, not hardcoded dependencies:
 
 The kit is a Claude Code **plugin**. Install it once per developer; it then loads in every session across every surface — the [CLI](https://code.claude.com), the desktop app, the VS Code / JetBrains extensions, and the web app (claude.ai/code).
 
-### Fastest: the setup wizard
+**Prerequisites:** [Claude Code](https://code.claude.com) (`claude --version`) and the [GitHub CLI](https://cli.github.com) authenticated (`gh auth status`).
+
+### Install with npm (recommended)
 
 ```bash
 npm create @theam/dev-kit
 ```
 
-Interactive: pick your issue tracker and whether you use Figma, review and opt in (or out of) anonymous telemetry, set your organisation, and it writes the config and runs the install commands for you. Everything below is the same thing done by hand.
+The wizard picks your issue tracker and whether you use Figma, **shows exactly what anonymous telemetry would be collected and lets you opt in or out**, sets your organisation label, writes `.claude/dev-kit.json`, and runs the plugin install for you. Then authorize your connectors (below) and you're done.
 
-**Prerequisites**
+### Manual install (what the wizard automates)
 
-- [Claude Code](https://code.claude.com) installed and signed in — verify with `claude --version`.
-- [GitHub CLI](https://cli.github.com) authenticated — verify with `gh auth status`.
-
-### 1. Add the marketplace and install the plugin
-
-Run these from a **terminal**. Plugin management is CLI-only — the VS Code / JetBrains chat panels reject `/plugin` commands.
+From a **terminal** — plugin management is CLI-only; the VS Code / JetBrains chat panels reject `/plugin` commands:
 
 ```bash
 claude plugin marketplace add theam/claude-dev-kit
 claude plugin install fullstack-dev-kit@claude-dev-kit
 ```
 
-This is **user-level and permanent**: every future session (CLI or IDE extension) loads the kit automatically — you never reinstall per session, per window, or per project.
+Installation is **user-level and permanent** — every future session (CLI or IDE extension) loads the kit automatically, no reinstall per session or project. Verify with `claude plugin list`, or type `/` in a session and search `fullstack-dev-kit:` (you should see `work-story`, `launch-story`, and the skills; agents show under `/agents`).
 
-### 2. Verify it loaded
-
-Start a session (`claude` in a terminal, or the IDE panel — reload the window if it was open during the install) and confirm the plugin is active:
-
-```bash
-claude plugin list          # fullstack-dev-kit should appear as installed + enabled
-```
-
-In a session, type `/` and search for `fullstack-dev-kit:` — you should see `work-story`, `launch-story`, and the skills. (Agents don't appear in that list; `/agents` shows them.)
-
-### 3. Authorize the connectors your team uses (one-time)
+### Authorize the connectors your team uses (one-time)
 
 Run `/mcp` in a session, or use your claude.ai connector settings:
 
@@ -83,7 +78,7 @@ Run `/mcp` in a session, or use your claude.ai connector settings:
 
 > When authorizing an MCP via OAuth, complete the browser flow **immediately** — the link is tied to a live local callback and expires with it. Don't reuse old tabs or restart the session mid-flow.
 
-### 4. Enable auto-update
+### Enable auto-update
 
 `/plugin` → **Marketplaces** tab → `claude-dev-kit` → **Enable auto-update**. New versions then arrive at session startup. To pull manually instead:
 
