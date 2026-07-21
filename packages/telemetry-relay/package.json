@@ -1,0 +1,9 @@
+{
+  "name": "@theam/claude-dev-kit-telemetry-relay",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Telemetry relay for claude-dev-kit: re-enforces the contract, strips caller IP, forwards anonymous events to PostHog. Deploy on Vercel.",
+  "license": "Apache-2.0",
+  "engines": { "node": ">=18" }
+}

@@ -35,6 +35,14 @@ It integrates with your tools through **adapters**, not hardcoded dependencies:
 
 The kit is a Claude Code **plugin**. Install it once per developer; it then loads in every session across every surface — the [CLI](https://code.claude.com), the desktop app, the VS Code / JetBrains extensions, and the web app (claude.ai/code).
 
+### Fastest: the setup wizard
+
+```bash
+npm create @theam/dev-kit
+```
+
+Interactive: pick your issue tracker and whether you use Figma, review and opt in (or out of) anonymous telemetry, set your organisation, and it writes the config and runs the install commands for you. Everything below is the same thing done by hand.
+
 **Prerequisites**
 
 - [Claude Code](https://code.claude.com) installed and signed in — verify with `claude --version`.
@@ -181,7 +189,7 @@ Adding a tracker, PR host, or design tool is an **adapter**, not a rewrite — s
 
 ## Telemetry (anonymous, opt-in, OFF by default)
 
-The kit can share **anonymous token counts** to [PostHog](https://posthog.com) so the maintainers can show aggregate impact. It is **off by default** and sends **only** when a developer enables it (`telemetry_enabled`). Events are anonymous (a random `installId`, no person profile); it never sends prompts, code, file names, ticket contents, emails, or org — and only counts sessions where the kit actually ran. The whole implementation is one auditable file, [`scripts/telemetry.mjs`](./scripts/telemetry.mjs). Kill switch: `DEVKIT_TELEMETRY=0`. It runs in the CLI, the IDE extensions, and the Desktop app's **Code tab** (local/SSH sessions), and needs Node on `PATH` (restart the desktop app if it can't find Node). Full details and the exact payload: **[TELEMETRY.md](./TELEMETRY.md)**.
+The kit can share **anonymous token counts** so the maintainers can show aggregate impact. It is **off by default**; you opt in via the setup wizard (`npm create @theam/dev-kit`). Clients ship **no API key** and never call analytics directly — they POST to a [relay](./packages/telemetry-relay/) that re-enforces a [machine-readable contract](./telemetry/contract.v1.json) and strips your IP before forwarding to PostHog. Events are anonymous (a random `install_id`); never prompts, code, file names, ticket contents, emails, or org-instance data — and only sessions where the kit actually ran. Kill switch: `DEVKIT_TELEMETRY=0`. Runs in the CLI, IDE extensions, and the Desktop app's **Code tab** (needs Node on `PATH`). Full details and the exact payload: **[TELEMETRY.md](./TELEMETRY.md)**.
 
 ## Troubleshooting
 

@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "event_name": "kit_session_completed",
+  "default_relay_url": "https://claude-dev-kit-telemetry.vercel.app",
+  "duration_buckets": ["lt_1m", "1m_to_5m", "5m_to_15m", "15m_to_1h", "gte_1h"],
+  "allowed_properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "kit_version": { "type": "version" },
+    "claude_code_version": { "type": "version", "optional": true },
+    "os": { "type": "enum", "values": ["darwin", "linux", "win32"] },
+    "tracker_type": { "type": "enum", "values": ["jira", "linear", "github", "azure"], "optional": true },
+    "org": { "type": "string", "maxLength": 64, "optional": true },
+    "duration_bucket": { "type": "enum", "values": ["lt_1m", "1m_to_5m", "5m_to_15m", "15m_to_1h", "gte_1h"], "optional": true },
+    "tokens_input": { "type": "integer", "min": 0 },
+    "tokens_output": { "type": "integer", "min": 0 },
+    "tokens_cache_read": { "type": "integer", "min": 0 },
+    "tokens_cache_creation": { "type": "integer", "min": 0 },
+    "tokens_total": { "type": "integer", "min": 0 }
+  },
+  "identity": {
+    "distinct_id": "random per-install UUID (install_id) — not derived from any personal or machine attribute",
+    "group": { "type": "company", "key": "org", "note": "present only if the organisation self-declared an org label" }
+  },
+  "never_collected": [
+    "prompts, responses, code, diffs",
+    "file paths, file names, repo names or URLs",
+    "ticket keys or contents, commit messages, branch names",
+    "emails, usernames, personal names",
+    "raw tool input/output, command arguments, stack traces",
+    "client IP (stripped at the relay, never stored)"
+  ]
+}
