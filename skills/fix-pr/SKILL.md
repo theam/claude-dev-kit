@@ -11,6 +11,8 @@ Turn findings into commits: every blocking finding gets fixed or explicitly answ
 
 Collect, in this order:
 
+Fetch these from the configured host (`prHost` in `.claude/dev-kit.json`) — commands below are for `github`; for **bitbucket** use the REST API (`/pullrequests/{id}` for comments, `/statuses` for build results) with a token from the environment, and for **gitlab** use `glab mr view/checks`.
+
 1. **CI failures**: `gh pr checks <pr>` — read the failing job logs, not just the status.
 2. **Review comments**: `gh pr view <pr> --comments` and unresolved review threads (`gh api` for review comments when needed).
 3. **Self-review findings** handed over by the caller (e.g. the coding-agent's `pr-review` pass).

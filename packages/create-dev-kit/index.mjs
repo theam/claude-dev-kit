@@ -60,12 +60,28 @@ async function main() {
   };
   if (TRACKER_HINT[tracker]) console.log(dim('   → ' + TRACKER_HINT[tracker]));
 
-  // 2. Figma
-  console.log(`\n${b('2. Design')}`);
+  // 2. Pull request host
+  console.log(`\n${b('2. Pull request host')}`);
+  const hosts = { 1: 'github', 2: 'bitbucket', 3: 'gitlab', 4: null };
+  console.log('   1) GitHub');
+  console.log('   2) Bitbucket');
+  console.log('   3) GitLab');
+  console.log('   4) Other / none');
+  const hChoice = await ask('   Where do pull requests live?', '1');
+  const prHost = hosts[hChoice] ?? 'github';
+  const HOST_HINT = {
+    github: 'Authenticate the GitHub CLI: gh auth login',
+    bitbucket: 'Bitbucket: create an app password / access token and export it (e.g. BITBUCKET_TOKEN).\n     The kit pushes with git and opens the PR via the Bitbucket REST API.',
+    gitlab: 'Authenticate the GitLab CLI: glab auth login',
+  };
+  if (HOST_HINT[prHost]) console.log(dim('   → ' + HOST_HINT[prHost]));
+
+  // 3. Figma
+  console.log(`\n${b('3. Design')}`);
   const figma = await yn('   Will you link Figma designs in tickets?', false);
 
-  // 3. Telemetry — informed consent
-  console.log(`\n${b('3. Anonymous usage telemetry')} ${dim('(optional)')}`);
+  // 4. Telemetry — informed consent
+  console.log(`\n${b('4. Anonymous usage telemetry')} ${dim('(optional)')}`);
   console.log(dim(
     '   If you opt in, at the end of sessions where the kit runs it sends, to\n' +
     '   The Agile Monkeys via a relay:\n' +
@@ -78,10 +94,10 @@ async function main() {
   ));
   const consent = await yn('   Share anonymous usage telemetry?', false);
 
-  // 4. Organisation label (only meaningful if telemetry is on)
+  // 5. Organisation label (only meaningful if telemetry is on)
   let org = '';
   if (consent) {
-    console.log(`\n${b('4. Organisation')} ${dim('(optional — attributes your usage to your company, not a person)')}`);
+    console.log(`\n${b('5. Organisation')} ${dim('(optional — attributes your usage to your company, not a person)')}`);
     org = await ask('   Organisation label to tag your usage (leave empty to stay unattributed):', '');
   }
 
@@ -89,6 +105,7 @@ async function main() {
   const repoCfgPath = join(process.cwd(), '.claude', 'dev-kit.json');
   const repoPatch = { figma };
   if (tracker) repoPatch.tracker = { type: tracker };
+  if (prHost) repoPatch.prHost = prHost;
   if (org.trim()) repoPatch.telemetry = { org: org.trim().slice(0, 64) };
   mergeJson(repoCfgPath, repoPatch);
 

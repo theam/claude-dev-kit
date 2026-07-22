@@ -77,13 +77,14 @@ Write `.claude/dev-kit.json` at the consuming repo root. Only the active tracker
     "reviewState": null
   },
   "stacks": ["node"],
+  "prHost": "github",
   "test": {
     "coverageCommands": []
   }
 }
 ```
 
-Shape of `tracker` per type: **jira** → `site`, `cloudId`, `projectKey`, `fields`; **linear** → `teamKey`, optional `workspace`; **github** → `repo` (`owner/name`, optional if same as origin); **azure** → `org`, `project`. `stacks` is the detected stack id(s) — skills load `instructions/stacks/<id>.md` as their baseline. `reviewState` is filled the first time `issue-update` transitions an item, then reused. `test.coverageCommands` is optional — `coverage-check` fills it in when it detects the repo's coverage command.
+Shape of `tracker` per type: **jira** → `site`, `cloudId`, `projectKey`, `fields`; **linear** → `teamKey`, optional `workspace`; **github** → `repo` (`owner/name`, optional if same as origin); **azure** → `org`, `project`. `stacks` is the detected stack id(s) — skills load `instructions/stacks/<id>.md` as their baseline. `prHost` is where PRs live — **detect it from the `origin` remote** (`github.com` → `github`, `bitbucket.org` → `bitbucket`, `gitlab.com` → `gitlab`; otherwise ask); `create-pr`/`pr-review`/`fix-pr` use it. For `bitbucket`/`gitlab`, remind the user that PR actions need a token/CLI authenticated (e.g. `BITBUCKET_TOKEN`, or `glab auth login`). `reviewState` is filled the first time `issue-update` transitions an item, then reused. `test.coverageCommands` is optional — `coverage-check` fills it in when it detects the repo's coverage command.
 
 **If the repo has no `CLAUDE.md`:** say so, proceed using the stack profile(s) + detected commands as the baseline, and suggest the user run `/init` (or let the kit propose a minimal `CLAUDE.md`) so future runs are grounded in the repo's own conventions. Never silently assume conventions the repo hasn't stated.
 
