@@ -41,7 +41,24 @@ Then run the matching discovery below. For any MCP/CLI that is not authenticated
 ### Azure DevOps
 - **Org and project**: read from the configured Azure DevOps connection or ask once. Store `org` and `project`.
 
-## 3. Persist
+## 3. Detect the stack(s)
+
+Identify the tech stack from the project's files so the kit can load the right baseline commands. Match against the profiles in `instructions/stacks/` (each profile lists its detection signals), e.g.:
+
+| Signal | Stack id |
+|---|---|
+| `package.json` | `node` |
+| `pyproject.toml` / `requirements*.txt` | `python` |
+| `*.csproj` / `*.sln` | `dotnet` |
+| `pom.xml` / `build.gradle` | `java` |
+| `go.mod` | `go` |
+| `Gemfile` | `ruby` |
+| `composer.json` | `php` |
+| `Cargo.toml` | `rust` |
+
+A monorepo may match several — record all of them. If nothing matches a shipped profile, record the closest label anyway and tell the user there is no stack profile yet (the kit still works from the repo's `CLAUDE.md` and generic rules — and contributing `instructions/stacks/<id>.md` is one small PR).
+
+## 4. Persist
 
 Write `.claude/dev-kit.json` at the consuming repo root. Only the active tracker's block is required:
 
@@ -59,22 +76,25 @@ Write `.claude/dev-kit.json` at the consuming repo root. Only the active tracker
     },
     "reviewState": null
   },
+  "stacks": ["node"],
   "test": {
     "coverageCommands": []
   }
 }
 ```
 
-Shape of `tracker` per type: **jira** → `site`, `cloudId`, `projectKey`, `fields`; **linear** → `teamKey`, optional `workspace`; **github** → `repo` (`owner/name`, optional if same as origin); **azure** → `org`, `project`. `reviewState` is filled the first time `issue-update` transitions an item, then reused. `test.coverageCommands` is optional — `coverage-check` fills it in when it detects the repo's coverage command.
+Shape of `tracker` per type: **jira** → `site`, `cloudId`, `projectKey`, `fields`; **linear** → `teamKey`, optional `workspace`; **github** → `repo` (`owner/name`, optional if same as origin); **azure** → `org`, `project`. `stacks` is the detected stack id(s) — skills load `instructions/stacks/<id>.md` as their baseline. `reviewState` is filled the first time `issue-update` transitions an item, then reused. `test.coverageCommands` is optional — `coverage-check` fills it in when it detects the repo's coverage command.
+
+**If the repo has no `CLAUDE.md`:** say so, proceed using the stack profile(s) + detected commands as the baseline, and suggest the user run `/init` (or let the kit propose a minimal `CLAUDE.md`) so future runs are grounded in the repo's own conventions. Never silently assume conventions the repo hasn't stated.
 
 - This file contains **no secrets** (auth lives in each developer's MCP OAuth grant or CLI login) — it is safe and intended to be committed, so one setup serves the whole team.
 - Tell the user the file was created and suggest committing it.
 
-## 4. Design tool (optional)
+## 5. Design tool (optional)
 
 Figma needs no configuration — file keys come from URLs, auth is the MCP OAuth. Verify authentication lazily, only when a Figma URL first appears.
 
-## 5. Telemetry (optional, opt-in, off by default)
+## 6. Telemetry (optional, opt-in, off by default)
 
 Do not enable or configure telemetry here, and never turn it on silently. If the user asks about it, point them to `TELEMETRY.md` and the plugin's `telemetry_enabled` option (set per developer). Absent an explicit opt-in, it stays off.
 

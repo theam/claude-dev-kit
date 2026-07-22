@@ -10,7 +10,7 @@ For every user story that changes user-facing behavior, an existing e2e test mus
 ## Process
 
 1. **Identify the affected flow(s)** from the story's acceptance criteria and the diff: which pages, routes, forms, and roles are involved.
-2. **Discover the project's e2e framework and conventions first** — before writing anything. Look for the config and test tree of whatever the repo uses (e.g. `playwright.config.*` + `e2e/`, `cypress.config.*` + `cypress/`, a Selenium/WebDriver test project, `*.feature` files for Cucumber, etc.) and reuse its existing page objects, fixtures, helpers, and app/API seeding or stubbing. Follow them exactly; do not introduce a new pattern or framework when one exists. If the repo has no e2e setup at all, say so and propose one that fits the stack instead of scaffolding silently.
+2. **Discover the project's e2e framework and conventions first** — before writing anything. If `.claude/dev-kit.json` names a stack, `instructions/stacks/<id>.md` lists the frameworks common for it as a starting hint. Then look for the config and test tree of whatever the repo actually uses (e.g. `playwright.config.*` + `e2e/`, `cypress.config.*` + `cypress/`, a Selenium/WebDriver test project, `*.feature` files for Cucumber, etc.) and reuse its existing page objects, fixtures, helpers, and app/API seeding or stubbing. Follow them exactly; do not introduce a new pattern or framework when one exists. If the repo has no e2e setup at all, say so and propose one that fits the stack instead of scaffolding silently.
 3. **Prefer updating an existing test** for the flow over creating a parallel one.
 4. **Write the scenarios.** Every generated suite must cover realistic edge cases, not just the happy path:
    - Empty states
