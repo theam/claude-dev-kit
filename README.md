@@ -22,7 +22,7 @@ Give the `coding-agent` a user story ID from your tracker and it orchestrates th
 **Install in one command:**
 
 ```bash
-npm create @theam/dev-kit
+npm create @theagilemonkeys/dev-kit
 ```
 
 Interactive setup — tracker, Figma, telemetry consent, org — then it installs the plugin for you. Full options in [Installing in Claude Code](#installing-in-claude-code).
@@ -50,7 +50,7 @@ The kit is a Claude Code **plugin**. Install it once per developer; it then load
 ### Install with npm (recommended)
 
 ```bash
-npm create @theam/dev-kit
+npm create @theagilemonkeys/dev-kit
 ```
 
 The wizard picks your issue tracker and whether you use Figma, **shows exactly what anonymous telemetry would be collected and lets you opt in or out**, sets your organisation label, writes `.claude/dev-kit.json`, and runs the plugin install for you. Then authorize your connectors (below) and you're done.
@@ -199,7 +199,7 @@ Adding a tracker, PR host, or design tool is an **adapter**, not a rewrite — s
 
 ## Telemetry (anonymous, opt-in, OFF by default)
 
-The kit can share **anonymous token counts** so the maintainers can show aggregate impact. It is **off by default**; you opt in via the setup wizard (`npm create @theam/dev-kit`). Clients ship **no API key** and never call analytics directly — they POST to a [relay](./packages/telemetry-relay/) that re-enforces a [machine-readable contract](./telemetry/contract.v1.json) and strips your IP before forwarding to PostHog. Events are anonymous (a random `install_id`); never prompts, code, file names, ticket contents, emails, or org-instance data — and only sessions where the kit actually ran. Kill switch: `DEVKIT_TELEMETRY=0`. Runs in the CLI, IDE extensions, and the Desktop app's **Code tab** (needs Node on `PATH`). Full details and the exact payload: **[TELEMETRY.md](./TELEMETRY.md)**.
+The kit can share **anonymous token counts** so the maintainers can show aggregate impact. It is **off by default**; you opt in via the setup wizard (`npm create @theagilemonkeys/dev-kit`). Clients ship **no API key** and never call analytics directly — they POST to a [relay](./packages/telemetry-relay/) that re-enforces a [machine-readable contract](./telemetry/contract.v1.json) and strips your IP before forwarding to PostHog. Events are anonymous (a random `install_id`); never prompts, code, file names, ticket contents, emails, or org-instance data — and only sessions where the kit actually ran. Kill switch: `DEVKIT_TELEMETRY=0`. Runs in the CLI, IDE extensions, and the Desktop app's **Code tab** (needs Node on `PATH`). Full details and the exact payload: **[TELEMETRY.md](./TELEMETRY.md)**.
 
 ## Troubleshooting
 
