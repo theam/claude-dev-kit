@@ -18,7 +18,7 @@ Review priorities, in order:
 2. Contract drift across any boundary the change touches (routes, payloads, enums, schemas, validation, status codes) — every side that depends on the contract updated together.
 3. Security and authorization mistakes (auth checks, secrets, headers, file uploads, data export, role checks).
 4. Data validation and error-handling gaps.
-5. Missing or weak tests — verify every behavioral change has matching unit coverage and, for user-facing changes, e2e coverage. Flag any touched file whose coverage falls below 95%.
+5. Missing or weak tests — **judged against the project's own setup** (adaptive gates, see `instructions/testing-standards.md`): when the project has tests, verify every behavioral change has matching coverage and flag touched files below its bar (default 95%) or regressing; when it does e2e, check user-facing changes have it. A project with no test/e2e setup → recommend, don't block.
 6. Test quality violations from `instructions/testing-standards.md`: assertion-free tests, tests written only to move the coverage number, deleted/renamed existing tests, lint/coverage suppressions.
 7. Maintainability issues that materially affect future changes.
 

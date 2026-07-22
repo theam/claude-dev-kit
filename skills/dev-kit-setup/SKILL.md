@@ -81,6 +81,10 @@ Write `.claude/dev-kit.json` at the consuming repo root. Only the active tracker
   },
   "stacks": ["node"],
   "prHost": "github",
+  "gates": {
+    "coverage": { "mode": "auto", "min": 95 },
+    "e2e": { "mode": "auto" }
+  },
   "test": {
     "coverageCommands": []
   }
@@ -88,6 +92,18 @@ Write `.claude/dev-kit.json` at the consuming repo root. Only the active tracker
 ```
 
 Shape of `tracker` per type: **jira** → `site`, `cloudId`, `projectKey`, `fields`; **linear** → `teamKey`, optional `workspace`; **github** → `repo` (`owner/name`, optional if same as origin); **azure** → `org`, `project`. `stacks` is the detected stack id(s) — skills load `instructions/stacks/<id>.md` as their baseline. `prHost` is where PRs live — **detect it from the `origin` remote** (`github.com` → `github`, `bitbucket.org` → `bitbucket`, `gitlab.com` → `gitlab`; otherwise ask); `create-pr`/`pr-review`/`fix-pr` use it. For `bitbucket`/`gitlab`, remind the user that PR actions need a token/CLI authenticated (e.g. `BITBUCKET_TOKEN`, or `glab auth login`). `reviewState` is filled the first time `issue-update` transitions an item, then reused. `test.coverageCommands` is optional — `coverage-check` fills it in when it detects the repo's coverage command.
+
+**Quality gates — mostly auto-detected, one preference optionally asked.** The full optional shape:
+
+```json
+"gates": {
+  "coverage": { "mode": "auto", "min": 95 },
+  "e2e":      { "mode": "auto" }
+}
+```
+
+- `mode`: **`auto`** (default — detect each run whether the project has the setup and enforce only then) · `required` (hard-fail even if absent) · `off` (skip). **Never detect-and-store `mode`** — a project's test setup changes over time, so it's resolved at runtime (see `instructions/testing-standards.md`).
+- `coverage.min`: the coverage bar for touched files (**default 95**). This is a *stable team preference*, not a moving property — so **ask it once here** and persist it: **only if you detected a test/coverage setup**, ask "Minimum coverage to hold touched files to? [95]" and store the answer under `gates.coverage.min`. If the repo has no tests, don't ask (nothing to gate). Do **not** ask `mode` — leave it auto. Teams can hand-edit `mode` to `required`/`off` later.
 
 **If the repo has no `CLAUDE.md`:** say so, proceed using the stack profile(s) + detected commands as the baseline, and suggest the user run `/init` (or let the kit propose a minimal `CLAUDE.md`) so future runs are grounded in the repo's own conventions. Never silently assume conventions the repo hasn't stated.
 

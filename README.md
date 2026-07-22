@@ -11,7 +11,7 @@ Give the `coding-agent` a user story ID from your tracker and it orchestrates th
    ├─ figma-fetch         → design context (if the ticket links Figma)
    ├─ PLAN + user approval (mandatory gate)
    ├─ implement           → follows the consuming repo's conventions & subagents
-   ├─ coverage-check      → every touched file ≥ 95% (line/branch/function)
+   ├─ coverage-check      → touched files meet the project's bar (default ≥ 95%)
    ├─ e2e-generate        → e2e tests (repo's framework) incl. edge cases
    ├─ security-reviewer   → authorization / secrets / input / exposure pass (gate)
    ├─ pr-review → pr-fixer → self-review, then fix the blocking findings
@@ -158,7 +158,7 @@ Notes:
 | `issue-fetch` | skill | Ticket + acceptance criteria + comments (Jira/Linear/GitHub/Azure) |
 | `issue-update` | skill | Comment PR + evidence on the ticket, transition to review |
 | `figma-fetch` | skill | Frame hierarchy + text content from a Figma URL |
-| `coverage-check` | skill | Runs the repo's coverage command, enforces the 95% gate |
+| `coverage-check` | skill | Runs the repo's coverage command, enforces the project's coverage bar (default 95%) when it has one |
 | `e2e-generate` | skill | Playbook for creating/updating e2e tests |
 | `create-pr` | skill | Branch, commit, and PR — only after all gates pass |
 | `pr-review` | skill | Review playbook: findings by dimension, verdict, AC check |
@@ -167,14 +167,21 @@ Notes:
 | `/work-story` | command | Entry point: `/work-story PROJ-1234` |
 | `/launch-story` | command | Creates a story worktree and opens a new VS Code window on it |
 
-## Quality gates (non-negotiable)
+## Quality gates
+
+**Always apply** (regardless of stack or test setup):
 
 - No code before the plan is approved (unless `--auto-approve` for pipelines).
-- Unit tests for touched files pass; coverage on touched files ≥ 95%.
-- User-facing changes get e2e coverage (edge cases included) and the suites pass.
 - Security pass (`security-reviewer`) with no blocking findings.
-- Lint clean; no suppressions to dodge a gate.
 - PR body carries the verification evidence; the ticket gets the PR link and moves to review.
+
+**Adaptive — enforce the project's *own* standard, detected each run** (the kit never imposes tests or scaffolds a framework on a project that doesn't use one):
+
+- If the project has tests/coverage: touched files meet its bar (default ≥ 95%) and don't regress; suites pass; lint clean.
+- User-facing changes get e2e **when the project already does e2e**.
+- No test/e2e/lint setup → the kit **recommends** it and says so in the PR — it doesn't block. Teams wanting a hard bar set a `gates` policy (`auto` (default) · `required` · `off`) in `.claude/dev-kit.json`.
+
+Either way, a skipped gate is **reported, never hidden**.
 
 ## Relationship to project repos
 

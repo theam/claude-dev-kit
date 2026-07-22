@@ -49,8 +49,8 @@ Report a table, worst offenders first:
 | src/payments/payment-list.component.<ext> | 88.4% | 71.0% | 90.0% | FAIL |
 ```
 
-- **FAIL** if any touched file is below 95% on any metric. List the uncovered lines/branches and propose the specific missing test cases.
-- Do not mark work as complete, commit, or open a PR while the gate fails.
+- **The bar is the project's own** (adaptive — see `instructions/testing-standards.md`). Use the project's configured threshold or `gates.coverage.min` in `.claude/dev-kit.json`; **default ≥ 95%** when none is set. Also **FAIL on a regression** (a touched file dropping below its pre-change coverage) even if it's above the bar.
+- **N/A, not FAIL, when the project has no test/coverage setup.** If there is no test suite or coverage tooling, report `NOT APPLICABLE — no coverage setup` with a recommendation to add tests (and offer to set it up) — do **not** invent a failure or a number. Only enforce a hard gate when `gates.coverage` is `required`.
+- **FAIL** (when the gate applies) if any touched file is below the bar or regresses; list the uncovered lines/branches and propose the specific missing test cases, and don't mark work complete / open a PR while it fails.
 - If tests themselves fail, report the failures verbatim — never report coverage from a failing run as authoritative.
-- If the project is not scaffolded or the command cannot run, say so explicitly instead of inventing results.
 - If a metric is genuinely unavailable for a stack (e.g. a runner reports no branch coverage), state that plainly rather than reporting a fabricated number.
