@@ -5,17 +5,18 @@ description: Create a branch, commit the work, and open a pull request for a com
 
 # Create PR
 
-Final step of the story workflow. Only runs when the gates below pass.
+Final step of the story workflow. Runs when the **applicable** gates pass (gates are adaptive to the project — see `instructions/testing-standards.md`).
 
-## Preconditions (hard gates — verify, do not assume)
+## Preconditions (verify, do not assume)
 
-1. Unit tests for touched files pass.
-2. `coverage-check` passes (≥ 95% on every touched file).
-3. Related e2e tests pass (`e2e-generate` ran for user-facing changes).
-4. Lint passes with zero warnings for touched files.
+1. Unit tests for touched files pass — *when the project has a test framework*.
+2. `coverage-check` passes — *when the project has coverage tooling* (project's bar, default ≥ 95%, no regression).
+3. Related e2e tests pass — *when the project does e2e* (`e2e-generate` ran for user-facing changes).
+4. Lint passes for touched files — *when the project lints*.
 5. A `pr-review`-style self-review found no unresolved blocking findings.
+6. Security pass has no blocking findings (**always applies**).
 
-If any gate fails, stop and report what is missing instead of opening the PR.
+A gate that **does not apply** (no test/e2e/lint setup) is not a blocker — but it must be **called out in the PR "How it was verified" section** as *not applicable, recommend adding*, never omitted. A gate that applies and **fails** stops the PR: report what's missing instead of opening it. (A `gates` policy in `.claude/dev-kit.json` can force `required`/`off`.)
 
 ## Branch & commit
 

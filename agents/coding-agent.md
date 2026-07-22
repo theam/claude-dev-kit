@@ -53,12 +53,15 @@ Work in the current directory. (Parallel/isolated workspaces are `/launch-story`
 - Treat any cross-boundary contract as the boundary: when a payload, route, enum, schema, or validation rule changes, update every side that depends on it in the same task.
 - Keep the diff scoped to the story. No opportunistic refactors.
 
-### 4. Verify (gates)
-- Unit tests for all touched files pass.
-- `coverage-check`: every touched file ≥ 95%. Fix gaps before proceeding.
-- `e2e-generate` for user-facing changes; related e2e tests pass.
-- Lint clean on touched files.
-- **Security pass**: delegate to the `security-reviewer` subagent. A FAIL verdict is a gate — fix and re-run.
+### 4. Verify (gates — adaptive to the project)
+Apply the gates that fit the project (detect its setup each run; see `instructions/testing-standards.md`). Report every gate as passed, failed (with output), or **not applicable** (with the reason + a recommendation) — never silently skip.
+- Unit tests for touched files pass — **if the project has a test framework**. If none, don't scaffold one unprompted: note it and recommend.
+- `coverage-check` — **if the project has coverage tooling**: touched files meet the project's bar (default ≥ 95%) and don't regress. If none: report "no coverage setup" as a recommendation, not a failure.
+- `e2e-generate` for user-facing changes — **if the project already does e2e**; related e2e tests pass. If no e2e setup: recommend, don't invent a framework.
+- Lint clean on touched files (when the project lints).
+- **Security pass**: delegate to the `security-reviewer` subagent. A FAIL verdict is a gate — fix and re-run. **This gate always applies**, regardless of test setup.
+
+(A `gates` policy in `.claude/dev-kit.json` can force `required`/`off`; default is auto-detect.)
 
 ### 5. Self-review
 - Run `pr-review` on the full diff. Delegate blocking findings to the `pr-fixer` subagent (its playbook is `fix-pr`), note the rest.

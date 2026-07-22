@@ -19,7 +19,7 @@ Produce a high-signal review: findings a reviewer would act on, classified and o
 2. **Correctness**: behavioral regressions, broken edge cases, wrong logic. Read the code, don't skim the diff.
 3. **Contract drift**: routes, payloads, enums, schemas, validation, status codes — every side that depends on the contract updated together.
 4. **Security**: apply the checklist in `instructions/secure-coding.md` (auth on new endpoints, secrets, input validation, data exposure). Any automatic-blocker present is a blocking finding.
-5. **Tests**: every behavioral change has a test that would fail without it; user-facing changes have e2e coverage with edge cases; touched files stay ≥ 95% (run `coverage-check` if evidence is missing). Test-quality violations from `instructions/testing-standards.md` (assertion-free tests, suppressions, deleted/renamed tests) are findings.
+5. **Tests** (adaptive — judge against the project's own setup, see `instructions/testing-standards.md`): when the project has tests, every behavioral change has one that would fail without it and touched files stay at the project's bar (default ≥ 95%, no regression — run `coverage-check` if evidence is missing); when it does e2e, user-facing changes have e2e coverage with edge cases. A project with **no** test/e2e setup is not a blocking finding — flag it as a recommendation. Test-quality violations from `instructions/testing-standards.md` (assertion-free tests, suppressions, deleted/renamed tests) are findings.
 6. **Maintainability**: only issues that materially affect future changes — no style nitpicks a formatter or linter should catch.
 
 ## Output format

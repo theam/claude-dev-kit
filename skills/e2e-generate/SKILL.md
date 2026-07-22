@@ -5,7 +5,9 @@ description: Create or update end-to-end tests for a user-facing flow that chang
 
 # E2E Test Generation
 
-For every user story that changes user-facing behavior, an existing e2e test must be updated or a new one created **before the story can be considered done**. This skill is framework-agnostic — it uses whatever e2e stack the consuming repo already has, and never introduces a new one.
+When a user story changes user-facing behavior **and the project already does e2e**, an existing e2e test must be updated or a new one created before the story is done. This skill is framework-agnostic — it uses whatever e2e stack the consuming repo already has, and **never introduces a new one unprompted**.
+
+**Adaptive gate** (see `instructions/testing-standards.md`): if the repo has **no e2e setup**, this is a *recommendation*, not a blocker — report "no e2e setup; recommend adding one" (and offer to, if the user wants), and do not scaffold a framework. Only treat missing e2e as a hard failure when `gates.e2e` is `required` in `.claude/dev-kit.json`.
 
 ## Process
 
