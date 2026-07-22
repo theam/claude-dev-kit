@@ -29,7 +29,9 @@ Interactive setup — tracker, Figma, telemetry consent, org — then it install
 
 ## Stack-agnostic by design
 
-The kit carries **no assumptions about language, framework, or test runner**. It reads everything stack-specific — build/test/lint/coverage commands, architecture conventions, and any implementer subagents — from the **consuming repo's `CLAUDE.md` and `.claude/`**, and detects conventions from the project when they aren't declared. Use it with .NET, Node, Python, Go, Rust, Java, or anything else.
+The kit carries **no assumptions about language, framework, or test runner**. It reads everything stack-specific — build/test/lint/coverage commands, architecture conventions, and any implementer subagents — from the **consuming repo's `CLAUDE.md` and `.claude/`**, and detects conventions from the project when they aren't declared.
+
+It ships **baseline "iteration zero" profiles** for common stacks in [`instructions/stacks/`](instructions/stacks/) — **node, python, dotnet, java, go, ruby, php, rust** — giving each one usable coverage/e2e/lint commands out of the box. Your `CLAUDE.md` always overrides them, and adding a stack is one markdown file (see [CONTRIBUTING](CONTRIBUTING.md#adding-or-improving-a-stack-profile)). These profiles are early and community-refined — treat an unlisted or unverified stack as "should work, help us confirm" rather than guaranteed.
 
 It integrates with your tools through **adapters**, not hardcoded dependencies:
 

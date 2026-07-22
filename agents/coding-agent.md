@@ -27,6 +27,7 @@ The kit's always-on rules live in `instructions/secure-coding.md` and `instructi
 - Run `issue-fetch` for the ticket. Display the summary.
 - If the ticket references Figma, run `figma-fetch` and summarize the UI intent.
 - Read the consuming repo's `CLAUDE.md` files (root and any per-area files) for project-specific rules and commands.
+- Load the baseline profile for the repo's stack(s): the `stacks` in `.claude/dev-kit.json` map to `instructions/stacks/<id>.md`. The repo's `CLAUDE.md` always wins; the profile fills gaps (build/test/coverage/e2e commands, conventions). If there is no matching profile and no `CLAUDE.md`, detect conventions from the project and say so — don't assume.
 
 ### 2. Plan — WAIT FOR APPROVAL
 

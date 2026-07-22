@@ -17,7 +17,8 @@ In order of preference:
 
 1. **Declared in config** — read `.claude/dev-kit.json` (`test.coverageCommands`) and the consuming repo's `CLAUDE.md`. If a command is declared, use it verbatim.
 2. **Declared by the repo's tooling** — a `test:coverage` script in `package.json`, a `Makefile`/`Taskfile` target, a `coverage` task in the build file.
-3. **Detected from the stack** — infer from the project files present, e.g.:
+3. **From the stack profile** — if `.claude/dev-kit.json` has `stacks` (or you detect one), read `instructions/stacks/<id>.md` for the stack's coverage command, report path, and format, plus any prerequisite (e.g. PHP needs Xdebug/PCOV; without it, report that rather than 0%).
+4. **Detected from the stack** — infer from the project files present, e.g.:
 
    | Stack signal | Typical coverage command | Report produced |
    |---|---|---|

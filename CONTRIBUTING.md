@@ -21,6 +21,7 @@ Check the troubleshooting table in the [README](README.md#troubleshooting) first
 | `skills/` | Skill playbooks — one folder per skill, each with a `SKILL.md` |
 | `commands/` | Slash commands (`/work-story`, `/launch-story`) |
 | `instructions/` | Always-on, language-agnostic rules (secure coding, testing standards) |
+| `instructions/stacks/` | Per-stack baseline profiles (commands, coverage format, e2e, conventions) |
 | `hooks/` + `scripts/` | Opt-in telemetry hook and its script (see [TELEMETRY.md](TELEMETRY.md)) |
 | `.claude-plugin/` | Plugin + marketplace manifests |
 | `.mcp.json` | Declared MCP servers (trackers, design tools) |
@@ -40,6 +41,14 @@ Check the troubleshooting table in the [README](README.md#troubleshooting) first
 2. Add a detection branch and a config shape to `skills/dev-kit-setup/SKILL.md`.
 3. If it uses an HTTP MCP, declare it in `.mcp.json`. If it uses a CLI (like `gh`), note the auth step instead.
 4. Update the reference-shape table in `issue-fetch` and the `README.md`.
+
+## Adding or improving a stack profile
+
+The kit ships baseline "iteration zero" profiles for common stacks in [`instructions/stacks/`](instructions/stacks/) (node, python, dotnet, java, go, ruby, php, rust). **The most useful contribution is a corrected or new profile from someone who works in that stack daily.**
+
+1. Add or edit `instructions/stacks/<id>.md` following the format in [`instructions/stacks/README.md`](instructions/stacks/README.md): detection signals, commands (incl. test-with-coverage → report path + format), e2e framework, conventions and prerequisites.
+2. Add the detection signal to the table in `skills/dev-kit-setup/SKILL.md` if the stack is new.
+3. That's it — skills pick the profile up automatically via `stacks` in `.claude/dev-kit.json`. No code to touch (the skills are prompts).
 
 ## Testing your changes locally
 
