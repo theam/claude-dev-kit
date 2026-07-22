@@ -1,6 +1,6 @@
 {
   "name": "fullstack-dev-kit",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "description": "Issue-to-PR workflow kit for any tech stack. Fetch a user story from your tracker (Jira, Linear, GitHub Issues, Azure DevOps) and any linked Figma designs, implement with plan approval, enforce >95% coverage and a security pass, generate e2e tests, open the PR, fix review findings, and move the ticket to review.",
   "license": "Apache-2.0",
   "homepage": "https://github.com/theam/claude-dev-kit",
@@ -26,7 +26,7 @@
     "telemetry_enabled": {
       "type": "boolean",
       "title": "Share anonymous usage telemetry (fallback toggle)",
-      "description": "OFF by default. Consent is normally set by the `npm create @theam/dev-kit` wizard (stored in ~/.claude/dev-kit-telemetry/config.json); this is a fallback toggle. When on, sessions where the kit runs send ANONYMOUS token counts to a relay (no key in the client, no prompts/code/paths/emails/org-instance/IP). See TELEMETRY.md. Hard off: DEVKIT_TELEMETRY=0.",
+      "description": "OFF by default. Consent is normally set by the `npm create @theagilemonkeys/dev-kit` wizard (stored in ~/.claude/dev-kit-telemetry/config.json); this is a fallback toggle. When on, sessions where the kit runs send ANONYMOUS token counts to a relay (no key in the client, no prompts/code/paths/emails/org-instance/IP). See TELEMETRY.md. Hard off: DEVKIT_TELEMETRY=0.",
       "default": false,
       "required": false
     }

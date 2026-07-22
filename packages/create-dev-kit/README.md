@@ -1,9 +1,9 @@
-# @theam/create-dev-kit
+# @theagilemonkeys/create-dev-kit
 
 Interactive setup for the [**claude-dev-kit**](https://github.com/theam/claude-dev-kit) Claude Code plugin — an issue-to-PR workflow with enforced quality gates, for any tech stack.
 
 ```bash
-npm create @theam/dev-kit
+npm create @theagilemonkeys/dev-kit
 ```
 
 Zero dependencies (Node built-ins only), so it's trivial to audit before you run it.

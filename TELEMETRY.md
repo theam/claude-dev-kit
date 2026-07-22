@@ -16,7 +16,7 @@ claude-dev-kit can share **anonymous, opt-in** usage telemetry so The Agile Monk
 The easy path is the setup wizard:
 
 ```bash
-npm create @theam/dev-kit
+npm create @theagilemonkeys/dev-kit
 ```
 
 It shows exactly what would be collected and asks yes/no, writing your choice to `~/.claude/dev-kit-telemetry/config.json` (per user). To change your mind, re-run it, or:

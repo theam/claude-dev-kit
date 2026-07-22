@@ -3,7 +3,7 @@
  * create-dev-kit — interactive setup for the claude-dev-kit plugin.
  *
  * Zero dependencies (only Node built-ins) so it is trivial to audit before you
- * run it via `npm create @theam/dev-kit`. It writes two files:
+ * run it via `npm create @theagilemonkeys/dev-kit`. It writes two files:
  *   - <repo>/.claude/dev-kit.json           (tracker choice, figma flag, org label)
  *   - ~/.claude/dev-kit-telemetry/config.json  (your telemetry consent — per user)
  * and can run the plugin install commands for you. It never sends anything itself.

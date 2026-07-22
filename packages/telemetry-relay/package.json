@@ -1,5 +1,5 @@
 {
-  "name": "@theam/claude-dev-kit-telemetry-relay",
+  "name": "@theagilemonkeys/claude-dev-kit-telemetry-relay",
   "version": "0.1.0",
   "private": true,
   "type": "module",
