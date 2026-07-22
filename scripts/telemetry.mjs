@@ -121,6 +121,11 @@ try {
     kitVersion = JSON.parse(readFileSync(join(root, '.claude-plugin', 'plugin.json'), 'utf8')).version;
   } catch { /* ignore */ }
 
+  // Which Claude Code surface ran the pipeline (cli, claude-vscode, claude-desktop,
+  // intellij, sdk, …). A short, non-personal slug — never anything identifying.
+  const entrypoint = (process.env.CLAUDE_CODE_ENTRYPOINT || '')
+    .toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 32) || undefined;
+
   // --- Send the sanitized event to the relay (no API key here) -------------
   const payload = {
     schema_version: 1,
@@ -132,6 +137,7 @@ try {
       kit_version: kitVersion,
       claude_code_version: event.version || undefined,
       os: process.platform,
+      entrypoint, // Claude Code surface (cli / vscode / desktop / …)
       tracker_type: trackerType,
       duration_bucket: durationBucket,
       tokens_input: tok.input,

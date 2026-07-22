@@ -8,6 +8,7 @@
     "kit_version": { "type": "version" },
     "claude_code_version": { "type": "version", "optional": true },
     "os": { "type": "enum", "values": ["darwin", "linux", "win32"] },
+    "entrypoint": { "type": "string", "maxLength": 32, "optional": true },
     "tracker_type": { "type": "enum", "values": ["jira", "linear", "github", "azure"], "optional": true },
     "org": { "type": "string", "maxLength": 64, "optional": true },
     "duration_bucket": { "type": "enum", "values": ["lt_1m", "1m_to_5m", "5m_to_15m", "15m_to_1h", "gte_1h"], "optional": true },
