@@ -48,6 +48,9 @@ Identify the tech stack from the project's files so the kit can load the right b
 | Signal | Stack id |
 |---|---|
 | `package.json` | `node` |
+| `angular.json` | `angular` |
+| `react` / `react-dom` in `package.json` | `react` |
+| `vue` in `package.json` | `vue` |
 | `pyproject.toml` / `requirements*.txt` | `python` |
 | `*.csproj` / `*.sln` | `dotnet` |
 | `pom.xml` / `build.gradle` | `java` |
@@ -56,7 +59,7 @@ Identify the tech stack from the project's files so the kit can load the right b
 | `composer.json` | `php` |
 | `Cargo.toml` | `rust` |
 
-A monorepo may match several — record all of them. If nothing matches a shipped profile, record the closest label anyway and tell the user there is no stack profile yet (the kit still works from the repo's `CLAUDE.md` and generic rules — and contributing `instructions/stacks/<id>.md` is one small PR).
+A JS/TS frontend matches **both** `node` and its framework — prefer the **more specific** one (`angular`/`react`/`vue`); those profiles reference `node` for the shared toolchain. A monorepo may match several — record all of them (e.g. `["dotnet", "angular"]`). If nothing matches a shipped profile, record the closest label anyway and tell the user there is no stack profile yet (the kit still works from the repo's `CLAUDE.md` and generic rules — and contributing `instructions/stacks/<id>.md` is one small PR).
 
 ## 4. Persist
 

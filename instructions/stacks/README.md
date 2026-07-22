@@ -53,5 +53,5 @@ Xdebug/PCOV for coverage), and keep it to what the kit actually needs: how to ru
 tests, get coverage, run e2e, and the conventions a reviewer would expect. See the
 main [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
-Current profiles: `dotnet`, `go`, `java`, `node`, `php`, `python`, `ruby`, `rust`.
+Current profiles: `angular`, `dotnet`, `go`, `java`, `node`, `php`, `python`, `react`, `ruby`, `rust`, `vue`. (Frontend frameworks `angular`/`react`/`vue` build on `node` and add framework-specific test/coverage/e2e detail.)
 Everything here is iteration zero — corrections from people who work in the stack daily are the most valuable contribution.
