@@ -5,8 +5,9 @@
   "license": "Apache-2.0",
   "type": "module",
   "bin": { "create-dev-kit": "index.mjs" },
-  "files": ["index.mjs"],
+  "files": ["index.mjs", "README.md"],
   "engines": { "node": ">=18" },
+  "publishConfig": { "access": "public" },
   "homepage": "https://github.com/theam/claude-dev-kit",
   "repository": { "type": "git", "url": "https://github.com/theam/claude-dev-kit.git", "directory": "packages/create-dev-kit" },
   "keywords": ["claude", "claude-code", "dev-kit", "scaffold", "setup"]
