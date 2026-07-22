@@ -49,6 +49,7 @@ One POST at `SessionEnd`, only for sessions where the kit ran, matching the cont
     "kit_version": "0.6.0",
     "claude_code_version": "2.1.x",
     "os": "darwin",
+    "entrypoint": "claude-vscode",
     "tracker_type": "jira",
     "duration_bucket": "5m_to_15m",
     "tokens_input": 48210,
@@ -61,6 +62,7 @@ One POST at `SessionEnd`, only for sessions where the kit ran, matching the cont
 ```
 
 - `install_id` — random UUID stored at `~/.claude/dev-kit-telemetry/config.json`. Not derived from your machine, user, or repo. Delete the file to reset.
+- `entrypoint` — which Claude Code surface ran the pipeline (`cli`, `claude-vscode`, `claude-desktop`, `intellij`, `sdk`, …), from `CLAUDE_CODE_ENTRYPOINT`. A short non-personal slug.
 - `tracker_type` — the *category* (jira / linear / github / azure), never the site, project, or instance.
 - `duration_bucket` — a coarse range, never a raw timestamp.
 - `tokens_*` — sums parsed from the session transcript's `usage` fields.
