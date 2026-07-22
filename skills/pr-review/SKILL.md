@@ -9,7 +9,7 @@ Produce a high-signal review: findings a reviewer would act on, classified and o
 
 ## Scope the diff
 
-- Reviewing an existing PR: `gh pr diff <pr>` + `gh pr view <pr>` for description and context.
+- Reviewing an existing PR: fetch the diff and description from the configured host (`prHost` in `.claude/dev-kit.json`). **github:** `gh pr diff <pr>` + `gh pr view <pr>`. **bitbucket:** `GET /2.0/repositories/{ws}/{repo}/pullrequests/{id}/diff` and `/pullrequests/{id}` (REST, token from env). **gitlab:** `glab mr diff <id>` + `glab mr view <id>`.
 - Reviewing the working tree (self-review before PR): `git diff` against the base branch, including staged changes.
 - Read the linked ticket's acceptance criteria — a diff can be flawless and still not do what the story asked.
 

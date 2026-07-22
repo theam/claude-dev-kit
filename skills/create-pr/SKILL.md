@@ -25,7 +25,14 @@ If any gate fails, stop and report what is missing instead of opening the PR.
 
 ## Pull request
 
-Open with `gh pr create` (or the repo's tooling). The body must include:
+Open the PR on the configured host (`prHost` in `.claude/dev-kit.json`; default `github`). Branch/commit/push are the same everywhere (plain git); only the "open the PR" call differs:
+
+- **github** — `gh pr create` (`gh` authenticated).
+- **bitbucket** — push the branch, then create the PR via the REST API: `POST https://api.bitbucket.org/2.0/repositories/{workspace}/{repo_slug}/pullrequests` with `{title, source:{branch:{name}}, destination:{branch:{name}}}`, authenticated with a Bitbucket app password / access token from the environment (e.g. `BITBUCKET_TOKEN`). The `acli` CLI works too if the team uses it. Derive `{workspace}/{repo_slug}` from the `origin` remote.
+- **gitlab** — `glab mr create` (`glab` authenticated).
+- **other/none** — print the branch and the ready-to-paste PR title/body and let the user open it.
+
+The body must include (adapt field names to the host — GitHub/GitLab render Markdown; Bitbucket PR descriptions accept Markdown too):
 
 ```
 ![AI-generated](https://img.shields.io/badge/%F0%9F%A4%96_AI--generated-Claude_Code_%C2%B7_fullstack--dev--kit-8A2BE2)
@@ -61,7 +68,7 @@ Use the repo's PR template instead if one exists (`.github/PULL_REQUEST_TEMPLATE
 
 **AI traceability metadata**, best effort after creation:
 
-- Add the label `ai-generated` to the PR (`gh pr edit <url> --add-label ai-generated`). If the label does not exist and you have permission, create it once (`gh label create ai-generated --color 8A2BE2 --description "Opened by an AI agent"`); if no permission, skip silently — the badge and footer already carry the signal.
+- Add an `ai-generated` label/tag to the PR when the host supports it — GitHub: `gh pr edit <url> --add-label ai-generated` (create it once with `gh label create ai-generated --color 8A2BE2` if missing); Bitbucket/GitLab: skip or use the host's equivalent. If not possible, skip silently — the badge and footer already carry the signal.
 
 ## After creation
 
