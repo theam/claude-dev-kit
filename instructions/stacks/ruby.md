@@ -11,16 +11,20 @@ Baseline for Ruby / Rails projects. The repo's `CLAUDE.md` and `Gemfile` win ove
 - Install: `bundle install`.
 - Lint: `bundle exec rubocop`.
 - Unit tests: `bundle exec rspec` or `bin/rails test`.
-- Tests with coverage: run the suite with **SimpleCov** enabled (add `require 'simplecov'; SimpleCov.start` at the top of `spec/spec_helper.rb` or `test/test_helper.rb` if missing).
+- Tests with coverage: run the suite with **SimpleCov** enabled (add `require 'simplecov'; SimpleCov.start 'rails'` at the very top of `spec/spec_helper.rb` / `test/test_helper.rb` if missing).
 
 ## Coverage
-- Report: `coverage/.resultset.json` and `coverage/coverage.json` (SimpleCov). Parse per-file line coverage from there.
-- For a machine-friendly format, add `simplecov-lcov` → `coverage/lcov.info`. SimpleCov is line-based (no native branch coverage unless `enable_coverage :branch` is set).
+- SimpleCov default output: `coverage/.resultset.json` + an HTML report (line-based).
+- For a machine-parseable file, add a formatter gem: **`simplecov-cobertura`** → `coverage/coverage.xml` (Cobertura, recommended) or `simplecov-json` → `coverage/coverage.json`. (`simplecov-lcov` exists but the lcov format is being retired by some tools — prefer Cobertura/JSON.)
+- Branch coverage: `SimpleCov.start { enable_coverage :branch }`. Without it, report line coverage and say so.
 
 ## E2E
-- Rails system tests (Capybara + Selenium/`cuprite`), or Playwright/Cypress for a decoupled frontend.
+- Rails system tests (Capybara + Selenium or `cuprite`), or Playwright/Cypress for a decoupled frontend.
 
 ## Conventions & gotchas
-- RSpec: `describe`/`context`/`it` with behaviour-focused names; use factories (FactoryBot), not fixtures with shared mutable state.
-- Enable SimpleCov before the app loads or coverage under-reports.
-- Rails: use `ActiveRecord` transactions / `database_cleaner` for isolation.
+- **SimpleCov must start before the app loads** or coverage under-reports.
+- RSpec: `describe`/`context`/`it` with behaviour-focused names; FactoryBot over shared fixtures.
+- Rails: transactions / `database_cleaner` for isolation.
+
+## Docs
+SimpleCov: <https://github.com/simplecov-ruby/simplecov>

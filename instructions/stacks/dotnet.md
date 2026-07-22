@@ -5,23 +5,26 @@
 Baseline for .NET projects. The repo's `CLAUDE.md`, `*.sln`, and `*.csproj` settings win over this.
 
 ## Detect
-`*.sln` or `*.csproj`. Test projects usually reference `xunit`, `nunit`, or `MSTest` plus `coverlet`.
+`*.sln` or `*.csproj`. Test projects reference `xunit`, `nunit`, or `MSTest` plus `coverlet` (`coverlet.collector` / `coverlet.msbuild`).
 
 ## Commands
 - Restore/build: `dotnet restore` && `dotnet build`.
-- Lint/format: `dotnet format --verify-no-changes` (plus any analyzers configured).
+- Format: `dotnet format --verify-no-changes` (+ any analyzers).
 - Unit tests: `dotnet test`.
 - Tests with coverage: `dotnet test --collect:"XPlat Code Coverage" --results-directory ./TestResults`
-  - Or coverlet MSBuild: `dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura`.
+  - MSBuild alt: `dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura`
 
 ## Coverage
-- Report: `TestResults/**/coverage.cobertura.xml` (Cobertura). Parse per-file line/branch metrics from it.
-- If the repo defines coverlet settings or a coverage command in `CLAUDE.md`/`.csproj`, prefer those.
+- Report: `TestResults/**/coverage.cobertura.xml` (**Cobertura**) — parse per-file line/branch.
+- Prefer the repo's coverlet settings / `runsettings` if defined in `CLAUDE.md` or the `.csproj`.
+- Multiple test projects: aggregate the Cobertura files across the touched files.
 
 ## E2E
-- Playwright for .NET or Selenium.WebDriver (commonly a separate test project). Reuse existing page models and driver setup.
+- Playwright for .NET or Selenium.WebDriver (usually a separate test project). Reuse existing page models and driver setup.
 
 ## Conventions & gotchas
-- Test naming: `Method_Scenario_ExpectedResult`; one behaviour per test.
+- Test naming `Method_Scenario_ExpectedResult`; one behaviour per test.
 - Responses return DTOs, not entities; validate at the request boundary.
-- Multiple test projects: aggregate the Cobertura files for per-file coverage across the touched files.
+
+## Docs
+Coverlet: <https://github.com/coverlet-coverage/coverlet> · `dotnet test`: <https://learn.microsoft.com/dotnet/core/tools/dotnet-test>
