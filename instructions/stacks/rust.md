@@ -1,5 +1,7 @@
 # Rust — stack profile
 
+> **Iteration zero.** A starting baseline, not yet verified end to end. If you work in this stack, please improve it — corrections and additions are very welcome via PR (see [README](./README.md)).
+
 Baseline for Rust projects. The repo's `CLAUDE.md` and `Cargo.toml` win over this.
 
 ## Detect

@@ -1,5 +1,7 @@
 # Node / JavaScript / TypeScript — stack profile
 
+> **Iteration zero.** A starting baseline, not yet verified end to end. If you work in this stack, please improve it — corrections and additions are very welcome via PR (see [README](./README.md)).
+
 Baseline for Node projects. The repo's `CLAUDE.md` and `package.json` scripts win over this.
 
 ## Detect

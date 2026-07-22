@@ -1,5 +1,7 @@
 # .NET / C# — stack profile
 
+> **Iteration zero.** A starting baseline, not yet verified end to end. If you work in this stack, please improve it — corrections and additions are very welcome via PR (see [README](./README.md)).
+
 Baseline for .NET projects. The repo's `CLAUDE.md`, `*.sln`, and `*.csproj` settings win over this.
 
 ## Detect
