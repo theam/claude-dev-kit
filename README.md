@@ -144,6 +144,16 @@ Notes:
 - `work-story` presents its implementation plan **in the chat** and waits for your explicit approval before writing any code.
 - Reviews report in the conversation; nothing is approved or commented on the tracker/GitHub without your confirmation.
 
+## Try it without a ticket
+
+You don't need a tracker (or a ticket) to use the kit — the ticket integration is a convenience for auto-reading acceptance criteria and updating status, not a requirement. The fastest ways to try it in ~30 seconds, no tracker/MCP setup:
+
+- **Review your current work:** `/fullstack-dev-kit:pr-review` on your working diff (or `pr-review #42` on a PR).
+- **Drive the orchestrator from a description:** in plain language, e.g. *"use the coding-agent to add a `--dry-run` flag to the export command"* — it plans (you approve), implements, runs the applicable gates, and opens the PR, skipping the fetch/update-ticket steps.
+- **Use a single skill:** `coverage-check`, `e2e-generate`, or the `security-reviewer` agent on the change you have in progress.
+
+Full **`/work-story <TICKET>`** flow is ticket-first (it fetches the story and moves it to review); everything else works ticketless. Teams with no tracker can set `tracker: none` in `dev-kit-setup`.
+
 ## What's inside
 
 | Component | Type | Purpose |
