@@ -61,7 +61,21 @@ Restart your Claude session and exercise the changed component — for workflow 
 
 ## Releases (maintainers)
 
-Users only receive changes when `version` in `.claude-plugin/plugin.json` is bumped — merging without a bump updates nobody. Release = merge → bump version → push to `main`. See the README's "Releasing" section.
+Users only receive changes when `version` in `.claude-plugin/plugin.json` is **bumped** — merging without a bump updates nobody. There is no loud "update available" notification in Claude Code: with **auto-update** enabled the new version arrives silently at session start, otherwise users run `claude plugin marketplace update claude-dev-kit`. So we drive awareness via **GitHub Releases + CHANGELOG**.
+
+Release checklist:
+
+1. Bump `version` in `.claude-plugin/plugin.json` (SemVer: patch = fix, minor = feature, major = breaking).
+2. Move the `CHANGELOG.md` `[Unreleased]` items under a new `## [X.Y.Z] - <date>` heading.
+3. Merge to `main` (PR).
+4. Tag + publish a GitHub Release (this is what notifies watchers and shows on the repo):
+   ```bash
+   gh release create vX.Y.Z --title "vX.Y.Z" --notes "<summary — mirror the CHANGELOG entry>"
+   ```
+5. For the npm package, if it changed: `cd packages/create-dev-kit && npm version <bump> && npm publish` (see [its notes](packages/create-dev-kit/README.md); the plugin and the wizard version independently).
+6. For internal teams, drop a note in your channel.
+
+Encourage users to enable auto-update (`/plugin` → Marketplaces → `claude-dev-kit`) so a bump + release reaches them automatically.
 
 ## License
 
