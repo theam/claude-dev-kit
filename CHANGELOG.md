@@ -8,6 +8,10 @@ a release is only "live" for users once that is bumped and published.
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-07-27
+### Changed
+- Telemetry delivery is now robust to sessions that never close cleanly (crash or a session left open forever). Added an **outbox**: a `Stop` hook writes a cheap per-session marker (no transcript parse, no network) and `SessionStart` flushes stale markers from prior sessions; `SessionEnd` still sends immediately. Still one anonymous event per session, opt-in only; state in `~/.claude/dev-kit-telemetry/pending.json`, self-cleaning. No relay changes.
+
 ## [0.12.3] - 2026-07-27
 ### Changed
 - Point `default_relay_url` at the live telemetry relay (`https://claude-dev-kit-telemetry-relay.vercel.app`). With this, opted-in clients actually reach the relay → PostHog. Verified end to end (relay returns `202 accepted`, contract enforced, IP discarded in PostHog).

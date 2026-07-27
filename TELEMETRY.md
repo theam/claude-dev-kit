@@ -35,9 +35,13 @@ Clients **never talk to PostHog directly and ship no PostHog key.** They send th
 
 This mirrors the relay pattern used by [theam/limina](https://github.com/theam/limina).
 
+## Delivery (robust to sessions that never close)
+
+One event per session. Normally it's sent at `SessionEnd`. To also cover sessions that never close cleanly (a crash, or a session left open indefinitely), the client keeps a tiny **outbox**: a `Stop` hook records a lightweight per-session marker (session id + transcript path + timestamp — no token parsing, no network), and the next `SessionStart` flushes markers of *prior* sessions that went stale (unrefreshed for 30 min). A still-open parallel session keeps refreshing its marker, so it's never sent early. State lives in `~/.claude/dev-kit-telemetry/pending.json`, is created **only if you opted in**, and self-cleans once an event is sent.
+
 ## Exactly what is sent
 
-One POST at `SessionEnd`, only for sessions where the kit ran, matching the contract:
+One POST (to the relay), only for sessions where the kit ran, matching the contract:
 
 ```json
 {
