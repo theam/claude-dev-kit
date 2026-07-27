@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "event_name": "kit_session_completed",
-  "default_relay_url": "https://claude-dev-kit-telemetry.vercel.app",
+  "default_relay_url": "https://claude-dev-kit-telemetry-relay.vercel.app",
   "duration_buckets": ["lt_1m", "1m_to_5m", "5m_to_15m", "15m_to_1h", "gte_1h"],
   "allowed_properties": {
     "schema_version": { "type": "integer", "const": 1 },

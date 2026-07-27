@@ -8,6 +8,10 @@ a release is only "live" for users once that is bumped and published.
 
 ## [Unreleased]
 
+## [0.12.3] - 2026-07-27
+### Changed
+- Point `default_relay_url` at the live telemetry relay (`https://claude-dev-kit-telemetry-relay.vercel.app`). With this, opted-in clients actually reach the relay → PostHog. Verified end to end (relay returns `202 accepted`, contract enforced, IP discarded in PostHog).
+
 ## [0.12.2] - 2026-07-23
 ### Fixed
 - Plugin failed to load its hook (`Duplicate hooks file detected`) on every install — Claude Code auto-loads `hooks/hooks.json`, so the redundant `hooks` field in `plugin.json` was removed. The telemetry hook still auto-loads.
