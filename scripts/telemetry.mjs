@@ -1,119 +1,86 @@
 #!/usr/bin/env node
 /*
- * Anonymous, opt-in usage telemetry for claude-dev-kit.
+ * Anonymous, opt-in usage telemetry for claude-dev-kit → relay → PostHog.
  *
- * Ships OFF. Sends ONLY when ALL hold:
- *   1. The user granted consent (via the `create-dev-kit` wizard, stored in
- *      ~/.claude/dev-kit-telemetry/config.json), and
- *   2. A kit command/agent actually ran in the session (honest attribution).
+ * Ships OFF. Runs only when the user granted consent (via the create-dev-kit
+ * wizard → ~/.claude/dev-kit-telemetry/config.json). No consent → this script
+ * does nothing and writes nothing.
  *
- * The client NEVER talks to PostHog directly and ships NO API key. It sends a
- * sanitized event to the relay, which re-enforces the contract
- * (telemetry/contract.v1.json), strips the IP, and forwards to PostHog.
+ * It sends token COUNTS + coarse metadata only — never prompts, code, paths,
+ * repo names, ticket content, emails, org-instance data, or the caller IP
+ * (stripped at the relay). One anonymous event per session.
  *
- * It sends token COUNTS + coarse metadata only. It NEVER reads or sends prompts,
- * code, paths, repo names, ticket content, emails, or org-instance data. It fails
- * silent and never blocks or slows the session.
+ * Delivery is robust to sessions that never close cleanly (outbox pattern):
+ *   - Stop        → cheaply upsert a per-session marker (no transcript parse).
+ *   - SessionEnd  → compute + send this session's event, drop its marker.
+ *   - SessionStart→ flush markers of PRIOR sessions that went stale (ended
+ *                   without a SessionEnd — crash, or a never-closed session).
+ * A still-open parallel session keeps refreshing its marker, so it is never
+ * flushed early. Everything lives in ~/.claude/dev-kit-telemetry/ and self-cleans.
  *
  * Opt out any time: DEVKIT_TELEMETRY=0, or set consent to "denied" in the config.
- * See TELEMETRY.md for the full schema.
+ * See TELEMETRY.md.
  */
-import { readFileSync, existsSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, existsSync, writeFileSync, mkdirSync, renameSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 
 const done = () => process.exit(0); // fail-silent, always
 
+const STATE_DIR = join(homedir(), '.claude', 'dev-kit-telemetry');
+const CONFIG = join(STATE_DIR, 'config.json');
+const PENDING = join(STATE_DIR, 'pending.json');
+const STALE_MS = 30 * 60 * 1000;             // marker not refreshed in 30 min → its session ended without SessionEnd
+const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;  // hard cap: never keep a marker longer than this
+
+const KIT_MARKERS = [
+  'fullstack-dev-kit', 'work-story', 'launch-story', 'coding-agent',
+  'coverage-check', 'coverage-guardian', 'issue-fetch', 'issue-update',
+  'e2e-generate', 'e2e-author', 'pr-review', 'pr-reviewer', 'pr-fixer',
+  'fix-pr', 'create-pr', 'security-reviewer', 'figma-fetch', 'dev-kit-setup',
+];
+
+const readJson = (p, def) => { try { return JSON.parse(readFileSync(p, 'utf8')); } catch { return def; } };
+function writeJsonAtomic(p, obj) {
+  try {
+    mkdirSync(dirname(p), { recursive: true });
+    const tmp = `${p}.tmp`;
+    writeFileSync(tmp, JSON.stringify(obj, null, 2));
+    renameSync(tmp, p);
+  } catch { /* ignore */ }
+}
+
 try {
   if (process.env.DEVKIT_TELEMETRY === '0') done();
 
-  // --- Consent (written by the create-dev-kit wizard) ----------------------
-  const cfgPath = join(homedir(), '.claude', 'dev-kit-telemetry', 'config.json');
-  let consentCfg = {};
-  try { consentCfg = JSON.parse(readFileSync(cfgPath, 'utf8')); } catch { /* absent */ }
-
+  const cfg = readJson(CONFIG, {});
   const envEnabled = String(
     process.env.DEVKIT_TELEMETRY_ENABLED ||
     process.env.CLAUDE_PLUGIN_OPTION_TELEMETRY_ENABLED || '').toLowerCase();
-  const granted =
-    consentCfg.consent === 'granted' ||
+  const granted = cfg.consent === 'granted' ||
     envEnabled === 'true' || envEnabled === '1' || envEnabled === 'yes';
-  if (!granted) done();
+  if (!granted) done(); // no consent → no markers, no send, nothing on disk
 
-  // --- Relay endpoint (no PostHog key lives in the client) -----------------
-  let defaultRelay = 'https://claude-dev-kit-telemetry.vercel.app';
-  try {
-    const root = process.env.CLAUDE_PLUGIN_ROOT || '.';
-    defaultRelay = JSON.parse(
-      readFileSync(join(root, 'telemetry', 'contract.v1.json'), 'utf8')
-    ).default_relay_url || defaultRelay;
-  } catch { /* use fallback */ }
-  const relay = (
-    process.env.DEVKIT_TELEMETRY_RELAY_URL || consentCfg.relay_url || defaultRelay
-  ).replace(/\/+$/, '');
-
-  // --- Stable, anonymous install id ----------------------------------------
-  let installId = consentCfg.install_id;
-  if (!installId) {
-    installId = randomUUID();
-    try { mkdirSync(dirname(cfgPath), { recursive: true }); } catch { /* ignore */ }
-    try {
-      writeFileSync(cfgPath, JSON.stringify({ ...consentCfg, consent: 'granted', install_id: installId }, null, 2));
-    } catch { /* ignore */ }
-  }
-
-  // --- Hook event payload from stdin ---------------------------------------
   const raw = readFileSync(0, 'utf8');
   const event = raw ? JSON.parse(raw) : {};
-  const transcriptPath = event.transcript_path;
-  if (!transcriptPath || !existsSync(transcriptPath)) done();
+  const evName = event.hook_event_name || '';
+  const sessionId = event.session_id;
 
-  const lines = readFileSync(transcriptPath, 'utf8').split('\n').filter(Boolean);
-
-  // --- Honesty gate: only attribute sessions where the kit actually ran ----
-  const KIT_MARKERS = [
-    'fullstack-dev-kit', 'work-story', 'launch-story', 'coding-agent',
-    'coverage-check', 'coverage-guardian', 'issue-fetch', 'issue-update',
-    'e2e-generate', 'e2e-author', 'pr-review', 'pr-reviewer', 'pr-fixer',
-    'fix-pr', 'create-pr', 'security-reviewer', 'figma-fetch', 'dev-kit-setup',
-  ];
-  if (!lines.some((l) => KIT_MARKERS.some((m) => l.includes(m)))) done();
-
-  // --- Sum token usage. Message CONTENT is never inspected. ----------------
-  const tok = { input: 0, output: 0, cacheRead: 0, cacheCreation: 0 };
-  let firstTs, lastTs;
-  for (const line of lines) {
-    let obj;
-    try { obj = JSON.parse(line); } catch { continue; }
-    const ts = Date.parse(obj?.timestamp || '');
-    if (!Number.isNaN(ts)) { firstTs = firstTs ?? ts; lastTs = ts; }
-    const u = obj?.message?.usage || obj?.usage;
-    if (!u) continue;
-    tok.input += u.input_tokens || 0;
-    tok.output += u.output_tokens || 0;
-    tok.cacheRead += u.cache_read_input_tokens || 0;
-    tok.cacheCreation += u.cache_creation_input_tokens || 0;
-  }
-  if (tok.input + tok.output === 0) done();
-
-  // --- Coarse duration bucket (never a raw timestamp) ----------------------
-  let durationBucket;
-  if (firstTs != null && lastTs != null && lastTs >= firstTs) {
-    const mins = (lastTs - firstTs) / 60000;
-    durationBucket =
-      mins < 1 ? 'lt_1m' : mins < 5 ? '1m_to_5m' : mins < 15 ? '5m_to_15m'
-      : mins < 60 ? '15m_to_1h' : 'gte_1h';
+  // Stable anonymous install id (shared across sessions).
+  let installId = cfg.install_id;
+  if (!installId) {
+    installId = randomUUID();
+    writeJsonAtomic(CONFIG, { ...cfg, consent: 'granted', install_id: installId });
   }
 
-  // --- Self-declared org label (never auto-derived) ------------------------
-  let trackerType, org;
+  // Relay endpoint (no PostHog key in the client).
+  let defaultRelay = 'https://claude-dev-kit-telemetry-relay.vercel.app';
   try {
-    const cfg = JSON.parse(readFileSync(join(process.cwd(), '.claude', 'dev-kit.json'), 'utf8'));
-    trackerType = cfg?.tracker?.type;
-    const rawOrg = cfg?.telemetry?.org;
-    if (typeof rawOrg === 'string' && rawOrg.trim()) org = rawOrg.trim().slice(0, 64);
-  } catch { /* ignore */ }
+    const root = process.env.CLAUDE_PLUGIN_ROOT || '.';
+    defaultRelay = JSON.parse(readFileSync(join(root, 'telemetry', 'contract.v1.json'), 'utf8')).default_relay_url || defaultRelay;
+  } catch { /* fallback */ }
+  const relay = (process.env.DEVKIT_TELEMETRY_RELAY_URL || cfg.relay_url || defaultRelay).replace(/\/+$/, '');
 
   let kitVersion;
   try {
@@ -121,42 +88,117 @@ try {
     kitVersion = JSON.parse(readFileSync(join(root, '.claude-plugin', 'plugin.json'), 'utf8')).version;
   } catch { /* ignore */ }
 
-  // Which Claude Code surface ran the pipeline (cli, claude-vscode, claude-desktop,
-  // intellij, sdk, …). A short, non-personal slug — never anything identifying.
   const entrypoint = (process.env.CLAUDE_CODE_ENTRYPOINT || '')
     .toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 32) || undefined;
 
-  // --- Send the sanitized event to the relay (no API key here) -------------
-  const payload = {
-    schema_version: 1,
-    event_name: 'kit_session_completed',
-    install_id: installId,
-    org, // undefined unless self-declared
-    properties: {
-      schema_version: 1,
-      kit_version: kitVersion,
-      claude_code_version: event.version || undefined,
-      os: process.platform,
-      entrypoint, // Claude Code surface (cli / vscode / desktop / …)
-      tracker_type: trackerType,
-      duration_bucket: durationBucket,
-      tokens_input: tok.input,
-      tokens_output: tok.output,
-      tokens_cache_read: tok.cacheRead,
-      tokens_cache_creation: tok.cacheCreation,
-      tokens_total: tok.input + tok.output + tok.cacheRead + tok.cacheCreation,
-    },
-  };
+  // Compute one session's event from its transcript and POST it. Content is
+  // never inspected beyond summing `usage` and checking a kit component ran.
+  async function flush(transcriptPath, cwd, ep, ccVersion) {
+    if (!transcriptPath || !existsSync(transcriptPath)) return;
+    const lines = readFileSync(transcriptPath, 'utf8').split('\n').filter(Boolean);
+    if (!lines.some((l) => KIT_MARKERS.some((m) => l.includes(m)))) return; // kit didn't run this session
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 3000);
-  await fetch(`${relay}/api/ingest`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-    signal: controller.signal,
-  }).catch(() => {});
-  clearTimeout(timer);
+    const tok = { input: 0, output: 0, cacheRead: 0, cacheCreation: 0 };
+    let firstTs, lastTs;
+    for (const line of lines) {
+      let o; try { o = JSON.parse(line); } catch { continue; }
+      const ts = Date.parse(o?.timestamp || '');
+      if (!Number.isNaN(ts)) { firstTs = firstTs ?? ts; lastTs = ts; }
+      const u = o?.message?.usage || o?.usage;
+      if (!u) continue;
+      tok.input += u.input_tokens || 0;
+      tok.output += u.output_tokens || 0;
+      tok.cacheRead += u.cache_read_input_tokens || 0;
+      tok.cacheCreation += u.cache_creation_input_tokens || 0;
+    }
+    if (tok.input + tok.output === 0) return;
+
+    let durationBucket;
+    if (firstTs != null && lastTs != null && lastTs >= firstTs) {
+      const m = (lastTs - firstTs) / 60000;
+      durationBucket = m < 1 ? 'lt_1m' : m < 5 ? '1m_to_5m' : m < 15 ? '5m_to_15m' : m < 60 ? '15m_to_1h' : 'gte_1h';
+    }
+
+    let trackerType, org;
+    try {
+      const c = JSON.parse(readFileSync(join(cwd || '.', '.claude', 'dev-kit.json'), 'utf8'));
+      trackerType = c?.tracker?.type;
+      const o = c?.telemetry?.org;
+      if (typeof o === 'string' && o.trim()) org = o.trim().slice(0, 64);
+    } catch { /* ignore */ }
+
+    const payload = {
+      schema_version: 1,
+      event_name: 'kit_session_completed',
+      install_id: installId,
+      org,
+      properties: {
+        schema_version: 1,
+        kit_version: kitVersion,
+        claude_code_version: ccVersion || undefined,
+        os: process.platform,
+        entrypoint: ep,
+        tracker_type: trackerType,
+        duration_bucket: durationBucket,
+        tokens_input: tok.input,
+        tokens_output: tok.output,
+        tokens_cache_read: tok.cacheRead,
+        tokens_cache_creation: tok.cacheCreation,
+        tokens_total: tok.input + tok.output + tok.cacheRead + tok.cacheCreation,
+      },
+    };
+    const ctl = new AbortController();
+    const t = setTimeout(() => ctl.abort(), 3000);
+    await fetch(`${relay}/api/ingest`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload), signal: ctl.signal,
+    }).catch(() => {});
+    clearTimeout(t);
+  }
+
+  if (evName === 'Stop') {
+    // Cheap: record/refresh this session's marker. No transcript parse, no network.
+    if (sessionId && event.transcript_path) {
+      const pend = readJson(PENDING, {});
+      pend[sessionId] = {
+        transcript_path: event.transcript_path,
+        cwd: event.cwd || process.cwd(),
+        entrypoint,
+        cc_version: event.version,
+        updated: Date.now(),
+      };
+      writeJsonAtomic(PENDING, pend);
+    }
+    done();
+  }
+
+  if (evName === 'SessionEnd') {
+    await flush(event.transcript_path, event.cwd || process.cwd(), entrypoint, event.version);
+    const pend = readJson(PENDING, {});
+    if (sessionId && pend[sessionId]) { delete pend[sessionId]; writeJsonAtomic(PENDING, pend); }
+    done();
+  }
+
+  if (evName === 'SessionStart') {
+    // Flush prior sessions that never closed cleanly (stale markers).
+    const pend = readJson(PENDING, {});
+    const now = Date.now();
+    let changed = false;
+    for (const [sid, m] of Object.entries(pend)) {
+      if (sid === sessionId) continue;                       // not the session just starting
+      const age = now - (m?.updated || 0);
+      if (age > MAX_AGE_MS) { delete pend[sid]; changed = true; continue; }
+      if (age > STALE_MS) {                                  // abandoned session → send its event
+        await flush(m.transcript_path, m.cwd, m.entrypoint, m.cc_version);
+        delete pend[sid]; changed = true;
+      }
+    }
+    if (changed) writeJsonAtomic(PENDING, pend);
+    done();
+  }
+
+  // Fallback (unknown/absent event name): behave like SessionEnd — best-effort single send.
+  await flush(event.transcript_path, event.cwd || process.cwd(), entrypoint, event.version);
 } catch {
   /* fail-silent: telemetry must never disrupt a session */
 }
