@@ -21,10 +21,10 @@
  * Opt out any time: DEVKIT_TELEMETRY=0, or set consent to "denied" in the config.
  * See TELEMETRY.md.
  */
-import { readFileSync, existsSync, writeFileSync, mkdirSync, renameSync } from 'node:fs';
+import { readFileSync, existsSync, writeFileSync, mkdirSync, renameSync, rmSync, readdirSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, dirname } from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 
 const done = () => process.exit(0); // fail-silent, always
 
@@ -73,6 +73,26 @@ try {
     installId = randomUUID();
     writeJsonAtomic(CONFIG, { ...cfg, consent: 'granted', install_id: installId });
   }
+
+  // Deterministic per-session dedup id: the SAME value on every code path (Stop /
+  // SessionEnd / SessionStart flush / fallback), so re-sends of one session share
+  // a uuid and PostHog collapses them. Derived locally from install+session — the
+  // real session id never leaves the machine. No session id → random (nothing to
+  // dedup against).
+  const sessionDedup = (sid) => {
+    if (!sid) return randomUUID();
+    const h = createHash('sha256').update(`${installId}|${sid}`).digest('hex');
+    return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`;
+  };
+
+  // At-most-once claim: exclusively create a sentinel for this dedup id. Only the
+  // first caller wins (O_EXCL), so concurrent hook runs — e.g. Desktop restoring
+  // several sessions at once on reopen — never double-send the same marker. This
+  // is a local guarantee, independent of PostHog's own dedup.
+  const claim = (dedup) => {
+    try { writeFileSync(join(STATE_DIR, `sent-${dedup}`), '', { flag: 'wx' }); return true; }
+    catch { return false; }
+  };
 
   // Relay endpoint (no PostHog key in the client).
   let defaultRelay = 'https://claude-dev-kit-telemetry-relay.vercel.app';
@@ -170,7 +190,7 @@ try {
         cwd: event.cwd || process.cwd(),
         entrypoint,
         cc_version: event.version,
-        dedup: pend[sessionId]?.dedup || randomUUID(), // stable per session → one event even across re-sends
+        dedup: pend[sessionId]?.dedup || sessionDedup(sessionId), // stable per session → one event even across re-sends
         updated: Date.now(),
       };
       writeJsonAtomic(PENDING, pend);
@@ -180,8 +200,10 @@ try {
 
   if (evName === 'SessionEnd') {
     const pend = readJson(PENDING, {});
-    const dedup = pend[sessionId]?.dedup || randomUUID();
-    await flush(event.transcript_path, event.cwd || process.cwd(), entrypoint, event.version, dedup);
+    const dedup = pend[sessionId]?.dedup || sessionDedup(sessionId);
+    if (claim(dedup)) {
+      await flush(event.transcript_path, event.cwd || process.cwd(), entrypoint, event.version, dedup);
+    }
     if (sessionId && pend[sessionId]) { delete pend[sessionId]; writeJsonAtomic(PENDING, pend); }
     done();
   }
@@ -196,16 +218,33 @@ try {
       const age = now - (m?.updated || 0);
       if (age > MAX_AGE_MS) { delete pend[sid]; changed = true; continue; }
       if (age > STALE_MS) {                                  // abandoned session → send its event
-        await flush(m.transcript_path, m.cwd, m.entrypoint, m.cc_version, m.dedup || randomUUID());
+        const dedup = m.dedup || sessionDedup(sid);
+        if (claim(dedup)) {
+          await flush(m.transcript_path, m.cwd, m.entrypoint, m.cc_version, dedup);
+        }
         delete pend[sid]; changed = true;
       }
     }
     if (changed) writeJsonAtomic(PENDING, pend);
+    // GC at-most-once sentinels so they never accumulate past the marker hard-cap.
+    try {
+      for (const f of readdirSync(STATE_DIR)) {
+        if (!f.startsWith('sent-')) continue;
+        try {
+          if (now - statSync(join(STATE_DIR, f)).mtimeMs > MAX_AGE_MS) rmSync(join(STATE_DIR, f), { force: true });
+        } catch { /* ignore one bad entry */ }
+      }
+    } catch { /* ignore */ }
     done();
   }
 
   // Fallback (unknown/absent event name): behave like SessionEnd — best-effort single send.
-  await flush(event.transcript_path, event.cwd || process.cwd(), entrypoint, event.version, randomUUID());
+  {
+    const dedup = sessionDedup(sessionId);
+    if (claim(dedup)) {
+      await flush(event.transcript_path, event.cwd || process.cwd(), entrypoint, event.version, dedup);
+    }
+  }
 } catch {
   /* fail-silent: telemetry must never disrupt a session */
 }
