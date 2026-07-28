@@ -12,6 +12,7 @@ Produce a high-signal review: findings a reviewer would act on, classified and o
 - Reviewing an existing PR: fetch the diff and description from the configured host (`prHost` in `.claude/dev-kit.json`). **github:** `gh pr diff <pr>` + `gh pr view <pr>`. **bitbucket:** `GET /2.0/repositories/{ws}/{repo}/pullrequests/{id}/diff` and `/pullrequests/{id}` (REST, token from env). **gitlab:** `glab mr diff <id>` + `glab mr view <id>`.
 - Reviewing the working tree (self-review before PR): `git diff` against the base branch, including staged changes.
 - Read the linked ticket's acceptance criteria — a diff can be flawless and still not do what the story asked.
+- Write the **PR intent** — one line on what this PR is for and what it deliberately leaves alone. It's the ruler for scope: a real defect *inside* the intent blocks; a valid concern *outside* it is a note or a follow-up, not a reason to expand the PR.
 
 ## Review dimensions (in priority order)
 
@@ -20,7 +21,9 @@ Produce a high-signal review: findings a reviewer would act on, classified and o
 3. **Contract drift**: routes, payloads, enums, schemas, validation, status codes — every side that depends on the contract updated together.
 4. **Security**: apply the checklist in `instructions/secure-coding.md` (auth on new endpoints, secrets, input validation, data exposure). Any automatic-blocker present is a blocking finding.
 5. **Tests** (adaptive — judge against the project's own setup, see `instructions/testing-standards.md`): when the project has tests, every behavioral change has one that would fail without it and touched files stay at the project's bar (default ≥ 95%, no regression — run `coverage-check` if evidence is missing); when it does e2e, user-facing changes have e2e coverage with edge cases. A project with **no** test/e2e setup is not a blocking finding — flag it as a recommendation. Test-quality violations from `instructions/testing-standards.md` (assertion-free tests, suppressions, deleted/renamed tests) are findings.
-6. **Maintainability**: only issues that materially affect future changes — no style nitpicks a formatter or linter should catch.
+6. **Performance regressions introduced here** (blocking): algorithmic blowups over collections that grow with usage; N+1 queries or per-item network calls on a request path; unbounded result sets / memory / missing pagination; blocking work on a hot path; a new query filtering/joining on an unindexed column. *Not* this: micro-optimizations or "could be faster" with no mechanism.
+7. **Duplication introduced by this PR** (blocking): new code reimplementing logic already in the repo, or copy-paste between the files this PR adds — fix by reusing/extracting once. *Not* this: two blocks that merely look alike and are about to diverge; pre-existing duplication is a follow-up at most.
+8. **Maintainability**: only issues that materially affect future changes — no style nitpicks a formatter or linter should catch.
 
 ## Output format
 

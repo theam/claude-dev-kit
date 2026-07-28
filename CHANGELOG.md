@@ -8,6 +8,17 @@ a release is only "live" for users once that is bumped and published.
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-07-28
+### Added
+- **PR review loop** improvements (adapted from `theam/monkey-skills` · `tam-pr-review-loop`):
+  - **PR intent statement** as the scope ruler in `pr-review` and `fix-pr` — a defect inside the intent blocks; a valid concern outside it is a follow-up, not PR expansion.
+  - `fix-pr` now builds a **ledger** (one row per distinct claim, deduped across CI / reviewers / bots / self-review) with one verdict each: **FIX_NOW / DEFER_TO_ISSUE / DISCARD**.
+  - **DEFER_TO_ISSUE** files a tracked issue via the configured tracker adapter instead of losing out-of-scope findings.
+  - **Late-feedback watcher** (`scripts/watch-pr-feedback.sh`): after a push, `fix-pr` waits out slow bot/CI reviews on a backoff schedule and loops back to triage on anything new (GitHub; single re-check on other hosts).
+  - Consent-first: answer every reviewer with the decision and resolve the thread (shown before posting).
+### Changed
+- `pr-review` gains explicit **performance-regression** and **duplication-introduced-here** dimensions; `testing-standards` adds the "the suite must be able to catch a revert of this change" standard.
+
 ## [0.14.0] - 2026-07-28
 ### Changed
 - Outbox stale threshold 30 min → **10 min**, so sessions that never fire `SessionEnd` (e.g. Claude Desktop "new chat" doesn't) are flushed sooner on the next session start.
