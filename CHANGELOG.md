@@ -8,6 +8,13 @@ a release is only "live" for users once that is bumped and published.
 
 ## [Unreleased]
 
+## [0.16.1] - 2026-07-28
+### Fixed
+- **Telemetry duplicate events**: a session could be reported twice (seen when Claude Desktop fires `SessionStart` more than once on reopen). Two causes, both closed:
+  - The outbox flush deleted a marker only *after* the network send, so concurrent hook runs could both flush the same marker. Sends are now guarded by an **at-most-once claim** (an exclusive `sent-<id>` sentinel in `~/.claude/dev-kit-telemetry/`, GC'd past the marker hard-cap) — only the first caller sends.
+  - The per-session dedup id fell back to a fresh random value independently on each code path, so re-sends of one session could carry *different* ids and never dedup. It is now **derived deterministically** from `install_id + session_id` (hashed locally — the real session id never leaves the machine), so every path produces the same id and PostHog collapses re-sends.
+- Client-only change; no relay redeploy needed.
+
 ## [0.16.0] - 2026-07-28
 ### Added
 - `pr-review`: an **optional, proportional adversarial check** for high-stakes diffs only (auth, money, personal data, migrations, concurrency, hard-to-roll-back) — a targeted skeptical second look, never a mandatory re-review of routine changes.
