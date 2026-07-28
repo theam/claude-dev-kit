@@ -7,7 +7,7 @@ Please **do not** open a public issue for security problems.
 Report privately, either:
 
 - **GitHub → Security → "Report a vulnerability"** (private vulnerability reporting), or
-- email **security@theagilemonkeys.com**
+- email **ataman@theagilemonkeys.com**
 
 Include: what you found, how to reproduce it, affected version(s), and the impact you expect. We aim to acknowledge within a few business days and will keep you updated on the fix and disclosure timeline.
 
