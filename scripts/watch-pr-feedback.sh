@@ -9,7 +9,7 @@
 # GitHub only (uses `gh`). For Bitbucket/GitLab, fix-pr falls back to a single
 # post-push check via that host's API instead of this watcher.
 #
-# Adapted from theam/monkey-skills (tam-pr-review-loop). Apache-2.0.
+# Adapted from an internal The Agile Monkeys review tool. Apache-2.0.
 #
 # Usage:   watch-pr-feedback.sh <pr-number>
 #
