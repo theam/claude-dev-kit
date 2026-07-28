@@ -1,18 +1,17 @@
 # Code owners — reviewers auto-requested on matching changes.
-# Replace @theam/maintainers with your real GitHub team or usernames
-# (e.g. @alice @bob). Until it's a valid team/user, GitHub ignores it.
+# Currently @atamanvega only; add more maintainers / a team here as they join.
 
 # Default owner for everything
-*                       @theam/maintainers
+*                       @atamanvega
 
 # The published npm package — supply-chain sensitive, always review.
-/packages/              @theam/maintainers
+/packages/              @atamanvega
 
 # Telemetry: client, contract, and relay — privacy sensitive.
-/scripts/telemetry.mjs  @theam/maintainers
-/telemetry/             @theam/maintainers
-/hooks/                 @theam/maintainers
+/scripts/telemetry.mjs  @atamanvega
+/telemetry/             @atamanvega
+/hooks/                 @atamanvega
 
 # Plugin manifest + always-on rules.
-/.claude-plugin/        @theam/maintainers
-/instructions/          @theam/maintainers
+/.claude-plugin/        @atamanvega
+/instructions/          @atamanvega
