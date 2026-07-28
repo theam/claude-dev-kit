@@ -8,6 +8,17 @@ a release is only "live" for users once that is bumped and published.
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-07-28
+### Changed
+- Outbox stale threshold 30 min → **10 min**, so sessions that never fire `SessionEnd` (e.g. Claude Desktop "new chat" doesn't) are flushed sooner on the next session start.
+### Added
+- **Per-session dedup**: the client sends a stable random `event_uuid` per session (not the real session id); the relay forwards it as the PostHog event `uuid` so re-sends of one session count once.
+- **Org attribution falls back to the user level**: `org` is read from the repo's `.claude/dev-kit.json` first, then from `~/.claude/dev-kit-telemetry/config.json`. The wizard now stores `org` there too — so attribution works in worktrees and repos without a committed `telemetry.org`.
+### Fixed
+- Relay sets `$geoip_disable` on forwarded events. PostHog was geolocating the **relay's** IP (not the user's — the user's IP never reaches PostHog), which was noise; now suppressed.
+
+*(Relay redeploys with this release — `packages/telemetry-relay` changed. Client changes reach users via the plugin version bump.)*
+
 ## [0.13.0] - 2026-07-27
 ### Changed
 - Telemetry delivery is now robust to sessions that never close cleanly (crash or a session left open forever). Added an **outbox**: a `Stop` hook writes a cheap per-session marker (no transcript parse, no network) and `SessionStart` flushes stale markers from prior sessions; `SessionEnd` still sends immediately. Still one anonymous event per session, opt-in only; state in `~/.claude/dev-kit-telemetry/pending.json`, self-cleaning. No relay changes.

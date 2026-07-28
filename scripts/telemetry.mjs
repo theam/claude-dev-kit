@@ -31,7 +31,7 @@ const done = () => process.exit(0); // fail-silent, always
 const STATE_DIR = join(homedir(), '.claude', 'dev-kit-telemetry');
 const CONFIG = join(STATE_DIR, 'config.json');
 const PENDING = join(STATE_DIR, 'pending.json');
-const STALE_MS = 30 * 60 * 1000;             // marker not refreshed in 30 min → its session ended without SessionEnd
+const STALE_MS = 10 * 60 * 1000;             // marker unrefreshed for 10 min → session is done → safe to flush on next start
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;  // hard cap: never keep a marker longer than this
 
 const KIT_MARKERS = [
@@ -93,7 +93,7 @@ try {
 
   // Compute one session's event from its transcript and POST it. Content is
   // never inspected beyond summing `usage` and checking a kit component ran.
-  async function flush(transcriptPath, cwd, ep, ccVersion) {
+  async function flush(transcriptPath, cwd, ep, ccVersion, dedup) {
     if (!transcriptPath || !existsSync(transcriptPath)) return;
     const lines = readFileSync(transcriptPath, 'utf8').split('\n').filter(Boolean);
     if (!lines.some((l) => KIT_MARKERS.some((m) => l.includes(m)))) return; // kit didn't run this session
@@ -126,12 +126,17 @@ try {
       const o = c?.telemetry?.org;
       if (typeof o === 'string' && o.trim()) org = o.trim().slice(0, 64);
     } catch { /* ignore */ }
+    // Fallback to the user-level org (set once in the wizard). Robust to worktrees
+    // and repos whose committed dev-kit.json lacks a telemetry.org block.
+    if (!org && typeof cfg.org === 'string' && cfg.org.trim()) org = cfg.org.trim().slice(0, 64);
 
     const payload = {
       schema_version: 1,
       event_name: 'kit_session_completed',
       install_id: installId,
       org,
+      event_uuid: dedup, // per-session id (random, NOT the real session id) so the relay/PostHog can dedup re-sends
+
       properties: {
         schema_version: 1,
         kit_version: kitVersion,
@@ -165,6 +170,7 @@ try {
         cwd: event.cwd || process.cwd(),
         entrypoint,
         cc_version: event.version,
+        dedup: pend[sessionId]?.dedup || randomUUID(), // stable per session → one event even across re-sends
         updated: Date.now(),
       };
       writeJsonAtomic(PENDING, pend);
@@ -173,8 +179,9 @@ try {
   }
 
   if (evName === 'SessionEnd') {
-    await flush(event.transcript_path, event.cwd || process.cwd(), entrypoint, event.version);
     const pend = readJson(PENDING, {});
+    const dedup = pend[sessionId]?.dedup || randomUUID();
+    await flush(event.transcript_path, event.cwd || process.cwd(), entrypoint, event.version, dedup);
     if (sessionId && pend[sessionId]) { delete pend[sessionId]; writeJsonAtomic(PENDING, pend); }
     done();
   }
@@ -189,7 +196,7 @@ try {
       const age = now - (m?.updated || 0);
       if (age > MAX_AGE_MS) { delete pend[sid]; changed = true; continue; }
       if (age > STALE_MS) {                                  // abandoned session → send its event
-        await flush(m.transcript_path, m.cwd, m.entrypoint, m.cc_version);
+        await flush(m.transcript_path, m.cwd, m.entrypoint, m.cc_version, m.dedup || randomUUID());
         delete pend[sid]; changed = true;
       }
     }
@@ -198,7 +205,7 @@ try {
   }
 
   // Fallback (unknown/absent event name): behave like SessionEnd — best-effort single send.
-  await flush(event.transcript_path, event.cwd || process.cwd(), entrypoint, event.version);
+  await flush(event.transcript_path, event.cwd || process.cwd(), entrypoint, event.version, randomUUID());
 } catch {
   /* fail-silent: telemetry must never disrupt a session */
 }

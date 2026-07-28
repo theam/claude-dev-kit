@@ -119,6 +119,9 @@ async function main() {
     schema_version: 1,
     consent: consent ? 'granted' : 'denied',
     install_id: installId,
+    // Also store org at the user level so attribution works in every repo/worktree,
+    // not only where a committed .claude/dev-kit.json carries telemetry.org.
+    ...(org.trim() ? { org: org.trim().slice(0, 64) } : {}),
   });
 
   // --- Report + offer to install ------------------------------------------

@@ -73,8 +73,14 @@ export default async function handler(req, res) {
 
   const properties = sanitize(body.properties);
   properties.$process_person_profile = false; // anonymous: no PostHog person profile
+  properties.$geoip_disable = true;           // don't derive geolocation (the IP PostHog sees is this relay's, not the user's)
   const org = typeof body.org === 'string' && body.org.trim() ? body.org.trim().slice(0, 64) : undefined;
   if (org) properties.org = org;
+
+  // Per-session dedup id from the client (random, not the real session id) → PostHog
+  // deduplicates events sharing this uuid, so re-sends of one session count once.
+  const eventUuid = typeof body.event_uuid === 'string' && /^[0-9a-fA-F-]{8,64}$/.test(body.event_uuid)
+    ? body.event_uuid : undefined;
 
   const phEvent = {
     api_key: POSTHOG_API_KEY,
@@ -82,6 +88,7 @@ export default async function handler(req, res) {
     distinct_id: installId,
     // NOTE: the caller IP is never read, forwarded, or stored by this relay.
     properties,
+    ...(eventUuid ? { uuid: eventUuid } : {}),
     ...(org ? { $groups: { company: org } } : {}),
   };
 

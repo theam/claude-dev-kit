@@ -85,6 +85,8 @@ By default events carry only a random `install_id`. An organisation that wants i
 
 When present it is sent as `org` (and a PostHog `company` group). Off unless you add it.
 
+You can also set it **once at the user level** — the setup wizard stores your `org` in `~/.claude/dev-kit-telemetry/config.json`, which is used as a fallback when a repo (or a git worktree) has no `telemetry.org`. The repo value always wins if both are set.
+
 Why this is GDPR-safe done this way:
 
 - **It identifies a company, not a person.** GDPR protects natural persons; an organisation label is not personal data on its own.
