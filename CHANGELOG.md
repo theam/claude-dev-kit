@@ -10,7 +10,7 @@ a release is only "live" for users once that is bumped and published.
 
 ## [0.15.0] - 2026-07-28
 ### Added
-- **PR review loop** improvements (adapted from `theam/monkey-skills` · `tam-pr-review-loop`):
+- **PR review loop** improvements (adapted from an internal The Agile Monkeys review tool):
   - **PR intent statement** as the scope ruler in `pr-review` and `fix-pr` — a defect inside the intent blocks; a valid concern outside it is a follow-up, not PR expansion.
   - `fix-pr` now builds a **ledger** (one row per distinct claim, deduped across CI / reviewers / bots / self-review) with one verdict each: **FIX_NOW / DEFER_TO_ISSUE / DISCARD**.
   - **DEFER_TO_ISSUE** files a tracked issue via the configured tracker adapter instead of losing out-of-scope findings.
