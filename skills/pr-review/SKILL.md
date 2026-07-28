@@ -25,6 +25,10 @@ Produce a high-signal review: findings a reviewer would act on, classified and o
 7. **Duplication introduced by this PR** (blocking): new code reimplementing logic already in the repo, or copy-paste between the files this PR adds — fix by reusing/extracting once. *Not* this: two blocks that merely look alike and are about to diverge; pre-existing duplication is a follow-up at most.
 8. **Maintainability**: only issues that materially affect future changes — no style nitpicks a formatter or linter should catch.
 
+## Adversarial check (proportional — do not double every review)
+
+For **high-stakes diffs only** (auth/authorization, money, personal data, migrations, concurrency, anything hard to roll back), before the verdict take one targeted skeptical pass: pick the 1–2 conclusions most likely to be wrong and the 1–2 "looks fine" spots most likely to hide a defect, and actively try to break them (an edge input, a failure/timeout path, a race, a partial write). Routine or low-risk diffs get the normal single pass — this is a focused second look where being wrong is expensive, not a mandatory re-review.
+
 ## Output format
 
 ```

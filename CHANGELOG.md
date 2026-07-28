@@ -8,6 +8,13 @@ a release is only "live" for users once that is bumped and published.
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-07-28
+### Added
+- `pr-review`: an **optional, proportional adversarial check** for high-stakes diffs only (auth, money, personal data, migrations, concurrency, hard-to-roll-back) — a targeted skeptical second look, never a mandatory re-review of routine changes.
+- `create-pr`: an **optional "Delivery readiness"** section (rollback, migrations, config/secrets, docs, breaking change) — included only when it applies, skipped for trivial changes.
+
+Folded in as lightweight facets of existing skills — no new agents, no extra passes by default — to keep token cost down.
+
 ## [0.15.0] - 2026-07-28
 ### Added
 - **PR review loop** improvements (adapted from an internal The Agile Monkeys review tool):

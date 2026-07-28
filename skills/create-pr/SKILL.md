@@ -49,13 +49,21 @@ decisions taken, plain language — same content as the tracker comment>
 
 ### How it was verified
 - Unit tests: <command + result>
-- Coverage on touched files: <summary, all ≥ 95%>
+- Coverage on touched files: <summary — meets the project's bar>
 - E2E: <suites run + result>
 - Security pass: <verdict>
 - Lint: clean
 
 ### Notes for reviewers
 - <risks, follow-ups, technical decisions>
+
+### Delivery readiness
+<Include only the lines that apply — skip this whole section for trivial/internal changes; don't pad.>
+- Rollback: safe to revert this PR on its own? Flag anything that isn't.
+- Migrations: reversible and safe on a live DB (no long locks; backfill plan)?
+- Config/secrets: new keys have safe defaults; nothing required-but-undocumented.
+- Docs/contract: user-facing or API changes reflected in the docs.
+- Breaking change / behind a feature flag: called out explicitly.
 
 Issue: <link to the tracker item>
 
