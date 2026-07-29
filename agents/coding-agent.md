@@ -52,6 +52,7 @@ Work in the current directory. (Parallel/isolated workspaces are `/launch-story`
 - Delegate to the consuming repo's implementer subagents when they exist (discover them via `/agents` or `.claude/agents/`); otherwise implement directly following the repo's conventions.
 - Treat any cross-boundary contract as the boundary: when a payload, route, enum, schema, or validation rule changes, update every side that depends on it in the same task.
 - Keep the diff scoped to the story. No opportunistic refactors.
+- For user-facing frontend work, write accessible markup as you go (semantic HTML, labels for controls, `alt` on images, keyboard/focus support) — cheaper than fixing it at self-review. The `pr-review` a11y dimension verifies it afterward.
 
 ### 4. Verify (gates — adaptive to the project)
 Apply the gates that fit the project (detect its setup each run; see `instructions/testing-standards.md`). Report every gate as passed, failed (with output), or **not applicable** (with the reason + a recommendation) — never silently skip.
