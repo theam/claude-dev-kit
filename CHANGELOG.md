@@ -8,6 +8,14 @@ a release is only "live" for users once that is bumped and published.
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-07-29
+### Added
+- **Accessibility review for frontend changes** — folded into `pr-review` as a **conditional dimension**, not a new agent or extra pass:
+  - Runs **only** when a diff changes user-facing UI in a frontend stack (components/templates/JSX/HTML/CSS); **skipped entirely — zero token cost — on backend/non-UI changes**.
+  - Covers the high-value basics (alt text, form labels, accessible names, keyboard/focus, contrast, correct ARIA) on the changed markup, using the repo's own a11y tooling (axe-core, `eslint-plugin-jsx-a11y`, Lighthouse) if present — **never scaffolds one**. Findings target **WCAG 2.2 AA** and cite the specific Success Criterion, so they're verifiable rather than vague (no bundled rules file — the standard is stable and the citation keeps it grounded).
+  - **Automatic and non-blocking by default; no setup required.** An optional top-level `"a11y"` key in `.claude/dev-kit.json` overrides: `auto` (default) · `required` (blocking gate) · `off`. Not asked in the setup wizard and not written by default — hand-edit it, or just ask the kit to change it (e.g. *"make accessibility a required gate"*).
+  - `coding-agent` also nudges the implement step to write accessible markup up front for user-facing frontend work, so it's covered proactively — not only caught at self-review.
+
 ## [0.16.1] - 2026-07-28
 ### Fixed
 - **Telemetry duplicate events**: a session could be reported twice (seen when Claude Desktop fires `SessionStart` more than once on reopen). Two causes, both closed:
