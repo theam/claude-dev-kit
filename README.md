@@ -190,6 +190,7 @@ Full **`/work-story <TICKET>`** flow is ticket-first (it fetches the story and m
 - If the project has tests/coverage: touched files meet its bar (default ≥ 95%) and don't regress; suites pass; lint clean.
 - User-facing changes get e2e **when the project already does e2e**.
 - No test/e2e/lint setup → the kit **recommends** it and says so in the PR — it doesn't block. Teams wanting a hard bar set a `gates` policy (`auto` (default) · `required` · `off`) in `.claude/dev-kit.json`.
+- **Accessibility (frontend only):** when a change touches user-facing UI in a frontend stack, the review automatically covers the a11y basics (alt text, labels, accessible names, keyboard/focus, contrast, correct ARIA) — using the repo's own a11y tooling if it has any, never scaffolding one. It's **automatic and non-blocking by default**, costs nothing on backend/non-UI changes, and needs no setup. To change it, set `"a11y"` in `.claude/dev-kit.json` to `auto` (default) · `required` (make it a blocking gate) · `off` (never run) — edit it by hand, or just **ask the kit to do it** (e.g. *"make accessibility a required gate"*) and it updates the file for you.
 
 Either way, a skipped gate is **reported, never hidden**.
 

@@ -105,6 +105,14 @@ Shape of `tracker` per type: **jira** → `site`, `cloudId`, `projectKey`, `fiel
 - `mode`: **`auto`** (default — detect each run whether the project has the setup and enforce only then) · `required` (hard-fail even if absent) · `off` (skip). **Never detect-and-store `mode`** — a project's test setup changes over time, so it's resolved at runtime (see `instructions/testing-standards.md`).
 - `coverage.min`: the coverage bar for touched files (**default 95**). This is a *stable team preference*, not a moving property — so **ask it once here** and persist it: **only if you detected a test/coverage setup**, ask "Minimum coverage to hold touched files to? [95]" and store the answer under `gates.coverage.min`. If the repo has no tests, don't ask (nothing to gate). Do **not** ask `mode` — leave it auto. Teams can hand-edit `mode` to `required`/`off` later.
 
+**Optional top-level `a11y` key** (accessibility review for frontend diffs — honored by `pr-review`):
+
+```json
+{ "a11y": "auto" }
+```
+
+`auto` (default, and the value when the key is **absent** — run the a11y basics only on user-facing frontend diffs) · `required` (make it a blocking gate) · `off` (never run). **Do not ask this in setup and do not write it by default** — leave it absent so the default `auto` applies. Only write it when the user explicitly asks (e.g. *"make accessibility a required gate"* / *"turn off the a11y checks"*): set the key to the requested value, preserving the rest of the file.
+
 **If the repo has no `CLAUDE.md`:** say so, proceed using the stack profile(s) + detected commands as the baseline, and suggest the user run `/init` (or let the kit propose a minimal `CLAUDE.md`) so future runs are grounded in the repo's own conventions. Never silently assume conventions the repo hasn't stated.
 
 - This file contains **no secrets** (auth lives in each developer's MCP OAuth grant or CLI login) — it is safe and intended to be committed, so one setup serves the whole team.
