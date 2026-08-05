@@ -18,8 +18,10 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC_SKILLS = join(ROOT, 'skills');
+const SRC_INSTR = join(ROOT, 'instructions');
 const PLUGIN = join(ROOT, 'plugins', 'fullstack-dev-kit');
 const DST_SKILLS = join(PLUGIN, 'skills');
+const DST_INSTR = join(PLUGIN, 'instructions');
 
 // 1. Resync skills (canonical top-level skills/ → plugin/skills/).
 rmSync(DST_SKILLS, { recursive: true, force: true });
@@ -31,6 +33,13 @@ for (const name of readdirSync(SRC_SKILLS)) {
   n++;
 }
 
+// 1b. Resync the instructions the skills reference (secure-coding, testing-standards,
+// stacks/…). Without these the bundle isn't self-contained — a native Codex install
+// can't run the kit's own security/testing/stack rules. Their relative paths
+// (`instructions/…`) resolve from the plugin root, same as from the repo root.
+rmSync(DST_INSTR, { recursive: true, force: true });
+if (existsSync(SRC_INSTR)) cpSync(SRC_INSTR, DST_INSTR, { recursive: true });
+
 // 2. Keep the Codex plugin version aligned with the kit version.
 const kitVersion = JSON.parse(readFileSync(join(ROOT, '.claude-plugin', 'plugin.json'), 'utf8')).version;
 const manifestPath = join(PLUGIN, '.codex-plugin', 'plugin.json');
@@ -40,4 +49,4 @@ if (manifest.version !== kitVersion) {
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
 }
 
-console.log(`Codex plugin built: ${n} skills synced, version ${kitVersion}.`);
+console.log(`Codex plugin built: ${n} skills + instructions/ synced, version ${kitVersion}.`);
