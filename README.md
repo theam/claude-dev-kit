@@ -196,19 +196,24 @@ Either way, a skipped gate is **reported, never hidden**.
 
 ## Also runs on Codex (experimental)
 
-The kit also targets **OpenAI Codex** (CLI + desktop app). The setup wizard detects
-Codex and, with your OK, anchors a stable checkout at `~/.dev-kit`, registers a
-**background telemetry sweep** (a launchd agent on macOS that scans
-`~/.codex/sessions` every 15 min), and copies the same `SKILL.md` playbooks into
-Codex's skills dir (`~/.codex/skills/`). Telemetry from Codex sessions lands in the
-same place, tagged `agent: codex` (surface `cli` / `vscode`), so aggregate usage can
-be split by tool.
+The kit also targets **OpenAI Codex** (CLI + desktop app) as a **native Codex plugin**.
+Codex has its own plugin system parallel to Claude Code's, so this repo doubles as a
+Codex marketplace ([`.agents/plugins/marketplace.json`](./.agents/plugins/marketplace.json)
++ [`plugins/fullstack-dev-kit/`](./plugins/fullstack-dev-kit/), whose skills are
+generated from the canonical top-level `skills/`). Install:
 
-The sweep is used instead of session hooks because on the Codex desktop app hooks
-are currently feature-flagged; where hooks are available they can be wired too and
-are deduplicated against the sweep. This integration is **new — the telemetry path is
-validated against a real Codex rollout; the in-app skill/workflow side is still being
-verified**. Details and the shared-source layout: [`codex/README.md`](./codex/README.md).
+```bash
+codex plugin marketplace add theam/claude-dev-kit
+codex plugin add fullstack-dev-kit@claude-dev-kit
+```
+
+The setup wizard does this for whichever of Claude Code / Codex it finds, registers the
+**MCP server your tracker choice implies** (Jira → Atlassian, Linear → Linear; GitHub/
+Azure use their CLIs), and schedules an anonymous **telemetry sweep** so Codex sessions
+report usage tagged `agent: codex` (surface `cli` / `vscode`). *Validated against real
+Codex 0.147: marketplace add, plugin install, and the telemetry parser/sweep. In-app
+skill invocation and MCP auth are yours to confirm.* Details:
+[`codex/README.md`](./codex/README.md).
 
 ## Relationship to project repos
 

@@ -1,14 +1,35 @@
 # Codex integration
 
-The dev kit runs on **OpenAI Codex** (CLI and the VS Code extension) as well as
-Claude Code. This directory holds the Codex-specific wiring; the *content* of the
-workflow (skills, instructions) is shared with the Claude side — see
-[Shared source](#shared-source).
+The dev kit runs on **OpenAI Codex** (CLI + desktop app) as a **native Codex plugin**.
+Codex's plugin system is parallel to Claude Code's, so this repo doubles as a Codex
+marketplace — [`.agents/plugins/marketplace.json`](../.agents/plugins/marketplace.json)
+lists [`plugins/fullstack-dev-kit/`](../plugins/fullstack-dev-kit/), whose `skills/` are
+generated from the canonical top-level `skills/` by
+[`scripts/build-codex-plugin.mjs`](../scripts/build-codex-plugin.mjs) (one source of truth).
 
-> **Status: early.** Codex hooks and skills are young and still moving. The paths
-> and schemas below follow the current docs but should be validated against your
-> installed Codex version before relying on them. Anything that can't be verified
-> here is called out.
+## Install
+
+```bash
+codex plugin marketplace add theam/claude-dev-kit
+codex plugin add fullstack-dev-kit@claude-dev-kit
+```
+
+The `create-dev-kit` wizard runs this for whichever of Claude Code / Codex it detects,
+plus registers the MCP your tracker choice needs and schedules the telemetry sweep.
+Then **restart Codex** and invoke a skill (e.g. `$pr-review`) — Codex has its own
+built-in review, so invoke the kit's explicitly.
+
+*Validated against real **codex-cli 0.147**: `marketplace add` + `plugin add` install and
+enable the plugin; the telemetry parser + sweep are confirmed on a real rollout. In-app
+skill invocation and MCP OAuth are still yours to confirm on your build.*
+
+## MCP servers (from your wizard choices)
+
+`issue-fetch` reads tickets through an MCP. The wizard registers the one matching your
+tracker (`codex mcp add … && codex mcp login …`): **Jira → Atlassian**
+(`https://mcp.atlassian.com/v1/sse`), **Linear → Linear** (`https://mcp.linear.app/mcp`).
+GitHub Issues / Azure DevOps use their CLIs (`gh` / `az`) — no MCP. Add them by hand with
+`codex mcp add <name> --url <url>` if you skip the wizard.
 
 ## What works the same as Claude Code
 

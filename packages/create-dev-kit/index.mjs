@@ -39,95 +39,87 @@ function mergeJson(path, patch) {
 }
 
 const KIT_REPO = 'https://github.com/theam/claude-dev-kit';
-const KIT_HOME = join(homedir(), '.dev-kit'); // stable, version-independent anchor for Codex
+const KIT_MARKETPLACE = 'theam/claude-dev-kit';           // Codex marketplace source (owner/repo)
+const KIT_HOME = join(homedir(), '.dev-kit');             // stable checkout for the telemetry sweep script
+const CODEX_APP_BIN = '/Applications/Codex.app/Contents/Resources/codex';
+
+// MCP servers Codex needs, keyed by the wizard's tracker choice. github/azure use
+// their CLIs (gh/az), not MCP, so they're absent here.
+const CODEX_MCP = {
+  jira:   { name: 'atlassian', url: 'https://mcp.atlassian.com/v1/sse' },
+  linear: { name: 'linear',    url: 'https://mcp.linear.app/mcp' },
+};
 
 function have(cmd, args = ['--version']) {
   try { const r = spawnSync(cmd, args, { stdio: 'ignore' }); return !r.error && (r.status === 0 || r.status === null); }
   catch { return false; }
 }
+const okStatus = (r) => !r.error && (r.status === 0 || r.status == null);
+function codexBin() {
+  if (have('codex')) return 'codex';
+  if (existsSync(CODEX_APP_BIN)) return CODEX_APP_BIN;   // Codex desktop app bundles the CLI
+  return null;
+}
 
-// Codex integration (experimental). Codex doesn't load Claude Code plugins, so we
-// anchor a stable checkout at ~/.dev-kit and point Codex's hooks + skills at it.
-async function maybeSetupCodex(consent) {
-  const codexPresent = have('codex') || existsSync(join(homedir(), '.codex'));
+// Codex integration. Codex has its own plugin system (parallel to Claude Code), so
+// we install the kit as a NATIVE Codex plugin from our marketplace, register the MCP
+// servers the wizard's choices imply, and schedule the anonymous telemetry sweep.
+async function maybeSetupCodex({ consent, tracker, figma }) {
+  const codex = codexBin();
+  const codexPresent = !!codex || existsSync(join(homedir(), '.codex'));
   if (!codexPresent) return;
-  console.log(`\n${b('6. Codex (also detected)')} ${dim('(experimental — validated on Claude, verify on your Codex version)')}`);
-  if (!await yn('   Set the kit up for Codex too (CLI + VS Code)?', true)) return;
-  if (!have('git')) { console.log(dim('   git not found — skipping Codex setup. Install git and re-run.')); return; }
+  console.log(`\n${b('6. Codex (also detected)')} ${dim('(experimental)')}`);
+  if (!await yn('   Set the kit up for Codex too?', true)) return;
+  if (!codex) { console.log(dim('   Codex CLI not found on PATH or in /Applications/Codex.app — skipping.')); return; }
 
-  // 1. Stable kit checkout (Codex hooks/skills point here; survives version bumps)
-  if (existsSync(join(KIT_HOME, '.git'))) {
-    console.log(dim(`   $ git -C ${KIT_HOME} pull --ff-only`));
-    spawnSync('git', ['-C', KIT_HOME, 'pull', '--ff-only'], { stdio: 'inherit' });
+  // 1. Native plugin: add our marketplace, then install the plugin (skills).
+  console.log(dim(`   $ codex plugin marketplace add ${KIT_MARKETPLACE}`));
+  if (okStatus(spawnSync(codex, ['plugin', 'marketplace', 'add', KIT_MARKETPLACE], { stdio: 'inherit' }))) {
+    console.log(dim('   $ codex plugin add fullstack-dev-kit@claude-dev-kit'));
+    spawnSync(codex, ['plugin', 'add', 'fullstack-dev-kit@claude-dev-kit'], { stdio: 'inherit' });
   } else {
-    console.log(dim(`   $ git clone --depth 1 ${KIT_REPO} ${KIT_HOME}`));
-    const r = spawnSync('git', ['clone', '--depth', '1', KIT_REPO, KIT_HOME], { stdio: 'inherit' });
-    if (r.error || r.status !== 0) { console.log(dim('   clone failed — skipping Codex setup.')); return; }
+    console.log(dim(`   marketplace add failed — do it yourself: codex plugin marketplace add ${KIT_MARKETPLACE}`));
   }
 
-  // 2. Telemetry hooks → ~/.codex/hooks.json (merge; never clobber existing hooks)
-  const codexHooksPath = join(homedir(), '.codex', 'hooks.json');
-  try {
-    const rendered = JSON.parse(
-      readFileSync(join(KIT_HOME, 'codex', 'hooks.json'), 'utf8').replaceAll('{{DEVKIT_ROOT}}', KIT_HOME));
-    let cur = {};
-    if (existsSync(codexHooksPath)) { try { cur = JSON.parse(readFileSync(codexHooksPath, 'utf8')); } catch { cur = {}; } }
-    cur.hooks = cur.hooks || {};
-    for (const [ev, arr] of Object.entries(rendered.hooks || {})) {
-      const kept = (cur.hooks[ev] || []).filter((h) => !JSON.stringify(h).includes('telemetry.mjs')); // drop our old entry on re-run
-      cur.hooks[ev] = [...kept, ...arr];
-    }
-    mkdirSync(dirname(codexHooksPath), { recursive: true });
-    writeFileSync(codexHooksPath, JSON.stringify(cur, null, 2) + '\n');
-    console.log(`   • ${codexHooksPath} ${dim('(telemetry hooks — need a one-time /hooks trust)')}`);
-  } catch (e) { console.log(dim('   could not write Codex hooks: ' + (e?.message || e))); }
+  // 2. MCP servers implied by your tracker/figma choices (authenticate on first use).
+  const mcp = CODEX_MCP[tracker];
+  if (mcp) {
+    console.log(dim(`   $ codex mcp add ${mcp.name} --url ${mcp.url}`));
+    spawnSync(codex, ['mcp', 'add', mcp.name, '--url', mcp.url], { stdio: 'inherit' });
+    console.log(dim(`     then authenticate:  codex mcp login ${mcp.name}`));
+  } else if (tracker === 'github' || tracker === 'azure') {
+    console.log(dim(`   (${tracker} uses its CLI — no MCP to register)`));
+  }
+  if (figma) console.log(dim('   Figma: connect the Figma MCP in Codex if you use design links (endpoint depends on your Figma setup).'));
 
-  // 3. Skills → same SKILL.md files as the Claude side. The skills dir is
-  // version-dependent: the Codex desktop app (codex-cli ~0.147) uses
-  // ~/.codex/skills/; some CLI builds use ~/.agents/skills/. Prefer whichever
-  // already exists, else default to ~/.codex/skills/.
-  try {
-    const src = join(KIT_HOME, 'skills');
-    const codexSkills = join(homedir(), '.codex', 'skills');
-    const agentsSkills = join(homedir(), '.agents', 'skills');
-    const dst = existsSync(agentsSkills) && !existsSync(codexSkills) ? agentsSkills : codexSkills;
-    mkdirSync(dst, { recursive: true });
-    let n = 0;
-    for (const name of readdirSync(src)) {
-      if (!existsSync(join(src, name, 'SKILL.md'))) continue;
-      cpSync(join(src, name), join(dst, name), { recursive: true });
-      n++;
-    }
-    console.log(`   • ${dst} ${dim(`(${n} skills)`)}`);
-  } catch (e) { console.log(dim('   could not copy skills: ' + (e?.message || e))); }
-
-  // 4. Background sweep — the reliable, hook-independent delivery. Codex builds
-  //    where session hooks are feature-flagged won't fire the hooks above, so a
-  //    launchd agent scans ~/.codex/sessions every 15 min and flushes completed
-  //    kit sessions. Anonymous + opt-in (no-ops without consent).
-  if (process.platform === 'darwin') {
-    try {
-      const label = 'com.theagilemonkeys.dev-kit.codex-sweep';
-      const plistPath = join(homedir(), 'Library', 'LaunchAgents', `${label}.plist`);
-      const rendered = readFileSync(join(KIT_HOME, 'codex', 'dev-kit-codex-sweep.plist'), 'utf8')
-        .replaceAll('{{NODE}}', process.execPath)
-        .replaceAll('{{DEVKIT_ROOT}}', KIT_HOME);
-      mkdirSync(dirname(plistPath), { recursive: true });
-      writeFileSync(plistPath, rendered);
-      const uid = process.getuid?.() ?? '';
-      spawnSync('launchctl', ['bootout', `gui/${uid}/${label}`], { stdio: 'ignore' }); // replace if already loaded
-      const r = spawnSync('launchctl', ['bootstrap', `gui/${uid}`, plistPath], { stdio: 'ignore' });
-      if (r.status !== 0) spawnSync('launchctl', ['load', '-w', plistPath], { stdio: 'ignore' }); // older macOS fallback
-      console.log(`   • ${plistPath} ${dim('(telemetry sweep every 15 min — the reliable delivery path)')}`);
-    } catch (e) { console.log(dim('   could not install the sweep agent: ' + (e?.message || e))); }
+  // 3. Telemetry sweep (anonymous, opt-in). Needs a stable script path, so keep a
+  //    lightweight checkout at ~/.dev-kit and schedule the sweep from there.
+  if (!have('git')) {
+    console.log(dim('   git not found — skipping the telemetry sweep (plugin + MCP are set up).'));
   } else {
-    console.log(dim(`   Non-macOS: schedule \`node ${join(KIT_HOME, 'scripts', 'telemetry.mjs')} --sweep\` every ~15 min (cron/systemd).`));
+    if (existsSync(join(KIT_HOME, '.git'))) spawnSync('git', ['-C', KIT_HOME, 'pull', '--ff-only'], { stdio: 'ignore' });
+    else spawnSync('git', ['clone', '--depth', '1', KIT_REPO, KIT_HOME], { stdio: 'ignore' });
+    const plistTmpl = join(KIT_HOME, 'codex', 'dev-kit-codex-sweep.plist');
+    if (process.platform === 'darwin' && existsSync(plistTmpl)) {
+      try {
+        const label = 'com.theagilemonkeys.dev-kit.codex-sweep';
+        const plistPath = join(homedir(), 'Library', 'LaunchAgents', `${label}.plist`);
+        const rendered = readFileSync(plistTmpl, 'utf8')
+          .replaceAll('{{NODE}}', process.execPath).replaceAll('{{DEVKIT_ROOT}}', KIT_HOME);
+        mkdirSync(dirname(plistPath), { recursive: true });
+        writeFileSync(plistPath, rendered);
+        const uid = process.getuid?.() ?? '';
+        spawnSync('launchctl', ['bootout', `gui/${uid}/${label}`], { stdio: 'ignore' });
+        if (!okStatus(spawnSync('launchctl', ['bootstrap', `gui/${uid}`, plistPath], { stdio: 'ignore' })))
+          spawnSync('launchctl', ['load', '-w', plistPath], { stdio: 'ignore' }); // older macOS fallback
+        console.log(`   • telemetry sweep scheduled ${dim('(launchd, every 15 min — anonymous, opt-in)')}`);
+      } catch (e) { console.log(dim('   could not schedule the sweep: ' + (e?.message || e))); }
+    } else if (process.platform !== 'darwin') {
+      console.log(dim(`   Non-macOS: schedule \`node ${join(KIT_HOME, 'scripts', 'telemetry.mjs')} --sweep\` every ~15 min.`));
+    }
   }
 
-  console.log(dim(
-    '\n   Codex telemetry is delivered by the background sweep above — no manual step.\n' +
-    '   On Codex builds where session hooks are enabled you can also `/hooks`-trust the\n' +
-    '   telemetry hook; it is optional and deduplicated against the sweep.'));
+  console.log(dim('\n   Restart Codex, then invoke a skill (e.g. $pr-review) or ask for the work directly.'));
   if (!consent) console.log(dim('   (telemetry is OFF — the sweep no-ops until you opt in)'));
 }
 
@@ -242,7 +234,7 @@ async function main() {
     console.log('    claude plugin install fullstack-dev-kit@claude-dev-kit');
   }
 
-  await maybeSetupCodex(consent);
+  await maybeSetupCodex({ consent, tracker, figma });
 
   console.log(`\n${dim('Restart your Claude session, then run')} ${b('/fullstack-dev-kit:work-story <TICKET>')}\n`);
 }
