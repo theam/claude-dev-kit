@@ -110,6 +110,20 @@ try {
     catch { return false; }
   };
 
+  // GC at-most-once sentinels so they never accumulate past the marker hard-cap.
+  // Runs from every delivery path (SessionStart flush AND the Codex sweep) so a
+  // Codex-only user — who never triggers a Claude SessionStart — still gets swept.
+  const gcSentinels = (now) => {
+    try {
+      for (const f of readdirSync(STATE_DIR)) {
+        if (!f.startsWith('sent-')) continue;
+        try {
+          if (now - statSync(join(STATE_DIR, f)).mtimeMs > MAX_AGE_MS) rmSync(join(STATE_DIR, f), { force: true });
+        } catch { /* ignore one bad entry */ }
+      }
+    } catch { /* ignore */ }
+  };
+
   // Relay endpoint (no PostHog key in the client).
   let defaultRelay = 'https://claude-dev-kit-telemetry-relay.vercel.app';
   try {
@@ -280,6 +294,7 @@ try {
       await flush(rp, cwd, ep, undefined, dedup, 'codex');
     }
     try { writeFileSync(watermarkFile, String(cutoff)); } catch { /* ignore */ }
+    gcSentinels(now);
     done();
   }
 
@@ -329,15 +344,7 @@ try {
       }
     }
     if (changed) writeJsonAtomic(PENDING, pend);
-    // GC at-most-once sentinels so they never accumulate past the marker hard-cap.
-    try {
-      for (const f of readdirSync(STATE_DIR)) {
-        if (!f.startsWith('sent-')) continue;
-        try {
-          if (now - statSync(join(STATE_DIR, f)).mtimeMs > MAX_AGE_MS) rmSync(join(STATE_DIR, f), { force: true });
-        } catch { /* ignore one bad entry */ }
-      }
-    } catch { /* ignore */ }
+    gcSentinels(now);
     done();
   }
 
