@@ -8,6 +8,7 @@
     "kit_version": { "type": "version" },
     "claude_code_version": { "type": "version", "optional": true },
     "os": { "type": "enum", "values": ["darwin", "linux", "win32"] },
+    "agent": { "type": "enum", "values": ["claude-code", "codex"], "optional": true },
     "entrypoint": { "type": "string", "maxLength": 32, "optional": true },
     "tracker_type": { "type": "enum", "values": ["jira", "linear", "github", "azure"], "optional": true },
     "org": { "type": "string", "maxLength": 64, "optional": true },

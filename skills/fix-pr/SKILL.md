@@ -47,9 +47,10 @@ For each `DEFER_TO_ISSUE`, confirm the batch with the user, then create a tracke
 Same as `create-pr`, adaptive to the project: unit tests for touched files pass; `coverage-check` holds the project's bar with no regression; related e2e pass if user-facing and the project does e2e; lint clean; no suppressions to dodge a gate.
 
 ## 9. Watch for late feedback, then loop
-Bots and CI often post minutes after a push. Right after pushing, run the bundled watcher in the background (it ships with the plugin at `"$CLAUDE_PLUGIN_ROOT"/scripts/watch-pr-feedback.sh`):
+Bots and CI often post minutes after a push. Right after pushing, run the bundled watcher in the background. It ships with the kit at `scripts/watch-pr-feedback.sh`; resolve its path from the kit install — `$CLAUDE_PLUGIN_ROOT` on Claude Code, the kit checkout path on Codex:
 ```bash
-BASELINE=<ledger github ids> "$CLAUDE_PLUGIN_ROOT"/scripts/watch-pr-feedback.sh <pr>
+BASELINE=<ledger github ids> "$CLAUDE_PLUGIN_ROOT"/scripts/watch-pr-feedback.sh <pr>   # Claude Code
+# Codex: run the same script from the kit's install path (no $CLAUDE_PLUGIN_ROOT there)
 ```
 Read its exit code: **10** = new feedback (printed) → back to step 3 with the new items; **20** = a bot signalled all-clear (👍 on the PR / approving review); **0** = ten quiet minutes; **30** = inconclusive → re-run it. Only close out on **0** or **20** from a window covering the last push. (GitHub only; for other hosts, do a single post-push re-check instead.)
 

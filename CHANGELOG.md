@@ -8,6 +8,16 @@ a release is only "live" for users once that is bumped and published.
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-07-31
+### Added
+- **Codex support (experimental).** The kit now targets OpenAI Codex (CLI + VS Code) alongside Claude Code.
+  - **Telemetry differentiation:** new `agent` property in the contract (`claude-code` · `codex`), so aggregate usage in PostHog can be split by tool. One telemetry script serves both hosts — invoked with `--agent codex` on Codex, it reads token totals from Codex's session rollout JSONL and derives the surface (`cli` / `vscode`) from the Codex originator. Consent, install id, org, dedup and the outbox are shared across both hosts (`~/.claude/dev-kit-telemetry/`), set once per user.
+  - **Codex hooks** (`codex/hooks.json`): wires `Stop` + `SessionStart` (not `SessionEnd`, which Codex caps at ~1s). Requires a one-time `/hooks` trust in Codex.
+  - **Shared-source workflow:** skill bodies made host-neutral (no hard Claude-Code-only references); the same `SKILL.md` files serve both hosts. Mapping documented in [`codex/README.md`](./codex/README.md).
+  - **Unified installer:** the `create-dev-kit` wizard detects Codex and, on opt-in, anchors a stable checkout at `~/.dev-kit`, merges the telemetry hooks into `~/.codex/hooks.json` (never clobbering existing hooks), copies skills into `~/.agents/skills/`, and prints the `/hooks` trust step.
+  - **Validation status:** verified here — the `agent` property, both telemetry parsers (Claude + Codex), and the installer's render/merge/copy logic. **Not yet verified against a live Codex install** — skill loading, the `/hooks` trust flow, and the orchestrator's Codex-native form still need a real-Codex test before this is announced.
+- Requires a **relay redeploy** for the `agent` property to reach PostHog (contract change), same as the v0.14.0 rollout.
+
 ## [0.17.0] - 2026-07-29
 ### Added
 - **Accessibility review for frontend changes** — folded into `pr-review` as a **conditional dimension**, not a new agent or extra pass:

@@ -87,4 +87,4 @@ Labels   : ...
 ## After fetching
 
 1. If the description or comments contain a **Figma URL** (`figma.com/(design|file)/...`), invoke the `figma-fetch` skill next.
-2. Present an **implementation plan** and **wait for explicit user approval** before writing any code (see the coding-agent workflow). Never skip this gate unless the caller explicitly says the plan is pre-approved.
+2. Present an **implementation plan** and **wait for explicit user approval** before writing any code (see the issue-to-PR workflow). Never skip this gate unless the caller explicitly says the plan is pre-approved.

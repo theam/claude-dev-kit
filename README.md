@@ -194,6 +194,20 @@ Full **`/work-story <TICKET>`** flow is ticket-first (it fetches the story and m
 
 Either way, a skipped gate is **reported, never hidden**.
 
+## Also runs on Codex (experimental)
+
+The kit also targets **OpenAI Codex** (CLI + VS Code extension). The setup wizard
+detects Codex and, with your OK, anchors a stable checkout at `~/.dev-kit`, wires
+Codex's session **hooks** to the shared telemetry emitter, and copies the same
+`SKILL.md` playbooks into `~/.agents/skills/`. Telemetry from Codex sessions lands
+in the same place, tagged `agent: codex` (surface `cli` / `vscode`), so aggregate
+usage can be split by tool.
+
+Two things to know: Codex won't run a freshly-installed hook until you **trust it
+once** with `/hooks`, and this integration is **new — validated on Claude Code,
+pending verification on your Codex version**. Details, manual setup, and the
+shared-source layout: [`codex/README.md`](./codex/README.md).
+
 ## Relationship to project repos
 
 Each consuming repo keeps its own `.claude/` with project-specific rules: build/test/lint/coverage commands, architecture conventions, and stack subagents (e.g. `backend-implementer` / `frontend-implementer`). The kit reads the consuming repo's `CLAUDE.md` for those conventions and its own `.claude/dev-kit.json` (auto-generated on first use) for tracker specifics.

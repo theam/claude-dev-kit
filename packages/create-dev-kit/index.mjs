@@ -10,7 +10,7 @@
  */
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout, exit } from 'node:process';
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, cpSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
 import { randomUUID } from 'node:crypto';
@@ -38,8 +38,73 @@ function mergeJson(path, patch) {
   return next;
 }
 
+const KIT_REPO = 'https://github.com/theam/claude-dev-kit';
+const KIT_HOME = join(homedir(), '.dev-kit'); // stable, version-independent anchor for Codex
+
+function have(cmd, args = ['--version']) {
+  try { const r = spawnSync(cmd, args, { stdio: 'ignore' }); return !r.error && (r.status === 0 || r.status === null); }
+  catch { return false; }
+}
+
+// Codex integration (experimental). Codex doesn't load Claude Code plugins, so we
+// anchor a stable checkout at ~/.dev-kit and point Codex's hooks + skills at it.
+async function maybeSetupCodex(consent) {
+  const codexPresent = have('codex') || existsSync(join(homedir(), '.codex'));
+  if (!codexPresent) return;
+  console.log(`\n${b('6. Codex (also detected)')} ${dim('(experimental — validated on Claude, verify on your Codex version)')}`);
+  if (!await yn('   Set the kit up for Codex too (CLI + VS Code)?', true)) return;
+  if (!have('git')) { console.log(dim('   git not found — skipping Codex setup. Install git and re-run.')); return; }
+
+  // 1. Stable kit checkout (Codex hooks/skills point here; survives version bumps)
+  if (existsSync(join(KIT_HOME, '.git'))) {
+    console.log(dim(`   $ git -C ${KIT_HOME} pull --ff-only`));
+    spawnSync('git', ['-C', KIT_HOME, 'pull', '--ff-only'], { stdio: 'inherit' });
+  } else {
+    console.log(dim(`   $ git clone --depth 1 ${KIT_REPO} ${KIT_HOME}`));
+    const r = spawnSync('git', ['clone', '--depth', '1', KIT_REPO, KIT_HOME], { stdio: 'inherit' });
+    if (r.error || r.status !== 0) { console.log(dim('   clone failed — skipping Codex setup.')); return; }
+  }
+
+  // 2. Telemetry hooks → ~/.codex/hooks.json (merge; never clobber existing hooks)
+  const codexHooksPath = join(homedir(), '.codex', 'hooks.json');
+  try {
+    const rendered = JSON.parse(
+      readFileSync(join(KIT_HOME, 'codex', 'hooks.json'), 'utf8').replaceAll('{{DEVKIT_ROOT}}', KIT_HOME));
+    let cur = {};
+    if (existsSync(codexHooksPath)) { try { cur = JSON.parse(readFileSync(codexHooksPath, 'utf8')); } catch { cur = {}; } }
+    cur.hooks = cur.hooks || {};
+    for (const [ev, arr] of Object.entries(rendered.hooks || {})) {
+      const kept = (cur.hooks[ev] || []).filter((h) => !JSON.stringify(h).includes('telemetry.mjs')); // drop our old entry on re-run
+      cur.hooks[ev] = [...kept, ...arr];
+    }
+    mkdirSync(dirname(codexHooksPath), { recursive: true });
+    writeFileSync(codexHooksPath, JSON.stringify(cur, null, 2) + '\n');
+    console.log(`   • ${codexHooksPath} ${dim('(telemetry hooks — need a one-time /hooks trust)')}`);
+  } catch (e) { console.log(dim('   could not write Codex hooks: ' + (e?.message || e))); }
+
+  // 3. Skills → ~/.agents/skills/<name>/ (same SKILL.md files as the Claude side)
+  try {
+    const src = join(KIT_HOME, 'skills');
+    const dst = join(homedir(), '.agents', 'skills');
+    mkdirSync(dst, { recursive: true });
+    let n = 0;
+    for (const name of readdirSync(src)) {
+      if (!existsSync(join(src, name, 'SKILL.md'))) continue;
+      cpSync(join(src, name), join(dst, name), { recursive: true });
+      n++;
+    }
+    console.log(`   • ${dst} ${dim(`(${n} skills)`)}`);
+  } catch (e) { console.log(dim('   could not copy skills: ' + (e?.message || e))); }
+
+  console.log(dim(
+    '\n   One manual step Codex requires (it won\'t run untrusted hooks):\n' +
+    '     • open a Codex session and run  /hooks  → review & trust the dev-kit telemetry hook\n' +
+    '   Then Codex sessions report the same anonymous, opt-in telemetry (tagged agent: codex).'));
+  if (!consent) console.log(dim('   (telemetry is OFF right now — the hook stays inert until you opt in)'));
+}
+
 async function main() {
-  console.log(`\n${b('claude-dev-kit setup')}\n${dim('Issue-to-PR workflow plugin for Claude Code — by The Agile Monkeys')}\n`);
+  console.log(`\n${b('claude-dev-kit setup')}\n${dim('Issue-to-PR workflow for Claude Code & Codex — by The Agile Monkeys')}\n`);
 
   // 1. Issue tracker
   console.log(b('1. Issue tracker'));
@@ -148,6 +213,9 @@ async function main() {
     console.log('    claude plugin marketplace add theam/claude-dev-kit');
     console.log('    claude plugin install fullstack-dev-kit@claude-dev-kit');
   }
+
+  await maybeSetupCodex(consent);
+
   console.log(`\n${dim('Restart your Claude session, then run')} ${b('/fullstack-dev-kit:work-story <TICKET>')}\n`);
 }
 

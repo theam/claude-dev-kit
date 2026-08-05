@@ -55,4 +55,4 @@ Acceptance criteria: <met / partially met (which ones missing)>
 - Every finding cites file and line. No finding without a concrete failure scenario or rule reference.
 - Do not pad: if the diff is clean, say so and approve — a review's value is its signal ratio.
 - Never approve with unresolved blocking findings, and never report a criterion as met without seeing the code that implements it.
-- When invoked as the self-review step of the story workflow, hand the blocking findings to `fix-pr` (the pr-fixer agent) and re-review after the fixes.
+- When invoked as the self-review step of the story workflow, hand the blocking findings to the `fix-pr` playbook (the `pr-fixer` subagent on Claude Code) and re-review after the fixes.
