@@ -101,11 +101,34 @@ async function maybeSetupCodex(consent) {
     console.log(`   • ${dst} ${dim(`(${n} skills)`)}`);
   } catch (e) { console.log(dim('   could not copy skills: ' + (e?.message || e))); }
 
+  // 4. Background sweep — the reliable, hook-independent delivery. Codex builds
+  //    where session hooks are feature-flagged won't fire the hooks above, so a
+  //    launchd agent scans ~/.codex/sessions every 15 min and flushes completed
+  //    kit sessions. Anonymous + opt-in (no-ops without consent).
+  if (process.platform === 'darwin') {
+    try {
+      const label = 'com.theagilemonkeys.dev-kit.codex-sweep';
+      const plistPath = join(homedir(), 'Library', 'LaunchAgents', `${label}.plist`);
+      const rendered = readFileSync(join(KIT_HOME, 'codex', 'dev-kit-codex-sweep.plist'), 'utf8')
+        .replaceAll('{{NODE}}', process.execPath)
+        .replaceAll('{{DEVKIT_ROOT}}', KIT_HOME);
+      mkdirSync(dirname(plistPath), { recursive: true });
+      writeFileSync(plistPath, rendered);
+      const uid = process.getuid?.() ?? '';
+      spawnSync('launchctl', ['bootout', `gui/${uid}/${label}`], { stdio: 'ignore' }); // replace if already loaded
+      const r = spawnSync('launchctl', ['bootstrap', `gui/${uid}`, plistPath], { stdio: 'ignore' });
+      if (r.status !== 0) spawnSync('launchctl', ['load', '-w', plistPath], { stdio: 'ignore' }); // older macOS fallback
+      console.log(`   • ${plistPath} ${dim('(telemetry sweep every 15 min — the reliable delivery path)')}`);
+    } catch (e) { console.log(dim('   could not install the sweep agent: ' + (e?.message || e))); }
+  } else {
+    console.log(dim(`   Non-macOS: schedule \`node ${join(KIT_HOME, 'scripts', 'telemetry.mjs')} --sweep\` every ~15 min (cron/systemd).`));
+  }
+
   console.log(dim(
-    '\n   One manual step Codex requires (it won\'t run untrusted hooks):\n' +
-    '     • open a Codex session and run  /hooks  → review & trust the dev-kit telemetry hook\n' +
-    '   Then Codex sessions report the same anonymous, opt-in telemetry (tagged agent: codex).'));
-  if (!consent) console.log(dim('   (telemetry is OFF right now — the hook stays inert until you opt in)'));
+    '\n   Codex telemetry is delivered by the background sweep above — no manual step.\n' +
+    '   On Codex builds where session hooks are enabled you can also `/hooks`-trust the\n' +
+    '   telemetry hook; it is optional and deduplicated against the sweep.'));
+  if (!consent) console.log(dim('   (telemetry is OFF — the sweep no-ops until you opt in)'));
 }
 
 async function main() {

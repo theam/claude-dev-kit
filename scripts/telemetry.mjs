@@ -74,7 +74,11 @@ try {
     envEnabled === 'true' || envEnabled === '1' || envEnabled === 'yes';
   if (!granted) done(); // no consent → no markers, no send, nothing on disk
 
-  const raw = readFileSync(0, 'utf8');
+  // `--sweep` runs with no hook event on stdin (a scheduled background scan of
+  // Codex sessions — see the sweep block below). Everything else reads the hook
+  // event from stdin.
+  const SWEEP = process.argv.slice(2).includes('--sweep');
+  const raw = SWEEP ? '' : readFileSync(0, 'utf8');
   const event = raw ? JSON.parse(raw) : {};
   const evName = event.hook_event_name || '';
   const sessionId = event.session_id;
@@ -224,6 +228,59 @@ try {
       body: JSON.stringify(payload), signal: ctl.signal,
     }).catch(() => {});
     clearTimeout(t);
+  }
+
+  if (SWEEP) {
+    // Hook-independent Codex delivery. Codex builds where session hooks are
+    // feature-flagged/unavailable still write per-session rollout JSONL under
+    // ~/.codex/sessions/. A scheduled sweep flushes COMPLETED kit sessions from
+    // there — same anonymous, opt-in, one-event-per-session contract as the hook
+    // paths. A watermark advances only past sessions old enough to be "done", so
+    // active sessions are never sent early and finished ones are never re-scanned.
+    const codexHome = process.env.CODEX_HOME || join(homedir(), '.codex');
+    const sessionsDir = join(codexHome, 'sessions');
+    const watermarkFile = join(STATE_DIR, 'codex-sweep.watermark');
+    const now = Date.now();
+    const cutoff = now - STALE_MS;                 // sessions idle ≥ STALE_MS are done
+    let watermark = null;
+    try { watermark = Number(readFileSync(watermarkFile, 'utf8')) || null; } catch { /* first run */ }
+
+    // First run: set a baseline and do NOT backfill history — telemetry starts
+    // when you opt in, not retroactively.
+    if (watermark === null) {
+      try { mkdirSync(STATE_DIR, { recursive: true }); writeFileSync(watermarkFile, String(cutoff)); } catch { /* ignore */ }
+      done();
+    }
+
+    let files = [];
+    try {
+      files = readdirSync(sessionsDir, { recursive: true })
+        .filter((f) => typeof f === 'string' && /rollout-.*\.jsonl$/.test(f))
+        .map((f) => join(sessionsDir, f));
+    } catch { /* no sessions dir → nothing to sweep */ }
+
+    for (const rp of files) {
+      let st; try { st = statSync(rp); } catch { continue; }
+      const mtime = st.mtimeMs;
+      if (mtime > cutoff) continue;                // still active
+      if (mtime <= watermark) continue;            // swept in a prior run
+      if (now - mtime > MAX_AGE_MS) continue;      // too old to backfill
+      let content; try { content = readFileSync(rp, 'utf8'); } catch { continue; }
+      if (!KIT_MARKERS.some((m) => content.includes(m))) continue; // not a kit session — skip, don't claim
+      let sid, ep, cwd;
+      for (const line of content.split('\n')) {
+        if (!line.includes('session_meta')) continue;
+        let o; try { o = JSON.parse(line); } catch { continue; }
+        const p = o?.payload || o;
+        if (p?.session_id) { sid = p.session_id; ep = slug(p.source || p.originator); cwd = p.cwd; break; }
+      }
+      if (!sid) continue;
+      const dedup = sessionDedup(sid);
+      if (!claim(dedup)) continue;                 // already sent
+      await flush(rp, cwd, ep, undefined, dedup, 'codex');
+    }
+    try { writeFileSync(watermarkFile, String(cutoff)); } catch { /* ignore */ }
+    done();
   }
 
   if (evName === 'Stop') {

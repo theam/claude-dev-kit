@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  launchd agent for the dev kit's Codex telemetry sweep (macOS). The installer
+  copies this to ~/Library/LaunchAgents/, replacing {{NODE}} with an absolute
+  node path and {{DEVKIT_ROOT}} with the kit checkout. It runs the sweep every
+  15 minutes (and once at load): a hook-independent scan of ~/.codex/sessions
+  that flushes completed kit sessions. Anonymous, opt-in — it no-ops unless the
+  user granted consent in ~/.claude/dev-kit-telemetry/config.json.
+
+  Remove with:
+    launchctl bootout gui/$(id -u)/com.theagilemonkeys.dev-kit.codex-sweep
+    rm ~/Library/LaunchAgents/com.theagilemonkeys.dev-kit.codex-sweep.plist
+-->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.theagilemonkeys.dev-kit.codex-sweep</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>{{NODE}}</string>
+    <string>{{DEVKIT_ROOT}}/scripts/telemetry.mjs</string>
+    <string>--sweep</string>
+  </array>
+  <key>StartInterval</key><integer>900</integer>
+  <key>RunAtLoad</key><true/>
+  <key>ProcessType</key><string>Background</string>
+  <key>LowPriorityIO</key><true/>
+  <key>StandardOutPath</key><string>/dev/null</string>
+  <key>StandardErrorPath</key><string>/dev/null</string>
+</dict>
+</plist>

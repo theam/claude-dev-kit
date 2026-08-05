@@ -22,36 +22,43 @@ workflow (skills, instructions) is shared with the Claude side — see
 - **Shared workflow content** — the `SKILL.md` playbooks and instruction docs are
   the same files; only their location and invocation differ per host.
 
-## Telemetry wiring (`hooks.json`)
+## Telemetry delivery — a background sweep (primary)
 
-Codex reads hooks from `~/.codex/hooks.json` (or inline `[[hooks.EventName]]` in
-`~/.codex/config.toml`). [`hooks.json`](./hooks.json) is the template the installer
-copies to `~/.codex/hooks.json`, replacing `{{DEVKIT_ROOT}}` with the absolute kit
-path.
+Codex session **hooks** are the obvious trigger, but on the **Codex desktop app**
+(codex-cli ~0.147-alpha) they are behind a feature flag with no `/hooks` trust
+command — so we don't rely on them. Instead the primary, deployment-robust delivery
+is a **scheduled sweep** (`scripts/telemetry.mjs --sweep`):
 
-Two deliberate choices:
+- It scans `~/.codex/sessions/**/rollout-*.jsonl`, and for each **completed** session
+  (idle ≥ 10 min) **where the kit ran**, it reads token totals from the last
+  cumulative `token_count` and sends one anonymous event tagged `agent: codex`
+  (surface from the rollout's `session_meta.source`).
+- A **watermark** advances only past sessions old enough to be done, so active
+  sessions are never sent early and finished ones are never re-scanned; a per-session
+  dedup sentinel guarantees at-most-once.
+- **No history backfill:** the first run just sets a baseline — telemetry starts when
+  you opt in, not retroactively.
+- It **no-ops without consent** (`~/.claude/dev-kit-telemetry/config.json`).
 
-1. **We wire `Stop` + `SessionStart`, not `SessionEnd`.** Codex caps `SessionEnd`
-   at ~1 second — too short for a network send. So `Stop` writes a cheap per-session
-   marker (no network) and `SessionStart` flushes stale markers from prior sessions
-   (the outbox pattern). Delivery happens on the next Codex start after the 10-minute
-   stale window — identical to how the Claude Desktop path already behaves.
-2. **Hooks require one-time trust.** Unlike Claude Code, Codex will not run a
-   freshly-installed hook until the user reviews and trusts it with the `/hooks`
-   command. The installer places the hook but **cannot** auto-trust it — the user
-   must run `/hooks` once. (Enterprises can instead ship it as a managed hook via
-   `requirements.toml`.)
+The installer registers it as a **launchd agent** on macOS
+([`dev-kit-codex-sweep.plist`](./dev-kit-codex-sweep.plist), every 15 min). On other
+OSes, schedule `node <kit>/scripts/telemetry.mjs --sweep` via cron/systemd.
+
+### Hooks (optional, where supported)
+
+On Codex builds where session hooks are enabled and trusted, [`hooks.json`](./hooks.json)
+wires `Stop` + `SessionStart` (not `SessionEnd` — Codex caps it at ~1s) to the same
+emitter. It's **optional and deduplicated against the sweep** (same per-session id),
+so running both is safe. It needs a one-time `/hooks` trust and is inert until then.
 
 ### Manual install (equivalent to what the wizard does)
 
 ```bash
-# 1. Point the hook at your kit checkout / install
-mkdir -p ~/.codex
-sed "s#{{DEVKIT_ROOT}}#/absolute/path/to/claude-dev-kit#g" \
-  codex/hooks.json > ~/.codex/hooks.json
-
-# 2. In a Codex session, trust the hook once
-/hooks
+# macOS: register the sweep agent (anonymous, opt-in, no-ops without consent)
+sed -e "s#{{NODE}}#$(command -v node)#g" \
+    -e "s#{{DEVKIT_ROOT}}#/absolute/path/to/claude-dev-kit#g" \
+    codex/dev-kit-codex-sweep.plist > ~/Library/LaunchAgents/com.theagilemonkeys.dev-kit.codex-sweep.plist
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.theagilemonkeys.dev-kit.codex-sweep.plist
 ```
 
 Opt out any time with `DEVKIT_TELEMETRY=0`, or by setting `consent` to `denied` in

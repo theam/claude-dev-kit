@@ -196,18 +196,19 @@ Either way, a skipped gate is **reported, never hidden**.
 
 ## Also runs on Codex (experimental)
 
-The kit also targets **OpenAI Codex** (CLI + VS Code extension). The setup wizard
-detects Codex and, with your OK, anchors a stable checkout at `~/.dev-kit`, wires
-Codex's session **hooks** to the shared telemetry emitter, and copies the same
-`SKILL.md` playbooks into Codex's skills dir (`~/.codex/skills/` on the Codex
-desktop app; `~/.agents/skills/` on some CLI builds). Telemetry from Codex sessions lands
-in the same place, tagged `agent: codex` (surface `cli` / `vscode`), so aggregate
-usage can be split by tool.
+The kit also targets **OpenAI Codex** (CLI + desktop app). The setup wizard detects
+Codex and, with your OK, anchors a stable checkout at `~/.dev-kit`, registers a
+**background telemetry sweep** (a launchd agent on macOS that scans
+`~/.codex/sessions` every 15 min), and copies the same `SKILL.md` playbooks into
+Codex's skills dir (`~/.codex/skills/`). Telemetry from Codex sessions lands in the
+same place, tagged `agent: codex` (surface `cli` / `vscode`), so aggregate usage can
+be split by tool.
 
-Two things to know: Codex won't run a freshly-installed hook until you **trust it
-once** with `/hooks`, and this integration is **new — validated on Claude Code,
-pending verification on your Codex version**. Details, manual setup, and the
-shared-source layout: [`codex/README.md`](./codex/README.md).
+The sweep is used instead of session hooks because on the Codex desktop app hooks
+are currently feature-flagged; where hooks are available they can be wired too and
+are deduplicated against the sweep. This integration is **new — the telemetry path is
+validated against a real Codex rollout; the in-app skill/workflow side is still being
+verified**. Details and the shared-source layout: [`codex/README.md`](./codex/README.md).
 
 ## Relationship to project repos
 
