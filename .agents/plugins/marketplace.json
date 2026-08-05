@@ -1,0 +1,11 @@
+{
+  "name": "claude-dev-kit",
+  "plugins": [
+    {
+      "name": "fullstack-dev-kit",
+      "source": { "source": "local", "path": "./plugins/fullstack-dev-kit" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_USE" },
+      "category": "Engineering"
+    }
+  ]
+}

@@ -66,21 +66,29 @@ claude plugin install fullstack-dev-kit@claude-dev-kit
 
 Installation is **user-level and permanent** — every future session (CLI or IDE extension) loads the kit automatically, no reinstall per session or project. Verify with `claude plugin list`, or type `/` in a session and search `fullstack-dev-kit:` (you should see `work-story`, `launch-story`, and the skills; agents show under `/agents`).
 
-### Authorize the connectors your team uses (one-time)
+### Connect the tracker your team uses (one-time)
 
-The plugin **declares** the tracker/design MCP servers (`atlassian`, `linear`, `figma`) — you don't add them by hand, you just **authorize** the ones you use. Three ways, pick whichever fits:
+**The easiest way is to just ask the kit** — tell it, in plain language, what you want:
 
-- **In a Claude Code session** (CLI, IDE panel, or the Desktop app's Code tab): run `/mcp`, pick the server (e.g. `atlassian`), and complete the OAuth in the browser.
-- **From the terminal:** `claude mcp login atlassian` (and `claude mcp list` to check status — plugin-declared servers show ⏸ *pending approval* until first approved inside a session).
-- **Already connected in Claude Desktop?** Import those connectors into Claude Code with `claude mcp add-from-claude-desktop` (macOS/WSL).
+> *"Connect my Jira"* · *"Set up the Atlassian connector"* · *"Hook up Linear so you can read tickets"*
 
-| Tool | Connector | Authorize with |
+The kit knows the right connector for your tracker and runs the setup for you (installing/authorizing the MCP or connector), then walks you through the one browser sign-in. Get in the habit of delegating this kind of chore to it — that's the point of the kit.
+
+If you'd rather do it by hand, here's what it runs under the covers:
+
+**Claude Code** — the plugin **declares** the MCP servers (`atlassian`, `linear`, `figma`); you just authorize the ones you use:
+- In a session: `/mcp` → pick the server → complete the browser OAuth. From the terminal: `claude mcp login atlassian`. Already in Claude Desktop? `claude mcp add-from-claude-desktop`.
+
+**Codex** — install the matching **curated connector** (native OAuth), then sign in from the app:
+- `codex plugin add atlassian-rovo@openai-curated` (Jira/Confluence) · `linear@openai-curated` · `figma@openai-curated`.
+
+| Tool | Claude Code | Codex |
 |---|---|---|
-| Jira | `atlassian` MCP | `/mcp` · `claude mcp login atlassian` |
-| Linear | `linear` MCP | `/mcp` · `claude mcp login linear` |
-| GitHub Issues | — (uses `gh`) | `gh auth login` |
-| Azure DevOps | — (uses `az`) | `az login` |
-| Figma *(optional)* | `figma` MCP | `/mcp` · `claude mcp login figma` |
+| Jira | `atlassian` MCP (`claude mcp login atlassian`) | `atlassian-rovo@openai-curated` |
+| Linear | `linear` MCP (`claude mcp login linear`) | `linear@openai-curated` |
+| GitHub Issues | — (uses `gh auth login`) | — (uses `gh`) |
+| Azure DevOps | — (uses `az login`) | — (uses `az`) |
+| Figma *(optional)* | `figma` MCP | `figma@openai-curated` |
 
 Authorization is **per developer, one-time** — it persists across sessions. The kit then discovers the rest (Jira site, project key, field IDs) automatically on first use via `dev-kit-setup`.
 
@@ -193,6 +201,28 @@ Full **`/work-story <TICKET>`** flow is ticket-first (it fetches the story and m
 - **Accessibility (frontend only):** when a change touches user-facing UI in a frontend stack, the review automatically covers the a11y basics (alt text, labels, accessible names, keyboard/focus, contrast, correct ARIA) — using the repo's own a11y tooling if it has any, never scaffolding one. It's **automatic and non-blocking by default**, costs nothing on backend/non-UI changes, and needs no setup. To change it, set `"a11y"` in `.claude/dev-kit.json` to `auto` (default) · `required` (make it a blocking gate) · `off` (never run) — edit it by hand, or just **ask the kit to do it** (e.g. *"make accessibility a required gate"*) and it updates the file for you.
 
 Either way, a skipped gate is **reported, never hidden**.
+
+## Also runs on Codex (experimental)
+
+The kit also targets **OpenAI Codex** (CLI + desktop app) as a **native Codex plugin**.
+Codex has its own plugin system parallel to Claude Code's, so this repo doubles as a
+Codex marketplace ([`.agents/plugins/marketplace.json`](./.agents/plugins/marketplace.json)
++ [`plugins/fullstack-dev-kit/`](./plugins/fullstack-dev-kit/), whose skills are
+generated from the canonical top-level `skills/`). Install:
+
+```bash
+codex plugin marketplace add theam/claude-dev-kit
+codex plugin add fullstack-dev-kit@claude-dev-kit
+```
+
+The setup wizard does this for whichever of Claude Code / Codex it finds, installs the
+**Codex connector your tracker choice implies** (Jira → `atlassian-rovo`, Linear → `linear`,
+Figma → `figma`, all curated with native OAuth; GitHub/Azure use their CLIs), and schedules
+an anonymous **telemetry sweep** so Codex sessions
+report usage tagged `agent: codex` (surface `cli` / `vscode`). *Validated against real
+Codex 0.147: marketplace add, plugin install, and the telemetry parser/sweep. In-app
+skill invocation and MCP auth are yours to confirm.* Details:
+[`codex/README.md`](./codex/README.md).
 
 ## Relationship to project repos
 

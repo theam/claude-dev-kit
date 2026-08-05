@@ -1,6 +1,11 @@
 #!/usr/bin/env node
 /*
- * Anonymous, opt-in usage telemetry for claude-dev-kit → relay → PostHog.
+ * Anonymous, opt-in usage telemetry for the dev kit → relay → PostHog.
+ *
+ * One script, two hosts: invoked by Claude Code hooks (default) or Codex hooks
+ * (`--agent codex`). Only the transcript parser and the surface source differ;
+ * consent, install id, org, dedup, outbox and the relay are shared. State lives
+ * in ~/.claude/dev-kit-telemetry/ for both, so consent/org are set once per user.
  *
  * Ships OFF. Runs only when the user granted consent (via the create-dev-kit
  * wizard → ~/.claude/dev-kit-telemetry/config.json). No consent → this script
@@ -24,9 +29,16 @@
 import { readFileSync, existsSync, writeFileSync, mkdirSync, renameSync, rmSync, readdirSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { randomUUID, createHash } from 'node:crypto';
 
 const done = () => process.exit(0); // fail-silent, always
+
+// Kit root for reading the contract + plugin.json. Claude Code sets
+// CLAUDE_PLUGIN_ROOT; Codex has no such var, so fall back to this script's own
+// location (scripts/telemetry.mjs → repo/plugin root is one level up).
+const SELF_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const KIT_ROOT = process.env.CLAUDE_PLUGIN_ROOT || process.env.DEVKIT_ROOT || SELF_ROOT;
 
 const STATE_DIR = join(homedir(), '.claude', 'dev-kit-telemetry');
 const CONFIG = join(STATE_DIR, 'config.json');
@@ -62,7 +74,11 @@ try {
     envEnabled === 'true' || envEnabled === '1' || envEnabled === 'yes';
   if (!granted) done(); // no consent → no markers, no send, nothing on disk
 
-  const raw = readFileSync(0, 'utf8');
+  // `--sweep` runs with no hook event on stdin (a scheduled background scan of
+  // Codex sessions — see the sweep block below). Everything else reads the hook
+  // event from stdin.
+  const SWEEP = process.argv.slice(2).includes('--sweep');
+  const raw = SWEEP ? '' : readFileSync(0, 'utf8');
   const event = raw ? JSON.parse(raw) : {};
   const evName = event.hook_event_name || '';
   const sessionId = event.session_id;
@@ -94,42 +110,88 @@ try {
     catch { return false; }
   };
 
+  // GC at-most-once sentinels so they never accumulate past the marker hard-cap.
+  // Runs from every delivery path (SessionStart flush AND the Codex sweep) so a
+  // Codex-only user — who never triggers a Claude SessionStart — still gets swept.
+  const gcSentinels = (now) => {
+    try {
+      for (const f of readdirSync(STATE_DIR)) {
+        if (!f.startsWith('sent-')) continue;
+        try {
+          if (now - statSync(join(STATE_DIR, f)).mtimeMs > MAX_AGE_MS) rmSync(join(STATE_DIR, f), { force: true });
+        } catch { /* ignore one bad entry */ }
+      }
+    } catch { /* ignore */ }
+  };
+
   // Relay endpoint (no PostHog key in the client).
   let defaultRelay = 'https://claude-dev-kit-telemetry-relay.vercel.app';
   try {
-    const root = process.env.CLAUDE_PLUGIN_ROOT || '.';
-    defaultRelay = JSON.parse(readFileSync(join(root, 'telemetry', 'contract.v1.json'), 'utf8')).default_relay_url || defaultRelay;
+    defaultRelay = JSON.parse(readFileSync(join(KIT_ROOT, 'telemetry', 'contract.v1.json'), 'utf8')).default_relay_url || defaultRelay;
   } catch { /* fallback */ }
   const relay = (process.env.DEVKIT_TELEMETRY_RELAY_URL || cfg.relay_url || defaultRelay).replace(/\/+$/, '');
 
   let kitVersion;
   try {
-    const root = process.env.CLAUDE_PLUGIN_ROOT || '.';
-    kitVersion = JSON.parse(readFileSync(join(root, '.claude-plugin', 'plugin.json'), 'utf8')).version;
+    kitVersion = JSON.parse(readFileSync(join(KIT_ROOT, '.claude-plugin', 'plugin.json'), 'utf8')).version;
   } catch { /* ignore */ }
 
-  const entrypoint = (process.env.CLAUDE_CODE_ENTRYPOINT || '')
-    .toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 32) || undefined;
+  // Which agent host is invoking us. Codex hooks pass `--agent codex` (explicit and
+  // stable); anything else is Claude Code. One script serves both — only the
+  // transcript parser and the surface source differ below.
+  const argv = process.argv.slice(2);
+  const AGENT = (argv.includes('codex') || argv.includes('--agent=codex') ||
+    argv[argv.indexOf('--agent') + 1] === 'codex') ? 'codex' : 'claude-code';
+
+  const slug = (s) => (s || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 32) || undefined;
+  // Surface per host. Claude: CLAUDE_CODE_ENTRYPOINT. Codex: the originator override
+  // (marked internal upstream → may change, so default gracefully) → vscode/cli.
+  let entrypoint;
+  if (AGENT === 'codex') {
+    const orig = (process.env.CODEX_INTERNAL_ORIGINATOR_OVERRIDE || '').toLowerCase();
+    entrypoint = orig.includes('vscode') ? 'vscode' : orig.includes('cli') ? 'cli' : slug(orig);
+  } else {
+    entrypoint = slug(process.env.CLAUDE_CODE_ENTRYPOINT);
+  }
 
   // Compute one session's event from its transcript and POST it. Content is
   // never inspected beyond summing `usage` and checking a kit component ran.
-  async function flush(transcriptPath, cwd, ep, ccVersion, dedup) {
+  async function flush(transcriptPath, cwd, ep, ccVersion, dedup, agent) {
     if (!transcriptPath || !existsSync(transcriptPath)) return;
     const lines = readFileSync(transcriptPath, 'utf8').split('\n').filter(Boolean);
     if (!lines.some((l) => KIT_MARKERS.some((m) => l.includes(m)))) return; // kit didn't run this session
 
     const tok = { input: 0, output: 0, cacheRead: 0, cacheCreation: 0 };
     let firstTs, lastTs;
-    for (const line of lines) {
-      let o; try { o = JSON.parse(line); } catch { continue; }
-      const ts = Date.parse(o?.timestamp || '');
-      if (!Number.isNaN(ts)) { firstTs = firstTs ?? ts; lastTs = ts; }
-      const u = o?.message?.usage || o?.usage;
-      if (!u) continue;
-      tok.input += u.input_tokens || 0;
-      tok.output += u.output_tokens || 0;
-      tok.cacheRead += u.cache_read_input_tokens || 0;
-      tok.cacheCreation += u.cache_creation_input_tokens || 0;
+    if (agent === 'codex') {
+      // Codex rollout JSONL: `token_count` events carry a CUMULATIVE total_token_usage,
+      // so the LAST one is the session total (summing every line would double-count).
+      let last;
+      for (const line of lines) {
+        let o; try { o = JSON.parse(line); } catch { continue; }
+        const ts = Date.parse(o?.timestamp || '');
+        if (!Number.isNaN(ts)) { firstTs = firstTs ?? ts; lastTs = ts; }
+        if (o?.payload?.type === 'token_count' && o?.payload?.info?.total_token_usage) last = o.payload.info.total_token_usage;
+      }
+      if (last) {
+        const cached = last.cached_input_tokens || 0;
+        tok.cacheRead = cached;
+        tok.input = Math.max(0, (last.input_tokens || 0) - cached); // input_tokens includes the cached portion
+        tok.output = (last.output_tokens || 0) + (last.reasoning_output_tokens || 0);
+        tok.cacheCreation = last.cache_write_input_tokens || 0; // present since codex-cli ~0.147
+      }
+    } else {
+      for (const line of lines) {
+        let o; try { o = JSON.parse(line); } catch { continue; }
+        const ts = Date.parse(o?.timestamp || '');
+        if (!Number.isNaN(ts)) { firstTs = firstTs ?? ts; lastTs = ts; }
+        const u = o?.message?.usage || o?.usage;
+        if (!u) continue;
+        tok.input += u.input_tokens || 0;
+        tok.output += u.output_tokens || 0;
+        tok.cacheRead += u.cache_read_input_tokens || 0;
+        tok.cacheCreation += u.cache_creation_input_tokens || 0;
+      }
     }
     if (tok.input + tok.output === 0) return;
 
@@ -159,8 +221,9 @@ try {
 
       properties: {
         schema_version: 1,
+        agent,
         kit_version: kitVersion,
-        claude_code_version: ccVersion || undefined,
+        claude_code_version: agent === 'claude-code' ? (ccVersion || undefined) : undefined,
         os: process.platform,
         entrypoint: ep,
         tracker_type: trackerType,
@@ -181,6 +244,60 @@ try {
     clearTimeout(t);
   }
 
+  if (SWEEP) {
+    // Hook-independent Codex delivery. Codex builds where session hooks are
+    // feature-flagged/unavailable still write per-session rollout JSONL under
+    // ~/.codex/sessions/. A scheduled sweep flushes COMPLETED kit sessions from
+    // there — same anonymous, opt-in, one-event-per-session contract as the hook
+    // paths. A watermark advances only past sessions old enough to be "done", so
+    // active sessions are never sent early and finished ones are never re-scanned.
+    const codexHome = process.env.CODEX_HOME || join(homedir(), '.codex');
+    const sessionsDir = join(codexHome, 'sessions');
+    const watermarkFile = join(STATE_DIR, 'codex-sweep.watermark');
+    const now = Date.now();
+    const cutoff = now - STALE_MS;                 // sessions idle ≥ STALE_MS are done
+    let watermark = null;
+    try { watermark = Number(readFileSync(watermarkFile, 'utf8')) || null; } catch { /* first run */ }
+
+    // First run: set a baseline and do NOT backfill history — telemetry starts
+    // when you opt in, not retroactively.
+    if (watermark === null) {
+      try { mkdirSync(STATE_DIR, { recursive: true }); writeFileSync(watermarkFile, String(cutoff)); } catch { /* ignore */ }
+      done();
+    }
+
+    let files = [];
+    try {
+      files = readdirSync(sessionsDir, { recursive: true })
+        .filter((f) => typeof f === 'string' && /rollout-.*\.jsonl$/.test(f))
+        .map((f) => join(sessionsDir, f));
+    } catch { /* no sessions dir → nothing to sweep */ }
+
+    for (const rp of files) {
+      let st; try { st = statSync(rp); } catch { continue; }
+      const mtime = st.mtimeMs;
+      if (mtime > cutoff) continue;                // still active
+      if (mtime <= watermark) continue;            // swept in a prior run
+      if (now - mtime > MAX_AGE_MS) continue;      // too old to backfill
+      let content; try { content = readFileSync(rp, 'utf8'); } catch { continue; }
+      if (!KIT_MARKERS.some((m) => content.includes(m))) continue; // not a kit session — skip, don't claim
+      let sid, ep, cwd;
+      for (const line of content.split('\n')) {
+        if (!line.includes('session_meta')) continue;
+        let o; try { o = JSON.parse(line); } catch { continue; }
+        const p = o?.payload || o;
+        if (p?.session_id) { sid = p.session_id; ep = slug(p.source || p.originator); cwd = p.cwd; break; }
+      }
+      if (!sid) continue;
+      const dedup = sessionDedup(sid);
+      if (!claim(dedup)) continue;                 // already sent
+      await flush(rp, cwd, ep, undefined, dedup, 'codex');
+    }
+    try { writeFileSync(watermarkFile, String(cutoff)); } catch { /* ignore */ }
+    gcSentinels(now);
+    done();
+  }
+
   if (evName === 'Stop') {
     // Cheap: record/refresh this session's marker. No transcript parse, no network.
     if (sessionId && event.transcript_path) {
@@ -189,6 +306,7 @@ try {
         transcript_path: event.transcript_path,
         cwd: event.cwd || process.cwd(),
         entrypoint,
+        agent: AGENT,
         cc_version: event.version,
         dedup: pend[sessionId]?.dedup || sessionDedup(sessionId), // stable per session → one event even across re-sends
         updated: Date.now(),
@@ -202,7 +320,7 @@ try {
     const pend = readJson(PENDING, {});
     const dedup = pend[sessionId]?.dedup || sessionDedup(sessionId);
     if (claim(dedup)) {
-      await flush(event.transcript_path, event.cwd || process.cwd(), entrypoint, event.version, dedup);
+      await flush(event.transcript_path, event.cwd || process.cwd(), entrypoint, event.version, dedup, AGENT);
     }
     if (sessionId && pend[sessionId]) { delete pend[sessionId]; writeJsonAtomic(PENDING, pend); }
     done();
@@ -220,21 +338,13 @@ try {
       if (age > STALE_MS) {                                  // abandoned session → send its event
         const dedup = m.dedup || sessionDedup(sid);
         if (claim(dedup)) {
-          await flush(m.transcript_path, m.cwd, m.entrypoint, m.cc_version, dedup);
+          await flush(m.transcript_path, m.cwd, m.entrypoint, m.cc_version, dedup, m.agent || 'claude-code');
         }
         delete pend[sid]; changed = true;
       }
     }
     if (changed) writeJsonAtomic(PENDING, pend);
-    // GC at-most-once sentinels so they never accumulate past the marker hard-cap.
-    try {
-      for (const f of readdirSync(STATE_DIR)) {
-        if (!f.startsWith('sent-')) continue;
-        try {
-          if (now - statSync(join(STATE_DIR, f)).mtimeMs > MAX_AGE_MS) rmSync(join(STATE_DIR, f), { force: true });
-        } catch { /* ignore one bad entry */ }
-      }
-    } catch { /* ignore */ }
+    gcSentinels(now);
     done();
   }
 
@@ -242,7 +352,7 @@ try {
   {
     const dedup = sessionDedup(sessionId);
     if (claim(dedup)) {
-      await flush(event.transcript_path, event.cwd || process.cwd(), entrypoint, event.version, dedup);
+      await flush(event.transcript_path, event.cwd || process.cwd(), entrypoint, event.version, dedup, AGENT);
     }
   }
 } catch {

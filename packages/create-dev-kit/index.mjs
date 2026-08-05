@@ -10,7 +10,7 @@
  */
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout, exit } from 'node:process';
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, cpSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
 import { randomUUID } from 'node:crypto';
@@ -38,8 +38,111 @@ function mergeJson(path, patch) {
   return next;
 }
 
+const KIT_REPO = 'https://github.com/theam/claude-dev-kit';
+const KIT_MARKETPLACE = 'theam/claude-dev-kit';           // Codex marketplace source (owner/repo)
+const KIT_HOME = join(homedir(), '.dev-kit');             // stable checkout for the telemetry sweep script
+const CODEX_APP_BIN = '/Applications/Codex.app/Contents/Resources/codex';
+
+// Codex ships curated connectors (native OAuth, maintained) for the trackers we
+// support. Prefer installing the connector over hand-registering an MCP URL.
+// github/azure use their CLIs (gh/az), so they're absent here.
+const CODEX_CONNECTOR = {
+  jira:   'atlassian-rovo@openai-curated',   // Jira + Confluence
+  linear: 'linear@openai-curated',
+};
+
+function have(cmd, args = ['--version']) {
+  try { const r = spawnSync(cmd, args, { stdio: 'ignore' }); return !r.error && (r.status === 0 || r.status === null); }
+  catch { return false; }
+}
+const okStatus = (r) => !r.error && (r.status === 0 || r.status == null);
+function codexBin() {
+  if (have('codex')) return 'codex';
+  if (existsSync(CODEX_APP_BIN)) return CODEX_APP_BIN;   // Codex desktop app bundles the CLI
+  return null;
+}
+
+// Codex integration. Codex has its own plugin system (parallel to Claude Code), so
+// we install the kit as a NATIVE Codex plugin from our marketplace, register the MCP
+// servers the wizard's choices imply, and schedule the anonymous telemetry sweep.
+async function maybeSetupCodex({ consent, tracker, figma }) {
+  const codex = codexBin();
+  const codexPresent = !!codex || existsSync(join(homedir(), '.codex'));
+  if (!codexPresent) return;
+  console.log(`\n${b('6. Codex (also detected)')} ${dim('(experimental)')}`);
+  if (!await yn('   Set the kit up for Codex too?', true)) return;
+  if (!codex) { console.log(dim('   Codex CLI not found on PATH or in /Applications/Codex.app — skipping.')); return; }
+
+  // Testing override: install from a branch instead of the default (main). Lets a
+  // teammate try an unmerged branch end to end — `DEVKIT_CODEX_REF=feat/... npm create …`.
+  const CODEX_REF = process.env.DEVKIT_CODEX_REF;
+  if (CODEX_REF) console.log(dim(`   (testing from ref ${CODEX_REF})`));
+
+  // 1. Native plugin: add our marketplace, then install the plugin (skills).
+  const mpArgs = ['plugin', 'marketplace', 'add', KIT_MARKETPLACE, ...(CODEX_REF ? ['--ref', CODEX_REF] : [])];
+  console.log(dim(`   $ codex ${mpArgs.join(' ')}`));
+  if (okStatus(spawnSync(codex, mpArgs, { stdio: 'inherit' }))) {
+    console.log(dim('   $ codex plugin add fullstack-dev-kit@claude-dev-kit'));
+    spawnSync(codex, ['plugin', 'add', 'fullstack-dev-kit@claude-dev-kit'], { stdio: 'inherit' });
+  } else {
+    console.log(dim(`   marketplace add failed — do it yourself: codex plugin marketplace add ${KIT_MARKETPLACE}${CODEX_REF ? ' --ref ' + CODEX_REF : ''}`));
+  }
+
+  // 2. Connectors implied by your tracker/figma choices — install Codex's curated
+  //    connector (native OAuth), then authenticate (one click in the Codex app).
+  const connectors = [];
+  if (CODEX_CONNECTOR[tracker]) connectors.push(CODEX_CONNECTOR[tracker]);
+  if (figma) connectors.push('figma@openai-curated');
+  for (const c of connectors) {
+    console.log(dim(`   $ codex plugin add ${c}`));
+    spawnSync(codex, ['plugin', 'add', c], { stdio: 'inherit' });
+  }
+  if (connectors.length) {
+    console.log(dim('   → authenticate each from the Codex app (Plugins → the connector → sign in), or `codex mcp login <name>`.'));
+  } else if (tracker === 'github' || tracker === 'azure') {
+    console.log(dim(`   (${tracker} uses its CLI — no connector needed)`));
+  }
+
+  // 3. Telemetry sweep (anonymous, opt-in). Needs a stable script path, so keep a
+  //    lightweight checkout at ~/.dev-kit and schedule the sweep from there.
+  if (!have('git')) {
+    console.log(dim('   git not found — skipping the telemetry sweep (plugin + MCP are set up).'));
+  } else {
+    if (existsSync(join(KIT_HOME, '.git'))) {
+      if (CODEX_REF) {
+        spawnSync('git', ['-C', KIT_HOME, 'fetch', 'origin', CODEX_REF], { stdio: 'ignore' });
+        spawnSync('git', ['-C', KIT_HOME, 'checkout', CODEX_REF], { stdio: 'ignore' });
+      }
+      spawnSync('git', ['-C', KIT_HOME, 'pull', '--ff-only'], { stdio: 'ignore' });
+    } else {
+      spawnSync('git', ['clone', '--depth', '1', ...(CODEX_REF ? ['--branch', CODEX_REF] : []), KIT_REPO, KIT_HOME], { stdio: 'ignore' });
+    }
+    const plistTmpl = join(KIT_HOME, 'codex', 'dev-kit-codex-sweep.plist');
+    if (process.platform === 'darwin' && existsSync(plistTmpl)) {
+      try {
+        const label = 'com.theagilemonkeys.dev-kit.codex-sweep';
+        const plistPath = join(homedir(), 'Library', 'LaunchAgents', `${label}.plist`);
+        const rendered = readFileSync(plistTmpl, 'utf8')
+          .replaceAll('{{NODE}}', process.execPath).replaceAll('{{DEVKIT_ROOT}}', KIT_HOME);
+        mkdirSync(dirname(plistPath), { recursive: true });
+        writeFileSync(plistPath, rendered);
+        const uid = process.getuid?.() ?? '';
+        spawnSync('launchctl', ['bootout', `gui/${uid}/${label}`], { stdio: 'ignore' });
+        if (!okStatus(spawnSync('launchctl', ['bootstrap', `gui/${uid}`, plistPath], { stdio: 'ignore' })))
+          spawnSync('launchctl', ['load', '-w', plistPath], { stdio: 'ignore' }); // older macOS fallback
+        console.log(`   • telemetry sweep scheduled ${dim('(launchd, every 15 min — anonymous, opt-in)')}`);
+      } catch (e) { console.log(dim('   could not schedule the sweep: ' + (e?.message || e))); }
+    } else if (process.platform !== 'darwin') {
+      console.log(dim(`   Non-macOS: schedule \`node ${join(KIT_HOME, 'scripts', 'telemetry.mjs')} --sweep\` every ~15 min.`));
+    }
+  }
+
+  console.log(dim('\n   Restart Codex, then invoke a skill (e.g. $pr-review) or ask for the work directly.'));
+  if (!consent) console.log(dim('   (telemetry is OFF — the sweep no-ops until you opt in)'));
+}
+
 async function main() {
-  console.log(`\n${b('claude-dev-kit setup')}\n${dim('Issue-to-PR workflow plugin for Claude Code — by The Agile Monkeys')}\n`);
+  console.log(`\n${b('claude-dev-kit setup')}\n${dim('Issue-to-PR workflow for Claude Code & Codex — by The Agile Monkeys')}\n`);
 
   // 1. Issue tracker
   console.log(b('1. Issue tracker'));
@@ -148,6 +251,9 @@ async function main() {
     console.log('    claude plugin marketplace add theam/claude-dev-kit');
     console.log('    claude plugin install fullstack-dev-kit@claude-dev-kit');
   }
+
+  await maybeSetupCodex({ consent, tracker, figma });
+
   console.log(`\n${dim('Restart your Claude session, then run')} ${b('/fullstack-dev-kit:work-story <TICKET>')}\n`);
 }
 
