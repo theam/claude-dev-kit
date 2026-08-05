@@ -25,8 +25,10 @@ skill invocation and MCP OAuth are still yours to confirm on your build.*
 
 ## Connectors / MCP (from your wizard choices)
 
-`issue-fetch` reads tickets through Codex's connector for your tracker. Codex ships
-**curated connectors** (native OAuth), so the wizard installs the matching one and you
+`issue-fetch` reads tickets through Codex's connector for your tracker. **The easiest
+way is to just ask the kit** — *"connect my Jira"* / *"set up the Atlassian connector"* —
+and it installs the right one for you (you complete the one sign-in). Codex ships
+**curated connectors** (native OAuth); the wizard installs the matching one and you
 authenticate with a click **in the Codex app** (Plugins → the connector → sign in):
 
 - **Jira → `atlassian-rovo@openai-curated`** (Jira + Confluence)

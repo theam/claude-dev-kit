@@ -21,7 +21,12 @@ Pick `tracker.type` with the least friction:
 2. Check which backends are actually available: is an Atlassian or Linear MCP authenticated? Is `gh` logged in for this repo? Is Azure DevOps configured?
 3. If still ambiguous, **ask the user once** which tracker the team uses: Jira, Linear, GitHub Issues, or Azure DevOps.
 
-Then run the matching discovery below. For any MCP/CLI that is not authenticated, tell the user how to authenticate (`/mcp`, `gh auth login`, `az login`) and stop — never continue with invented values.
+Then run the matching discovery below. For any MCP/CLI that is not authenticated, **offer to set it up for them** (users are encouraged to just ask "connect my Jira" — do the work, don't only hand back a command):
+- **Claude Code:** the tracker/design MCPs are plugin-declared (`atlassian`, `linear`, `figma`) — authorize with `claude mcp login <server>` (or tell them to run `/mcp` inside the session; the OAuth browser step is theirs to complete).
+- **Codex:** install the curated connector and have them sign in from the app — `codex plugin add atlassian-rovo@openai-curated` (Jira/Confluence) · `linear@openai-curated` · `figma@openai-curated`.
+- **GitHub / Azure:** `gh auth login` / `az login` (no MCP).
+
+Run the command for them when you can; the OAuth/browser sign-in is always the user's step. Then stop — never continue with invented values until the backend is actually reachable.
 
 ## 2. Discover per tracker
 
