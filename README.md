@@ -207,9 +207,10 @@ codex plugin marketplace add theam/claude-dev-kit
 codex plugin add fullstack-dev-kit@claude-dev-kit
 ```
 
-The setup wizard does this for whichever of Claude Code / Codex it finds, registers the
-**MCP server your tracker choice implies** (Jira → Atlassian, Linear → Linear; GitHub/
-Azure use their CLIs), and schedules an anonymous **telemetry sweep** so Codex sessions
+The setup wizard does this for whichever of Claude Code / Codex it finds, installs the
+**Codex connector your tracker choice implies** (Jira → `atlassian-rovo`, Linear → `linear`,
+Figma → `figma`, all curated with native OAuth; GitHub/Azure use their CLIs), and schedules
+an anonymous **telemetry sweep** so Codex sessions
 report usage tagged `agent: codex` (surface `cli` / `vscode`). *Validated against real
 Codex 0.147: marketplace add, plugin install, and the telemetry parser/sweep. In-app
 skill invocation and MCP auth are yours to confirm.* Details:

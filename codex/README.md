@@ -23,13 +23,20 @@ built-in review, so invoke the kit's explicitly.
 enable the plugin; the telemetry parser + sweep are confirmed on a real rollout. In-app
 skill invocation and MCP OAuth are still yours to confirm on your build.*
 
-## MCP servers (from your wizard choices)
+## Connectors / MCP (from your wizard choices)
 
-`issue-fetch` reads tickets through an MCP. The wizard registers the one matching your
-tracker (`codex mcp add … && codex mcp login …`): **Jira → Atlassian**
-(`https://mcp.atlassian.com/v1/sse`), **Linear → Linear** (`https://mcp.linear.app/mcp`).
-GitHub Issues / Azure DevOps use their CLIs (`gh` / `az`) — no MCP. Add them by hand with
-`codex mcp add <name> --url <url>` if you skip the wizard.
+`issue-fetch` reads tickets through Codex's connector for your tracker. Codex ships
+**curated connectors** (native OAuth), so the wizard installs the matching one and you
+authenticate with a click **in the Codex app** (Plugins → the connector → sign in):
+
+- **Jira → `atlassian-rovo@openai-curated`** (Jira + Confluence)
+- **Linear → `linear@openai-curated`**
+- **Figma → `figma@openai-curated`** (if you use design links)
+- **GitHub Issues / Azure DevOps** use their CLIs (`gh` / `az`) — no connector.
+
+Install by hand if you skip the wizard: `codex plugin add atlassian-rovo@openai-curated`,
+then authenticate in the app. (A raw `codex mcp add <name> --url <url>` also works if you
+prefer to point at an MCP endpoint directly.)
 
 ## What works the same as Claude Code
 

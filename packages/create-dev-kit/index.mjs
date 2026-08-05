@@ -43,11 +43,12 @@ const KIT_MARKETPLACE = 'theam/claude-dev-kit';           // Codex marketplace s
 const KIT_HOME = join(homedir(), '.dev-kit');             // stable checkout for the telemetry sweep script
 const CODEX_APP_BIN = '/Applications/Codex.app/Contents/Resources/codex';
 
-// MCP servers Codex needs, keyed by the wizard's tracker choice. github/azure use
-// their CLIs (gh/az), not MCP, so they're absent here.
-const CODEX_MCP = {
-  jira:   { name: 'atlassian', url: 'https://mcp.atlassian.com/v1/sse' },
-  linear: { name: 'linear',    url: 'https://mcp.linear.app/mcp' },
+// Codex ships curated connectors (native OAuth, maintained) for the trackers we
+// support. Prefer installing the connector over hand-registering an MCP URL.
+// github/azure use their CLIs (gh/az), so they're absent here.
+const CODEX_CONNECTOR = {
+  jira:   'atlassian-rovo@openai-curated',   // Jira + Confluence
+  linear: 'linear@openai-curated',
 };
 
 function have(cmd, args = ['--version']) {
@@ -81,16 +82,20 @@ async function maybeSetupCodex({ consent, tracker, figma }) {
     console.log(dim(`   marketplace add failed — do it yourself: codex plugin marketplace add ${KIT_MARKETPLACE}`));
   }
 
-  // 2. MCP servers implied by your tracker/figma choices (authenticate on first use).
-  const mcp = CODEX_MCP[tracker];
-  if (mcp) {
-    console.log(dim(`   $ codex mcp add ${mcp.name} --url ${mcp.url}`));
-    spawnSync(codex, ['mcp', 'add', mcp.name, '--url', mcp.url], { stdio: 'inherit' });
-    console.log(dim(`     then authenticate:  codex mcp login ${mcp.name}`));
-  } else if (tracker === 'github' || tracker === 'azure') {
-    console.log(dim(`   (${tracker} uses its CLI — no MCP to register)`));
+  // 2. Connectors implied by your tracker/figma choices — install Codex's curated
+  //    connector (native OAuth), then authenticate (one click in the Codex app).
+  const connectors = [];
+  if (CODEX_CONNECTOR[tracker]) connectors.push(CODEX_CONNECTOR[tracker]);
+  if (figma) connectors.push('figma@openai-curated');
+  for (const c of connectors) {
+    console.log(dim(`   $ codex plugin add ${c}`));
+    spawnSync(codex, ['plugin', 'add', c], { stdio: 'inherit' });
   }
-  if (figma) console.log(dim('   Figma: connect the Figma MCP in Codex if you use design links (endpoint depends on your Figma setup).'));
+  if (connectors.length) {
+    console.log(dim('   → authenticate each from the Codex app (Plugins → the connector → sign in), or `codex mcp login <name>`.'));
+  } else if (tracker === 'github' || tracker === 'azure') {
+    console.log(dim(`   (${tracker} uses its CLI — no connector needed)`));
+  }
 
   // 3. Telemetry sweep (anonymous, opt-in). Needs a stable script path, so keep a
   //    lightweight checkout at ~/.dev-kit and schedule the sweep from there.
