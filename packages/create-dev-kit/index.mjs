@@ -73,13 +73,19 @@ async function maybeSetupCodex({ consent, tracker, figma }) {
   if (!await yn('   Set the kit up for Codex too?', true)) return;
   if (!codex) { console.log(dim('   Codex CLI not found on PATH or in /Applications/Codex.app — skipping.')); return; }
 
+  // Testing override: install from a branch instead of the default (main). Lets a
+  // teammate try an unmerged branch end to end — `DEVKIT_CODEX_REF=feat/... npm create …`.
+  const CODEX_REF = process.env.DEVKIT_CODEX_REF;
+  if (CODEX_REF) console.log(dim(`   (testing from ref ${CODEX_REF})`));
+
   // 1. Native plugin: add our marketplace, then install the plugin (skills).
-  console.log(dim(`   $ codex plugin marketplace add ${KIT_MARKETPLACE}`));
-  if (okStatus(spawnSync(codex, ['plugin', 'marketplace', 'add', KIT_MARKETPLACE], { stdio: 'inherit' }))) {
+  const mpArgs = ['plugin', 'marketplace', 'add', KIT_MARKETPLACE, ...(CODEX_REF ? ['--ref', CODEX_REF] : [])];
+  console.log(dim(`   $ codex ${mpArgs.join(' ')}`));
+  if (okStatus(spawnSync(codex, mpArgs, { stdio: 'inherit' }))) {
     console.log(dim('   $ codex plugin add fullstack-dev-kit@claude-dev-kit'));
     spawnSync(codex, ['plugin', 'add', 'fullstack-dev-kit@claude-dev-kit'], { stdio: 'inherit' });
   } else {
-    console.log(dim(`   marketplace add failed — do it yourself: codex plugin marketplace add ${KIT_MARKETPLACE}`));
+    console.log(dim(`   marketplace add failed — do it yourself: codex plugin marketplace add ${KIT_MARKETPLACE}${CODEX_REF ? ' --ref ' + CODEX_REF : ''}`));
   }
 
   // 2. Connectors implied by your tracker/figma choices — install Codex's curated
@@ -102,8 +108,15 @@ async function maybeSetupCodex({ consent, tracker, figma }) {
   if (!have('git')) {
     console.log(dim('   git not found — skipping the telemetry sweep (plugin + MCP are set up).'));
   } else {
-    if (existsSync(join(KIT_HOME, '.git'))) spawnSync('git', ['-C', KIT_HOME, 'pull', '--ff-only'], { stdio: 'ignore' });
-    else spawnSync('git', ['clone', '--depth', '1', KIT_REPO, KIT_HOME], { stdio: 'ignore' });
+    if (existsSync(join(KIT_HOME, '.git'))) {
+      if (CODEX_REF) {
+        spawnSync('git', ['-C', KIT_HOME, 'fetch', 'origin', CODEX_REF], { stdio: 'ignore' });
+        spawnSync('git', ['-C', KIT_HOME, 'checkout', CODEX_REF], { stdio: 'ignore' });
+      }
+      spawnSync('git', ['-C', KIT_HOME, 'pull', '--ff-only'], { stdio: 'ignore' });
+    } else {
+      spawnSync('git', ['clone', '--depth', '1', ...(CODEX_REF ? ['--branch', CODEX_REF] : []), KIT_REPO, KIT_HOME], { stdio: 'ignore' });
+    }
     const plistTmpl = join(KIT_HOME, 'codex', 'dev-kit-codex-sweep.plist');
     if (process.platform === 'darwin' && existsSync(plistTmpl)) {
       try {
