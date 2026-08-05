@@ -160,7 +160,7 @@ try {
         tok.cacheRead = cached;
         tok.input = Math.max(0, (last.input_tokens || 0) - cached); // input_tokens includes the cached portion
         tok.output = (last.output_tokens || 0) + (last.reasoning_output_tokens || 0);
-        tok.cacheCreation = 0; // Codex does not currently surface cache-write tokens
+        tok.cacheCreation = last.cache_write_input_tokens || 0; // present since codex-cli ~0.147
       }
     } else {
       for (const line of lines) {

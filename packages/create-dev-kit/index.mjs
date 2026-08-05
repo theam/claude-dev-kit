@@ -82,10 +82,15 @@ async function maybeSetupCodex(consent) {
     console.log(`   • ${codexHooksPath} ${dim('(telemetry hooks — need a one-time /hooks trust)')}`);
   } catch (e) { console.log(dim('   could not write Codex hooks: ' + (e?.message || e))); }
 
-  // 3. Skills → ~/.agents/skills/<name>/ (same SKILL.md files as the Claude side)
+  // 3. Skills → same SKILL.md files as the Claude side. The skills dir is
+  // version-dependent: the Codex desktop app (codex-cli ~0.147) uses
+  // ~/.codex/skills/; some CLI builds use ~/.agents/skills/. Prefer whichever
+  // already exists, else default to ~/.codex/skills/.
   try {
     const src = join(KIT_HOME, 'skills');
-    const dst = join(homedir(), '.agents', 'skills');
+    const codexSkills = join(homedir(), '.codex', 'skills');
+    const agentsSkills = join(homedir(), '.agents', 'skills');
+    const dst = existsSync(agentsSkills) && !existsSync(codexSkills) ? agentsSkills : codexSkills;
     mkdirSync(dst, { recursive: true });
     let n = 0;
     for (const name of readdirSync(src)) {

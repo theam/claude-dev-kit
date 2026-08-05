@@ -199,7 +199,8 @@ Either way, a skipped gate is **reported, never hidden**.
 The kit also targets **OpenAI Codex** (CLI + VS Code extension). The setup wizard
 detects Codex and, with your OK, anchors a stable checkout at `~/.dev-kit`, wires
 Codex's session **hooks** to the shared telemetry emitter, and copies the same
-`SKILL.md` playbooks into `~/.agents/skills/`. Telemetry from Codex sessions lands
+`SKILL.md` playbooks into Codex's skills dir (`~/.codex/skills/` on the Codex
+desktop app; `~/.agents/skills/` on some CLI builds). Telemetry from Codex sessions lands
 in the same place, tagged `agent: codex` (surface `cli` / `vscode`), so aggregate
 usage can be split by tool.
 

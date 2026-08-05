@@ -64,7 +64,7 @@ layout:
 
 | Content | Claude Code | Codex |
 | --- | --- | --- |
-| Skills (`SKILL.md`) | `skills/<name>/` | `~/.agents/skills/<name>/` |
+| Skills (`SKILL.md`) | `skills/<name>/` | `~/.codex/skills/<name>/` (desktop app; some CLI builds use `~/.agents/skills/`) |
 | Project instructions | `CLAUDE.md` | `AGENTS.md` (CLAUDE.md can `@import` it) |
 | Trackers / MCP | plugin + `.claude/` | `~/.codex/config.toml` `[mcp_servers.*]` |
 | Session hooks | `hooks/hooks.json` | `~/.codex/hooks.json` |
