@@ -15,6 +15,7 @@
 import { readFileSync, writeFileSync, rmSync, mkdirSync, cpSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SRC_SKILLS = join(ROOT, 'skills');
@@ -50,3 +51,7 @@ if (manifest.version !== kitVersion) {
 }
 
 console.log(`Codex plugin built: ${n} skills + instructions/ synced, version ${kitVersion}.`);
+
+// Validate the freshly-built bundle (structure, enums, self-contained instructions).
+const v = spawnSync(process.execPath, [join(ROOT, 'scripts', 'validate-codex-plugin.mjs')], { stdio: 'inherit' });
+if (v.status !== 0) process.exit(v.status || 1);

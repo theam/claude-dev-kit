@@ -8,6 +8,14 @@ a release is only "live" for users once that is bumped and published.
 
 ## [Unreleased]
 
+## [0.18.1] - 2026-08-10
+### Changed
+- **Codex plugin packaging hardening** (Phase 1 of aligning with the new open *Agent Plugins* standard):
+  - **Validator** (`scripts/validate-codex-plugin.mjs`, run at the end of `build-codex-plugin.mjs`, zero-dep): checks the marketplace + plugin manifests against the enums confirmed on **codex-cli 0.147** (`installation`, `authentication`, source shape) and enforces a **self-contained bundle** — every `instructions/…` a bundled skill references must ship in the plugin. This is the check that would have caught the packaging bug `pr-review` found on #28.
+  - Enriched the plugin `interface` (added `privacyPolicyURL` → `TELEMETRY.md`) toward Plugins Directory listing readiness.
+### Removed
+- The unverified `codex/hooks.json` template. Codex session hooks are feature-flagged on the desktop app and their on-disk format is version-specific; the kit delivers Codex telemetry via the hook-independent **sweep**, so shipping a guessed hooks file was wrong. Docs updated.
+
 ## [0.18.0] - 2026-07-31
 ### Added
 - **Codex support (experimental).** The kit now targets OpenAI Codex (CLI + VS Code) alongside Claude Code.
