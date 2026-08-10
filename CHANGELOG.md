@@ -14,6 +14,7 @@ a release is only "live" for users once that is bumped and published.
   - **Verified against real `codex-cli 0.147`:** Codex *requires* `.codex-plugin/plugin.json` (a portable-only layout errors `missing plugin.json`), and installs cleanly with **both** manifests present — confirming dual-emit is the correct approach.
   - Validator extended: checks the portable manifest (`$schema` const, `name` pattern, closed-schema fields) and Agent Skills naming (hyphen-only skill dirs, frontmatter `name` matches the dir).
   - Portable `mcp.json` intentionally omitted — the 1.0.0 MCP schema has no OAuth field and our trackers use Codex curated connectors; portable clients handle connector auth themselves.
+- **Portable `work-story` orchestration skill.** The end-to-end "ticket → PR" flow now travels to hosts without an orchestrator subagent (Codex, and other Agent-Plugins clients): a `work-story` skill carries the full pipeline (fetch → plan+approval → implement → adaptive gates + security → self-review → PR → update ticket) as a playbook the **host agent runs itself**. Shipped in the plugin bundle only (via `codex/skills/`), **not** in the Claude Code plugin — Claude Code keeps its richer `/work-story` command + `coding-agent` subagent (context isolation, two-phase plan gate) unchanged. Nothing is removed from Claude Code; this is purely additive for the other clients.
 
 ## [0.18.1] - 2026-08-10
 ### Changed

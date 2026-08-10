@@ -34,6 +34,19 @@ for (const name of readdirSync(SRC_SKILLS)) {
   n++;
 }
 
+// 1a. Bundle-only skills (codex/skills/): shipped to the plugin (Codex + portable
+// clients like Cursor/Copilot) but NOT to the Claude Code plugin. This is where the
+// `work-story` orchestration playbook lives — hosts without an orchestrator subagent
+// follow it directly, whereas Claude Code uses its /work-story command + coding-agent.
+const SRC_BUNDLE_SKILLS = join(ROOT, 'codex', 'skills');
+if (existsSync(SRC_BUNDLE_SKILLS)) {
+  for (const name of readdirSync(SRC_BUNDLE_SKILLS)) {
+    if (!existsSync(join(SRC_BUNDLE_SKILLS, name, 'SKILL.md'))) continue;
+    cpSync(join(SRC_BUNDLE_SKILLS, name), join(DST_SKILLS, name), { recursive: true });
+    n++;
+  }
+}
+
 // 1b. Resync the instructions the skills reference (secure-coding, testing-standards,
 // stacks/…). Without these the bundle isn't self-contained — a native Codex install
 // can't run the kit's own security/testing/stack rules. Their relative paths
