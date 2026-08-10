@@ -5,10 +5,16 @@ the **same `SKILL.md` playbooks** as the Claude Code plugin, installed into Code
 
 ## How it's used
 
-Invoke a skill explicitly (e.g. `$issue-fetch`, `$pr-review`, `$create-pr`) or ask for the
-work directly ("work ticket PROJ-1234 end to end"). Codex has its own built-in review; to use
-this kit's review, invoke `$pr-review`. The skills honor the per-repo config in
-`.claude/dev-kit.json` (tracker, PR host, gates) exactly as on Claude Code.
+- **End to end:** invoke **`$work-story PROJ-1234`** — the orchestration playbook. Since Codex
+  has no orchestrator subagent, *you (the host agent)* run its steps in order: fetch → plan
+  (with approval) → implement → verify gates → self-review → open PR → update the ticket,
+  invoking the other skills as it calls for them.
+- **Single step:** invoke any skill directly (`$issue-fetch`, `$pr-review`, `$create-pr`, …).
+  Codex has its own built-in review; to use this kit's review, invoke `$pr-review`.
+
+The skills honor the per-repo config in `.claude/dev-kit.json` (tracker, PR host, gates)
+exactly as on Claude Code. (On Claude Code the end-to-end flow is the `/work-story` command +
+`coding-agent` subagent instead of this playbook skill.)
 
 ## Prerequisites
 

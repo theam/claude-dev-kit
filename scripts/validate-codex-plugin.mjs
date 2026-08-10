@@ -59,7 +59,20 @@ else {
   }
 }
 
-// 3. Self-contained bundle: every instructions/… referenced by a bundled skill must exist here.
+// 3. Portable Agent Plugins 1.0.0 manifest (root plugin.json), for non-Codex clients.
+const portPath = join(PLUGIN, 'plugin.json');
+if (!existsSync(portPath)) errs.push(`missing portable ${portPath} — run build-codex-plugin.mjs`);
+else {
+  let pm; try { pm = readJson(portPath); } catch (e) { errs.push(`portable plugin.json is not valid JSON: ${e.message}`); }
+  if (pm) {
+    if (pm.$schema !== 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json') errs.push('portable plugin.json: $schema must be the Agent Plugins 1.0.0 const URI');
+    if (!pm.name || !/^(?!.*(?:--|\.\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/.test(pm.name)) errs.push(`portable plugin.json: name "${pm.name}" fails the 1.0.0 pattern`);
+    if (pm.author && typeof pm.author !== 'object') errs.push('portable plugin.json: author must be an object {name,email,url}');
+    for (const bad of ['skills', 'interface']) if (bad in pm) errs.push(`portable plugin.json: "${bad}" is not allowed by the closed schema — put it under extensions instead`);
+  }
+}
+
+// 4. Self-contained bundle + portable skill-name rules.
 const skillsDir = join(PLUGIN, 'skills');
 if (existsSync(skillsDir)) {
   const refs = new Set();
@@ -69,6 +82,11 @@ if (existsSync(skillsDir)) {
     const body = readFileSync(sp, 'utf8');
     for (const m of body.matchAll(/instructions\/[A-Za-z0-9/_-]+\.md/g)) refs.add(m[0]);
     for (const m of body.matchAll(/instructions\/stacks\//g)) refs.add('instructions/stacks');
+    // Agent Skills: dir name hyphen-only, and frontmatter `name` must match the dir name.
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(name)) errs.push(`skill "${name}": dir name must be lowercase hyphen-only (Agent Skills spec)`);
+    const fm = body.match(/^---\n([\s\S]*?)\n---/);
+    const declared = fm && fm[1].match(/^name:\s*(.+)$/m)?.[1]?.trim();
+    if (declared && declared !== name) errs.push(`skill "${name}": frontmatter name "${declared}" must match the directory name`);
   }
   for (const ref of refs) {
     if (!existsSync(join(PLUGIN, ref))) errs.push(`bundle is not self-contained: a skill references "${ref}" but it's not in the plugin — run build-codex-plugin.mjs`);

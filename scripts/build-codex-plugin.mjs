@@ -34,6 +34,19 @@ for (const name of readdirSync(SRC_SKILLS)) {
   n++;
 }
 
+// 1a. Bundle-only skills (codex/skills/): shipped to the plugin (Codex + portable
+// clients like Cursor/Copilot) but NOT to the Claude Code plugin. This is where the
+// `work-story` orchestration playbook lives — hosts without an orchestrator subagent
+// follow it directly, whereas Claude Code uses its /work-story command + coding-agent.
+const SRC_BUNDLE_SKILLS = join(ROOT, 'codex', 'skills');
+if (existsSync(SRC_BUNDLE_SKILLS)) {
+  for (const name of readdirSync(SRC_BUNDLE_SKILLS)) {
+    if (!existsSync(join(SRC_BUNDLE_SKILLS, name, 'SKILL.md'))) continue;
+    cpSync(join(SRC_BUNDLE_SKILLS, name), join(DST_SKILLS, name), { recursive: true });
+    n++;
+  }
+}
+
 // 1b. Resync the instructions the skills reference (secure-coding, testing-standards,
 // stacks/…). Without these the bundle isn't self-contained — a native Codex install
 // can't run the kit's own security/testing/stack rules. Their relative paths
@@ -50,7 +63,29 @@ if (manifest.version !== kitVersion) {
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
 }
 
-console.log(`Codex plugin built: ${n} skills + instructions/ synced, version ${kitVersion}.`);
+// 3. Dual-emit the PORTABLE Agent Plugins 1.0.0 manifest at the plugin root.
+// Codex reads .codex-plugin/plugin.json (required — verified: Codex 0.147 errors
+// "missing plugin.json" without it); portable clients (Cursor, VS Code, Copilot, …)
+// read this root plugin.json. Generated from the Codex manifest = one source of truth.
+// The portable schema is closed and has no home for Codex's `interface`/`skills` keys,
+// so `skills` is dropped (skills are auto-discovered from skills/) and `interface`
+// rides under our reverse-DNS extensions namespace.
+const cm = JSON.parse(readFileSync(manifestPath, 'utf8'));
+const portable = {
+  $schema: 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json',
+  name: cm.name,
+  version: cm.version,
+  description: cm.description,
+  author: cm.author,          // {name, url} object — valid under the portable schema
+  homepage: cm.homepage,
+  repository: cm.repository,
+  license: cm.license,
+  keywords: cm.keywords,
+  extensions: { 'com.theagilemonkeys.dev-kit': { interface: cm.interface } },
+};
+writeFileSync(join(PLUGIN, 'plugin.json'), JSON.stringify(portable, null, 2) + '\n');
+
+console.log(`Codex plugin built: ${n} skills + instructions/ synced, version ${kitVersion} (native + portable manifests).`);
 
 // Validate the freshly-built bundle (structure, enums, self-contained instructions).
 const v = spawnSync(process.execPath, [join(ROOT, 'scripts', 'validate-codex-plugin.mjs')], { stdio: 'inherit' });

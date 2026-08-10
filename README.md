@@ -202,27 +202,51 @@ Full **`/work-story <TICKET>`** flow is ticket-first (it fetches the story and m
 
 Either way, a skipped gate is **reported, never hidden**.
 
-## Also runs on Codex (experimental)
+## Also runs on Codex, Cursor & Copilot (experimental)
 
-The kit also targets **OpenAI Codex** (CLI + desktop app) as a **native Codex plugin**.
-Codex has its own plugin system parallel to Claude Code's, so this repo doubles as a
-Codex marketplace ([`.agents/plugins/marketplace.json`](./.agents/plugins/marketplace.json)
-+ [`plugins/fullstack-dev-kit/`](./plugins/fullstack-dev-kit/), whose skills are
-generated from the canonical top-level `skills/`). Install:
+Beyond Claude Code, the kit ships as a plugin for **any [Agent Plugins 1.0.0](https://agent-plugins.org)
+client**. This repo doubles as the plugin: a Codex marketplace
+([`.agents/plugins/marketplace.json`](./.agents/plugins/marketplace.json)) plus a portable
+plugin at [`plugins/fullstack-dev-kit/`](./plugins/fullstack-dev-kit/) that carries **both** a
+Codex-native `.codex-plugin/plugin.json` **and** a portable root `plugin.json`. The same
+`skills/` (generated from the canonical top-level `skills/`) serve every client.
 
+**What travels:** the skills, including a portable **`work-story`** orchestration playbook the
+host agent runs end to end (fetch → plan → implement → gates → review → PR → ticket). **What
+doesn't:** Claude Code's `coding-agent` subagent and curated Codex connectors are host-specific;
+each client uses its own agent + its own MCP/connector auth.
+
+> **Telemetry note:** the anonymous usage sweep is set up **only by the `npm create` wizard**
+> (Codex). A plain plugin install — and any install on Cursor/Copilot — carries **no
+> telemetry**. If you want usage attributed, install via the wizard.
+
+### OpenAI Codex (validated on codex-cli 0.147)
 ```bash
 codex plugin marketplace add theam/claude-dev-kit
 codex plugin add fullstack-dev-kit@claude-dev-kit
 ```
+Then invoke `$work-story PROJ-1234` (or any single skill like `$pr-review`). The `npm create`
+wizard also installs the **connector your tracker implies** (Jira → `atlassian-rovo`, Linear →
+`linear`, Figma → `figma`; GitHub/Azure use their CLIs) and schedules the telemetry sweep.
+Details: [`codex/README.md`](./codex/README.md).
 
-The setup wizard does this for whichever of Claude Code / Codex it finds, installs the
-**Codex connector your tracker choice implies** (Jira → `atlassian-rovo`, Linear → `linear`,
-Figma → `figma`, all curated with native OAuth; GitHub/Azure use their CLIs), and schedules
-an anonymous **telemetry sweep** so Codex sessions
-report usage tagged `agent: codex` (surface `cli` / `vscode`). *Validated against real
-Codex 0.147: marketplace add, plugin install, and the telemetry parser/sweep. In-app
-skill invocation and MCP auth are yours to confirm.* Details:
-[`codex/README.md`](./codex/README.md).
+### GitHub Copilot (VS Code) — *experimental in VS Code*
+Command Palette → **“Chat: Install Plugin From Source”** → paste `https://github.com/theam/claude-dev-kit`.
+VS Code clones and installs it; skills load from the plugin's `skills/` and any `mcp.json` starts
+automatically. Add your tracker's MCP via **MCP: Add Server** (or `.vscode/mcp.json`). *Feature is
+labeled Experimental — behavior may shift.*
+
+### Cursor — *no git-URL installer yet*
+Cursor has no “install from git URL” command today. Either:
+- clone into the local plugins dir: `git clone https://github.com/theam/claude-dev-kit ~/.cursor/plugins/local/claude-dev-kit`, or
+- (Teams/Enterprise) an admin imports the repo: Dashboard → Plugins → **Add Marketplace → Import from Repo**.
+
+Skills then auto-load; enable MCP under **Cursor Settings → Tools & MCP** (`~/.cursor/mcp.json`).
+
+> **Status, honestly:** the Agent Plugins standard is days old (published 2026-08-06) and client
+> support is early. We've **validated Codex 0.147 end to end**; **Cursor and Copilot are not yet
+> verified by us** — the plugin is format-compliant, but confirm install + skill invocation on your
+> client version.
 
 ## Relationship to project repos
 
