@@ -86,7 +86,7 @@ async function maybeSetupCodex({ consent, tracker, figma }) {
   const codex = codexBin();
   const codexPresent = !!codex || existsSync(join(homedir(), '.codex'));
   if (!codexPresent) return;
-  console.log(`\n${b('6. Codex (also detected)')} ${dim('(experimental)')}`);
+  console.log(`\n${b('7. Codex (detected)')} ${dim('(experimental)')}`);
   if (!await yn('   Set the kit up for Codex too?', true)) return;
   if (!codex) { console.log(dim('   Codex CLI not found on PATH or in /Applications/Codex.app — skipping.')); return; }
 
@@ -156,7 +156,7 @@ async function maybeSetupCodex({ consent, tracker, figma }) {
 async function maybeSetupCursor() {
   const cursorPresent = existsSync(join(homedir(), '.cursor')) || existsSync('/Applications/Cursor.app');
   if (!cursorPresent) return;
-  console.log(`\n${b('7. Cursor (also detected)')} ${dim('(experimental — not verified by us)')}`);
+  console.log(`\n${b('8. Cursor (detected)')} ${dim('(experimental — not verified by us)')}`);
   if (!await yn('   Install the kit for Cursor too?', true)) return;
   if (!have('git')) { console.log(dim('   git not found — skipping. Install git and re-run.')); return; }
   if (!ensureKitCheckout(process.env.DEVKIT_CODEX_REF)) { console.log(dim('   could not fetch the kit — skipping Cursor setup.')); return; }
@@ -171,7 +171,7 @@ async function maybeSetupCursor() {
 }
 
 async function main() {
-  console.log(`\n${b('claude-dev-kit setup')}\n${dim('Issue-to-PR workflow for Claude Code & Codex — by The Agile Monkeys')}\n`);
+  console.log(`\n${b('claude-dev-kit setup')}\n${dim('Issue-to-PR workflow for Claude Code, Codex & Cursor — by The Agile Monkeys')}\n`);
 
   // 1. Issue tracker
   console.log(b('1. Issue tracker'));
@@ -261,30 +261,32 @@ async function main() {
   console.log(`  • ${repoCfgPath} ${dim('(commit this — shared by your team)')}`);
   console.log(`  • ${consentPath} ${dim('(per-user, private — telemetry ' + (consent ? 'ON' : 'OFF') + ')')}`);
 
-  if (await yn('\nInstall the plugin now with the Claude CLI?', true)) {
-    for (const args of [
-      ['plugin', 'marketplace', 'add', 'theam/claude-dev-kit'],
-      ['plugin', 'install', 'fullstack-dev-kit@claude-dev-kit'],
-    ]) {
-      console.log(dim(`  $ claude ${args.join(' ')}`));
-      const r = spawnSync('claude', args, { stdio: 'inherit' });
-      if (r.error) {
-        console.log(`  ${dim('claude CLI not found — run these two commands yourself:')}`);
-        console.log('    claude plugin marketplace add theam/claude-dev-kit');
-        console.log('    claude plugin install fullstack-dev-kit@claude-dev-kit');
-        break;
+  // Install per detected agent — the kit is multi-client, so Claude Code is one option,
+  // not the assumed host. Each agent gets its own opt-in step below.
+  if (have('claude')) {
+    console.log(`\n${b('6. Claude Code (detected)')}`);
+    if (await yn('   Install the plugin for Claude Code now?', true)) {
+      for (const args of [
+        ['plugin', 'marketplace', 'add', 'theam/claude-dev-kit'],
+        ['plugin', 'install', 'fullstack-dev-kit@claude-dev-kit'],
+      ]) {
+        console.log(dim(`   $ claude ${args.join(' ')}`));
+        if (spawnSync('claude', args, { stdio: 'inherit' }).error) {
+          console.log(dim('   claude CLI errored mid-run — run: claude plugin marketplace add theam/claude-dev-kit && claude plugin install fullstack-dev-kit@claude-dev-kit'));
+          break;
+        }
       }
+    } else {
+      console.log(dim('   Later: claude plugin marketplace add theam/claude-dev-kit && claude plugin install fullstack-dev-kit@claude-dev-kit'));
     }
-  } else {
-    console.log(dim('\n  Install later with:'));
-    console.log('    claude plugin marketplace add theam/claude-dev-kit');
-    console.log('    claude plugin install fullstack-dev-kit@claude-dev-kit');
   }
 
   await maybeSetupCodex({ consent, tracker, figma });
   await maybeSetupCursor();
 
-  console.log(`\n${dim('Restart your Claude session, then run')} ${b('/fullstack-dev-kit:work-story <TICKET>')}\n`);
+  console.log(`\n${b('Done.')} ${dim('Restart your agent, then start a story:')}`);
+  console.log(dim('  • Claude Code:  ') + b('/fullstack-dev-kit:work-story <TICKET>'));
+  console.log(dim('  • Codex / Cursor:  ') + b('$work-story <TICKET>') + dim('  (or invoke any skill, e.g. $pr-review)') + '\n');
 }
 
 main().catch((e) => { console.error(e?.message || e); exit(1); }).finally(() => rl.close());
