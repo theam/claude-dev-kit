@@ -1,6 +1,6 @@
 {
   "name": "@theagilemonkeys/create-dev-kit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Interactive setup for the claude-dev-kit Claude Code plugin: pick your issue tracker and design tool, review and opt in (or out) of anonymous telemetry, set your organisation, and write the config.",
   "license": "Apache-2.0",
   "type": "module",

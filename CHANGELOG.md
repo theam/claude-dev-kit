@@ -8,6 +8,12 @@ a release is only "live" for users once that is bumped and published.
 
 ## [Unreleased]
 
+## [0.19.1] - 2026-08-10
+### Added
+- **Wizard installs for Cursor too.** `create-dev-kit` now detects Cursor and, on opt-in, drops the portable plugin into `~/.cursor/plugins/local/fullstack-dev-kit` (skills auto-load on restart; MCP enabled from Cursor Settings → Tools & MCP). Additive and idempotent; no telemetry on Cursor (tracking stays Codex/Claude only). Copilot install remains manual (its "Install Plugin From Source" is a VS Code UI action, not scriptable). Wizard package bumped to 0.1.1 — republish to npm for users to get it.
+### Changed
+- Refactored the shared `~/.dev-kit` checkout into an `ensureKitCheckout()` helper used by both the Codex sweep and the Cursor install.
+
 ## [0.19.0] - 2026-08-10
 ### Added
 - **Portable Agent Plugins 1.0.0 manifest (multi-client).** `build-codex-plugin.mjs` now **dual-emits** a root `plugins/fullstack-dev-kit/plugin.json` following the open [Agent Plugins 1.0.0](https://agent-plugins.org) standard (OpenAI · AWS · Cursor · GitHub · Microsoft · Vercel), alongside the Codex-native `.codex-plugin/plugin.json`. Generated from one source; the `interface` metadata rides under the `com.theagilemonkeys.dev-kit` extensions namespace; `skills/` is shared. The same plugin is now loadable by other Agent-Plugins-compatible clients (Cursor, VS Code, Copilot, …), not just Codex.

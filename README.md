@@ -237,11 +237,12 @@ automatically. Add your tracker's MCP via **MCP: Add Server** (or `.vscode/mcp.j
 labeled Experimental — behavior may shift.*
 
 ### Cursor — *no git-URL installer yet*
-Cursor has no “install from git URL” command today. Either:
-- clone into the local plugins dir: `git clone https://github.com/theam/claude-dev-kit ~/.cursor/plugins/local/claude-dev-kit`, or
+Cursor has no “install from git URL” command today, so:
+- **Easiest:** run **`npm create @theagilemonkeys/dev-kit`** — the wizard detects Cursor and drops the portable plugin into `~/.cursor/plugins/local/fullstack-dev-kit` for you, or
+- clone it yourself: `git clone https://github.com/theam/claude-dev-kit ~/.cursor/plugins/local/claude-dev-kit`, or
 - (Teams/Enterprise) an admin imports the repo: Dashboard → Plugins → **Add Marketplace → Import from Repo**.
 
-Skills then auto-load; enable MCP under **Cursor Settings → Tools & MCP** (`~/.cursor/mcp.json`).
+Restart Cursor; skills then auto-load. Enable MCP under **Cursor Settings → Tools & MCP** (`~/.cursor/mcp.json`). No telemetry on Cursor.
 
 > **Status, honestly:** the Agent Plugins standard is days old (published 2026-08-06) and client
 > support is early. We've **validated Codex 0.147 end to end**; **Cursor and Copilot are not yet
