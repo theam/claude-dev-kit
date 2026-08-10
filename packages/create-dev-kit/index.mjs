@@ -10,7 +10,7 @@
  */
 import { createInterface } from 'node:readline/promises';
 import { stdin, stdout, exit } from 'node:process';
-import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, cpSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, cpSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
 import { randomUUID } from 'node:crypto';
@@ -62,6 +62,23 @@ function codexBin() {
   return null;
 }
 
+// Clone/update the stable kit checkout at ~/.dev-kit (shared by the Codex telemetry
+// sweep and the Cursor install). Honors DEVKIT_CODEX_REF for branch testing. Returns
+// true if the plugin is present in the checkout afterward.
+function ensureKitCheckout(ref) {
+  if (!have('git')) return existsSync(join(KIT_HOME, 'plugins', 'fullstack-dev-kit'));
+  if (existsSync(join(KIT_HOME, '.git'))) {
+    if (ref) {
+      spawnSync('git', ['-C', KIT_HOME, 'fetch', 'origin', ref], { stdio: 'ignore' });
+      spawnSync('git', ['-C', KIT_HOME, 'checkout', ref], { stdio: 'ignore' });
+    }
+    spawnSync('git', ['-C', KIT_HOME, 'pull', '--ff-only'], { stdio: 'ignore' });
+  } else {
+    spawnSync('git', ['clone', '--depth', '1', ...(ref ? ['--branch', ref] : []), KIT_REPO, KIT_HOME], { stdio: 'ignore' });
+  }
+  return existsSync(join(KIT_HOME, 'plugins', 'fullstack-dev-kit'));
+}
+
 // Codex integration. Codex has its own plugin system (parallel to Claude Code), so
 // we install the kit as a NATIVE Codex plugin from our marketplace, register the MCP
 // servers the wizard's choices imply, and schedule the anonymous telemetry sweep.
@@ -108,15 +125,7 @@ async function maybeSetupCodex({ consent, tracker, figma }) {
   if (!have('git')) {
     console.log(dim('   git not found — skipping the telemetry sweep (plugin + MCP are set up).'));
   } else {
-    if (existsSync(join(KIT_HOME, '.git'))) {
-      if (CODEX_REF) {
-        spawnSync('git', ['-C', KIT_HOME, 'fetch', 'origin', CODEX_REF], { stdio: 'ignore' });
-        spawnSync('git', ['-C', KIT_HOME, 'checkout', CODEX_REF], { stdio: 'ignore' });
-      }
-      spawnSync('git', ['-C', KIT_HOME, 'pull', '--ff-only'], { stdio: 'ignore' });
-    } else {
-      spawnSync('git', ['clone', '--depth', '1', ...(CODEX_REF ? ['--branch', CODEX_REF] : []), KIT_REPO, KIT_HOME], { stdio: 'ignore' });
-    }
+    ensureKitCheckout(CODEX_REF);
     const plistTmpl = join(KIT_HOME, 'codex', 'dev-kit-codex-sweep.plist');
     if (process.platform === 'darwin' && existsSync(plistTmpl)) {
       try {
@@ -139,6 +148,26 @@ async function maybeSetupCodex({ consent, tracker, figma }) {
 
   console.log(dim('\n   Restart Codex, then invoke a skill (e.g. $pr-review) or ask for the work directly.'));
   if (!consent) console.log(dim('   (telemetry is OFF — the sweep no-ops until you opt in)'));
+}
+
+// Cursor loads plugins from ~/.cursor/plugins/local/. We drop the portable plugin there
+// (skills auto-load; MCP is enabled from Cursor Settings → Tools & MCP). No telemetry on
+// Cursor — usage tracking is Codex/Claude only.
+async function maybeSetupCursor() {
+  const cursorPresent = existsSync(join(homedir(), '.cursor')) || existsSync('/Applications/Cursor.app');
+  if (!cursorPresent) return;
+  console.log(`\n${b('7. Cursor (also detected)')} ${dim('(experimental — not verified by us)')}`);
+  if (!await yn('   Install the kit for Cursor too?', true)) return;
+  if (!have('git')) { console.log(dim('   git not found — skipping. Install git and re-run.')); return; }
+  if (!ensureKitCheckout(process.env.DEVKIT_CODEX_REF)) { console.log(dim('   could not fetch the kit — skipping Cursor setup.')); return; }
+  try {
+    const dst = join(homedir(), '.cursor', 'plugins', 'local', 'fullstack-dev-kit');
+    mkdirSync(dirname(dst), { recursive: true });
+    rmSync(dst, { recursive: true, force: true });   // idempotent: replace any prior copy
+    cpSync(join(KIT_HOME, 'plugins', 'fullstack-dev-kit'), dst, { recursive: true });
+    console.log(`   • ${dst} ${dim('(portable plugin — restart Cursor; skills auto-load)')}`);
+    console.log(dim('   Enable your tracker MCP in Cursor Settings → Tools & MCP. (No telemetry on Cursor.)'));
+  } catch (e) { console.log(dim('   could not install for Cursor: ' + (e?.message || e))); }
 }
 
 async function main() {
@@ -253,6 +282,7 @@ async function main() {
   }
 
   await maybeSetupCodex({ consent, tracker, figma });
+  await maybeSetupCursor();
 
   console.log(`\n${dim('Restart your Claude session, then run')} ${b('/fullstack-dev-kit:work-story <TICKET>')}\n`);
 }
