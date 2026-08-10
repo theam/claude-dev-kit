@@ -8,6 +8,10 @@ a release is only "live" for users once that is bumped and published.
 
 ## [Unreleased]
 
+## [0.19.2] - 2026-08-10
+### Changed
+- **Wizard install step is now agent-aware.** It no longer assumes Claude Code: the "install for Claude Code" step only appears **when the `claude` CLI is detected** (was an unconditional "Install with the Claude CLI?"), and the closing hint shows the right entry point per host (Claude `/fullstack-dev-kit:work-story` vs Codex/Cursor `$work-story`). Sections renumbered (Claude 6 · Codex 7 · Cursor 8); intro reworded for the multi-client kit. Wizard package → 0.1.2 (republish to npm for users to get it).
+
 ## [0.19.1] - 2026-08-10
 ### Added
 - **Wizard installs for Cursor too.** `create-dev-kit` now detects Cursor and, on opt-in, drops the portable plugin into `~/.cursor/plugins/local/fullstack-dev-kit` (skills auto-load on restart; MCP enabled from Cursor Settings → Tools & MCP). Additive and idempotent; no telemetry on Cursor (tracking stays Codex/Claude only). Copilot install remains manual (its "Install Plugin From Source" is a VS Code UI action, not scriptable). Wizard package bumped to 0.1.1 — republish to npm for users to get it.
