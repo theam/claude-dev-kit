@@ -50,7 +50,29 @@ if (manifest.version !== kitVersion) {
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
 }
 
-console.log(`Codex plugin built: ${n} skills + instructions/ synced, version ${kitVersion}.`);
+// 3. Dual-emit the PORTABLE Agent Plugins 1.0.0 manifest at the plugin root.
+// Codex reads .codex-plugin/plugin.json (required — verified: Codex 0.147 errors
+// "missing plugin.json" without it); portable clients (Cursor, VS Code, Copilot, …)
+// read this root plugin.json. Generated from the Codex manifest = one source of truth.
+// The portable schema is closed and has no home for Codex's `interface`/`skills` keys,
+// so `skills` is dropped (skills are auto-discovered from skills/) and `interface`
+// rides under our reverse-DNS extensions namespace.
+const cm = JSON.parse(readFileSync(manifestPath, 'utf8'));
+const portable = {
+  $schema: 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json',
+  name: cm.name,
+  version: cm.version,
+  description: cm.description,
+  author: cm.author,          // {name, url} object — valid under the portable schema
+  homepage: cm.homepage,
+  repository: cm.repository,
+  license: cm.license,
+  keywords: cm.keywords,
+  extensions: { 'com.theagilemonkeys.dev-kit': { interface: cm.interface } },
+};
+writeFileSync(join(PLUGIN, 'plugin.json'), JSON.stringify(portable, null, 2) + '\n');
+
+console.log(`Codex plugin built: ${n} skills + instructions/ synced, version ${kitVersion} (native + portable manifests).`);
 
 // Validate the freshly-built bundle (structure, enums, self-contained instructions).
 const v = spawnSync(process.execPath, [join(ROOT, 'scripts', 'validate-codex-plugin.mjs')], { stdio: 'inherit' });

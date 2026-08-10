@@ -1,6 +1,6 @@
 {
   "name": "fullstack-dev-kit",
-  "version": "0.18.1",
+  "version": "0.19.0",
   "description": "Issue-to-PR workflow for any tech stack: fetch stories from Jira/Linear/GitHub/Azure and Figma designs, plan-approval gate, adaptive quality + coverage gates, e2e generation, PR creation and review.",
   "author": {
     "name": "The Agile Monkeys",

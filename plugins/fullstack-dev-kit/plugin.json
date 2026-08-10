@@ -1,0 +1,41 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "fullstack-dev-kit",
+  "version": "0.19.0",
+  "description": "Issue-to-PR workflow for any tech stack: fetch stories from Jira/Linear/GitHub/Azure and Figma designs, plan-approval gate, adaptive quality + coverage gates, e2e generation, PR creation and review.",
+  "author": {
+    "name": "The Agile Monkeys",
+    "url": "https://www.theagilemonkeys.com"
+  },
+  "homepage": "https://github.com/theam/claude-dev-kit",
+  "repository": "https://github.com/theam/claude-dev-kit",
+  "license": "Apache-2.0",
+  "keywords": [
+    "issue-to-pr",
+    "code-review",
+    "coverage",
+    "jira",
+    "linear",
+    "workflow"
+  ],
+  "extensions": {
+    "com.theagilemonkeys.dev-kit": {
+      "interface": {
+        "displayName": "Fullstack Dev Kit",
+        "shortDescription": "Issue-to-PR workflow with quality gates, for any stack.",
+        "longDescription": "Takes a ticket (Jira / Linear / GitHub Issues / Azure) from plan-approval through implementation, adaptive tests/coverage, security and accessibility review, to an opened pull request. Stack-agnostic. The issue tracker and PR host are configured per repo; connect the matching MCP (e.g. Atlassian for Jira, Linear) to let the kit read tickets.",
+        "developerName": "The Agile Monkeys",
+        "category": "Engineering",
+        "capabilities": [
+          "Read",
+          "Write"
+        ],
+        "websiteURL": "https://github.com/theam/claude-dev-kit",
+        "privacyPolicyURL": "https://github.com/theam/claude-dev-kit/blob/main/TELEMETRY.md",
+        "defaultPrompt": [
+          "Work ticket PROJ-1234 end to end and open a PR"
+        ]
+      }
+    }
+  }
+}

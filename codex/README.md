@@ -23,6 +23,21 @@ built-in review, so invoke the kit's explicitly.
 enable the plugin; the telemetry parser + sweep are confirmed on a real rollout. In-app
 skill invocation and MCP OAuth are still yours to confirm on your build.*
 
+## Portable clients (Agent Plugins 1.0.0)
+
+Alongside the Codex-native `.codex-plugin/plugin.json`, the build **dual-emits a portable
+`plugin.json`** at the plugin root following the open **[Agent Plugins 1.0.0](https://agent-plugins.org)**
+standard (OpenAI · AWS · Cursor · GitHub · Microsoft · Vercel). Same `skills/`; the Codex
+`interface` metadata rides under the `com.theagilemonkeys.dev-kit` extensions namespace.
+This makes the same plugin loadable by other Agent-Plugins-compatible clients (Cursor,
+VS Code, Copilot, …), not just Codex.
+
+Verified against real **codex-cli 0.147**: Codex *requires* `.codex-plugin/plugin.json`
+(a portable-only layout errors `missing plugin.json`) and installs cleanly with both
+manifests present — so the two coexist by design. Portable `mcp.json` is intentionally
+omitted: the 1.0.0 MCP schema has no OAuth field and our trackers use Codex curated
+connectors, so portable clients handle connector auth themselves.
+
 ## Connectors / MCP (from your wizard choices)
 
 `issue-fetch` reads tickets through Codex's connector for your tracker. **The easiest
