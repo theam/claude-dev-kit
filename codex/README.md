@@ -74,12 +74,14 @@ The installer registers it as a **launchd agent** on macOS
 ([`dev-kit-codex-sweep.plist`](./dev-kit-codex-sweep.plist), every 15 min). On other
 OSes, schedule `node <kit>/scripts/telemetry.mjs --sweep` via cron/systemd.
 
-### Hooks (optional, where supported)
+### Why not session hooks?
 
-On Codex builds where session hooks are enabled and trusted, [`hooks.json`](./hooks.json)
-wires `Stop` + `SessionStart` (not `SessionEnd` — Codex caps it at ~1s) to the same
-emitter. It's **optional and deduplicated against the sweep** (same per-session id),
-so running both is safe. It needs a one-time `/hooks` trust and is inert until then.
+Codex has a session-hooks system, but it's **feature-flagged on the current desktop app**
+(no `/hooks` trust command surfaced) and its on-disk config format is version-specific and
+still moving. Rather than ship an unverified hook config, the kit delivers telemetry via the
+**sweep** above — it's hook-independent and works today. If a future Codex build exposes
+stable, trustable hooks, they could emit the same event (deduplicated against the sweep by
+the per-session id); until then we don't bundle a hooks file.
 
 ### Manual install (equivalent to what the wizard does)
 
@@ -103,8 +105,8 @@ layout:
 | --- | --- | --- |
 | Skills (`SKILL.md`) | `skills/<name>/` | `~/.codex/skills/<name>/` (desktop app; some CLI builds use `~/.agents/skills/`) |
 | Project instructions | `CLAUDE.md` | `AGENTS.md` (CLAUDE.md can `@import` it) |
-| Trackers / MCP | plugin + `.claude/` | `~/.codex/config.toml` `[mcp_servers.*]` |
-| Session hooks | `hooks/hooks.json` | `~/.codex/hooks.json` |
+| Trackers / MCP | plugin + `.claude/` | curated connectors / `~/.codex/config.toml` `[mcp_servers.*]` |
+| Telemetry | `hooks/hooks.json` (auto) | background sweep (launchd) — hooks feature-flagged on the app |
 
 Both platforms use the same `SKILL.md` front matter (`name` + `description`), so the
 same skill file is valid in both. Playbook bodies are kept host-neutral; where a step
