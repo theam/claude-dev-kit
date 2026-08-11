@@ -35,11 +35,11 @@ URL, no `.well-known/openai-apps-challenge` domain verification, no tool-annotat
 **Listing metadata (`interface`)** — text done, visual assets pending:
 - ✅ `displayName`, `shortDescription`, `longDescription`, `category`, `capabilities`, `websiteURL`, `privacyPolicyURL` (→ `TELEMETRY.md`), `defaultPrompt` (3 examples).
 - ✅ `termsOfServiceURL` — **decided:** points at the Apache `LICENSE`. Legal can swap it for a dedicated ToS URL at any time; no blocker.
-- ⛔ `logo` + `logoDark` — square 1024², transparent PNG, light + dark. **Owner: design.**
-- ⛔ `composerIcon` — small monochrome mark (~128²). **Owner: design.**
-- ⛔ `screenshots` — 1–3 workflow images (~1600×1000). **Owner: design.**
-- ⛔ `brandColor` — TheAM brand hex. **Owner: design/brand.**
-- ⏳ Once assets land in `plugins/fullstack-dev-kit/assets/`, wire them into `.codex-plugin/plugin.json`'s `interface`; the build mirrors them into the portable `plugin.json`.
+- ✅ `logo` + `logoDark` — TAM brand icons (`tam-positive-1024` / `tam-negative-1024`), in `assets/`.
+- ✅ `composerIcon` — the TAM `t•` symbol (`assets/composer-icon.svg`).
+- ✅ `brandColor` — `#000000` (TAM is strict B&W; canonical brand black).
+- 🟡 `screenshots` — 1–3 workflow images (~1600×1000). **Optional**; can submit without and add later. **Owner: design (or generate mockups).**
+- Note: the icon PNGs are solid-background (RGB, not transparent) — fine for a listing; regenerate from the symbol SVG if a portal requires transparency.
 
 **Identity / access (the slow one)**
 - ⛔ **OpenAI Platform:** verified individual/business identity + a role with **"Apps Management"** write access. **Owner: you (org admin).** Start this early — it gates the OpenAI submission.
@@ -68,6 +68,6 @@ URL, no `.well-known/openai-apps-challenge` domain verification, no tool-annotat
 
 ## Next actions
 1. **You:** start OpenAI identity/Apps-Management verification (long pole).
-2. **Design:** produce `logo` + `logoDark`, `composerIcon`, 1–3 `screenshots`, and a `brandColor`.
+2. ~~Design: logo / composerIcon / brandColor~~ — done (from the TAM brand system). Only optional **screenshots** remain.
 3. ~~Decide `termsOfServiceURL`~~ — done (Apache `LICENSE`; legal can swap later).
-4. **Kit:** once assets land, enrich `interface` + rebuild, then submit skills-only to OpenAI (Cursor / VS Code to follow).
+4. **Kit:** ✅ `interface` wired (brand icons + color) and validated. Package is **submission-ready** — waiting only on OpenAI identity verification to submit skills-only (Cursor / VS Code to follow).

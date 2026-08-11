@@ -8,6 +8,11 @@ a release is only "live" for users once that is bumped and published.
 
 ## [Unreleased]
 
+## [0.19.3] - 2026-08-11
+### Added
+- **Directory-listing metadata (brand + submission readiness).** The plugin `interface` now carries the TAM brand assets — `logo` / `logoDark` (positive/negative 1024² icons), `composerIcon` (the `t•` symbol), `brandColor` `#000000` — plus `termsOfServiceURL` (Apache `LICENSE`) and richer `defaultPrompt` examples; the build mirrors it all into the portable manifest. Assets live in `plugins/fullstack-dev-kit/assets/` (icons/symbol only — no licensed fonts).
+- **`SUBMISSION.md` runbook** for listing in the OpenAI Plugins Directory (+ Cursor / VS Code), with the skills-only strategy and review test cases (5 positive + 3 negative). Package is submission-ready; only optional screenshots + OpenAI identity verification remain.
+
 ## [0.19.2] - 2026-08-10
 ### Changed
 - **Wizard install step is now agent-aware.** It no longer assumes Claude Code: the "install for Claude Code" step only appears **when the `claude` CLI is detected** (was an unconditional "Install with the Claude CLI?"), and the closing hint shows the right entry point per host (Claude `/fullstack-dev-kit:work-story` vs Codex/Cursor `$work-story`). Sections renumbered (Claude 6 · Codex 7 · Cursor 8); intro reworded for the multi-client kit. Wizard package → 0.1.2 (republish to npm for users to get it).
