@@ -32,8 +32,11 @@
         ],
         "websiteURL": "https://github.com/theam/claude-dev-kit",
         "privacyPolicyURL": "https://github.com/theam/claude-dev-kit/blob/main/TELEMETRY.md",
+        "termsOfServiceURL": "https://github.com/theam/claude-dev-kit/blob/main/LICENSE",
         "defaultPrompt": [
-          "Work ticket PROJ-1234 end to end and open a PR"
+          "Work ticket PROJ-1234 end to end and open a PR",
+          "Review this diff for correctness, security, and missing tests",
+          "Fetch ticket ENG-42 and summarize its acceptance criteria"
         ]
       }
     }
