@@ -4,3 +4,7 @@ node_modules/
 .vercel/
 .vercel
 .env*
+
+# Claude Code local harness settings (never commit)
+.claude/settings.json
+.claude/settings.local.json
