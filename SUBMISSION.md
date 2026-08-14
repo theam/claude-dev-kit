@@ -39,7 +39,7 @@ URL, no `.well-known/openai-apps-challenge` domain verification, no tool-annotat
 - ✅ `composerIcon` — the TAM `t•` symbol (`assets/composer-icon.svg`).
 - ✅ `brandColor` — `#000000` (TAM is strict B&W; canonical brand black).
 - ✅ `screenshots` — 3 wired: the GitHub PR (badge + verification), the Codex plan-approval gate, and the updated Jira ticket. In `assets/screenshots/`.
-- Note: the icon PNGs are solid-background (RGB, not transparent) — fine for a listing; regenerate from the symbol SVG if a portal requires transparency. The screenshots are raw captures with browser chrome and a personal name — **design should crop the chrome / anonymize** before the final submission (drop-in replacements, same filenames).
+- Note: the icon PNGs are solid-background (RGB, not transparent) — fine for a listing; regenerate from the symbol SVG if a portal requires transparency. Screenshots now have the **browser chrome cropped**; the demo name (`atamanvega` / "Ataman Vega Vega") remains — design can redact it and add consistent margins if desired (drop-in replacements, same filenames).
 
 **Identity / access (the slow one)**
 - ⛔ **OpenAI Platform:** verified individual/business identity + a role with **"Apps Management"** write access. **Owner: you (org admin).** Start this early — it gates the OpenAI submission.
