@@ -38,8 +38,8 @@ URL, no `.well-known/openai-apps-challenge` domain verification, no tool-annotat
 - ✅ `logo` + `logoDark` — TAM brand icons (`tam-positive-1024` / `tam-negative-1024`), in `assets/`.
 - ✅ `composerIcon` — the TAM `t•` symbol (`assets/composer-icon.svg`).
 - ✅ `brandColor` — `#000000` (TAM is strict B&W; canonical brand black).
-- 🟡 `screenshots` — 1–3 workflow images (~1600×1000). **Optional**; can submit without and add later. **Owner: design (or generate mockups).**
-- Note: the icon PNGs are solid-background (RGB, not transparent) — fine for a listing; regenerate from the symbol SVG if a portal requires transparency.
+- ✅ `screenshots` — 3 wired: the GitHub PR (badge + verification), the Codex plan-approval gate, and the updated Jira ticket. In `assets/screenshots/`.
+- Note: the icon PNGs are solid-background (RGB, not transparent) — fine for a listing; regenerate from the symbol SVG if a portal requires transparency. The screenshots are raw captures with browser chrome and a personal name — **design should crop the chrome / anonymize** before the final submission (drop-in replacements, same filenames).
 
 **Identity / access (the slow one)**
 - ⛔ **OpenAI Platform:** verified individual/business identity + a role with **"Apps Management"** write access. **Owner: you (org admin).** Start this early — it gates the OpenAI submission.
@@ -68,6 +68,6 @@ URL, no `.well-known/openai-apps-challenge` domain verification, no tool-annotat
 
 ## Next actions
 1. **You:** start OpenAI identity/Apps-Management verification (long pole).
-2. ~~Design: logo / composerIcon / brandColor~~ — done (from the TAM brand system). Only optional **screenshots** remain.
+2. ~~Design: logo / composerIcon / brandColor / screenshots~~ — done. Optional polish: crop chrome / anonymize the screenshots (drop-in, same filenames).
 3. ~~Decide `termsOfServiceURL`~~ — done (Apache `LICENSE`; legal can swap later).
 4. **Kit:** ✅ `interface` wired (brand icons + color) and validated. Package is **submission-ready** — waiting only on OpenAI identity verification to submit skills-only (Cursor / VS Code to follow).

@@ -8,6 +8,10 @@ a release is only "live" for users once that is bumped and published.
 
 ## [Unreleased]
 
+## [0.19.4] - 2026-08-14
+### Added
+- **Listing screenshots.** Wired 3 workflow screenshots into the plugin `interface` (mirrored to the portable manifest): the GitHub PR (AI-generated badge + verification evidence), the Codex plan-approval gate, and the updated Jira ticket — in `plugins/fullstack-dev-kit/assets/screenshots/`. With this, the listing metadata is complete. (Raw captures for now; design can drop in cropped/anonymized versions under the same filenames.)
+
 ## [0.19.3] - 2026-08-11
 ### Added
 - **Directory-listing metadata (brand + submission readiness).** The plugin `interface` now carries the TAM brand assets — `logo` / `logoDark` (positive/negative 1024² icons), `composerIcon` (the `t•` symbol), `brandColor` `#000000` — plus `termsOfServiceURL` (Apache `LICENSE`) and richer `defaultPrompt` examples; the build mirrors it all into the portable manifest. Assets live in `plugins/fullstack-dev-kit/assets/` (icons/symbol only — no licensed fonts).
