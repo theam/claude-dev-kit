@@ -19,6 +19,19 @@ The plugin is already a valid **Agent Plugins 1.0.0** package (portable root `pl
 
 Start with **OpenAI** (largest reach: Codex + ChatGPT); Cursor and VS Code can follow.
 
+### OpenAI submission — exact portal steps (Aug 2026)
+
+1. **Identity verification** — ✅ done. `platform.openai.com/settings/organization/general` → **Verifications: Verified** (business, "The Agile Monkeys"). Reviewers match this identity to the listing's name/website/support/privacy/terms, so keep them aligned (see below).
+2. **Apps Management role** — an **owner** sets **"Apps Management" = Write** at `platform.openai.com/settings/organization/people/roles` and assigns it to the submitter. *(Only remaining gate.)*
+3. **Create the plugin** — `platform.openai.com/plugins` → **Create plugin** → type **"Skills only"**, then fill the tabs:
+   - **Info** — name, short/long description, **verified Developer Identity** (dropdown → The Agile Monkeys), logo, category (Engineering), website/privacy/terms URLs, support contact. All values live in the `interface` block of `.codex-plugin/plugin.json`.
+   - **Skills** — upload the bundle: `plugins/fullstack-dev-kit/` (`skills/` + bundled `instructions/` + portable `plugin.json`).
+   - **Prompts** — the 3 starter prompts (`defaultPrompt`).
+   - **Testing** — the **5 positive + 3 negative** cases below (prompt / expected behavior / result shape; add test credentials if a tracker MCP is needed to exercise a case).
+   - **Global** — target countries/regions.
+   - **Submit** — release notes + policy attestations → **Submit for Review**.
+4. **After approval** — the developer publishes; it then appears in the Directory.
+
 ## Requirements checklist
 
 Legend: ✅ done · ⏳ in progress · ⛔ blocked (needs an owner/decision)
@@ -41,9 +54,15 @@ URL, no `.well-known/openai-apps-challenge` domain verification, no tool-annotat
 - ✅ `screenshots` — 3 wired: the GitHub PR (badge + verification), the Codex plan-approval gate, and the updated Jira ticket. In `assets/screenshots/`.
 - Note: the icon PNGs are solid-background (RGB, not transparent) — fine for a listing; regenerate from the symbol SVG if a portal requires transparency. Screenshots now have the **browser chrome cropped**; the demo name (`atamanvega` / "Ataman Vega Vega") remains — design can redact it and add consistent margins if desired (drop-in replacements, same filenames).
 
-**Identity / access (the slow one)**
-- ⛔ **OpenAI Platform:** verified individual/business identity + a role with **"Apps Management"** write access. **Owner: you (org admin).** Start this early — it gates the OpenAI submission.
+**Identity / access**
+- ✅ **OpenAI org identity — VERIFIED.** Org **The Agile Monkeys** (`org-QOGr7edHaPBb00G4Q6ufRfYL`) shows **Verifications: Verified** (business). The org name matches the listing's `developerName` ("The Agile Monkeys"). This was the slow gate — done.
+- ⛔ **OpenAI "Apps Management" role — the only remaining gate.** Submitting needs a role with **"Apps Management" = Write**. The submitter currently lacks `organization.write`, so an **org owner** must grant it at `platform.openai.com/settings/organization/people/roles` (or use the banner's **"Manage permissions →"**). Owners have it automatically.
+- **Support contact** (portal Info tab asks for one): `ataman@theagilemonkeys.com`.
 - Cursor / VS Code: publisher accounts for their marketplaces. **Owner: you.**
+
+**Website / privacy / terms — decided (must match the verified identity):**
+- `websiteURL` → **GitHub repo** (kept). It's the real product page and lives under the `theam` org (maps to The Agile Monkeys); `author.url` already carries `theagilemonkeys.com` for identity linkage. A dedicated landing can replace it later.
+- `privacyPolicyURL` → `TELEMETRY.md` · `termsOfServiceURL` → `LICENSE`. Defensible for OSS; legal can swap for dedicated URLs at any time.
 
 **Review test cases** — ✅ drafted below (OpenAI asks for ~5 positive + ~3 negative).
 
@@ -67,7 +86,8 @@ URL, no `.well-known/openai-apps-challenge` domain verification, no tool-annotat
 - Review timelines are being scaled by the platforms — expect variability.
 
 ## Next actions
-1. **You:** start OpenAI identity/Apps-Management verification (long pole).
-2. ~~Design: logo / composerIcon / brandColor / screenshots~~ — done. Optional polish: crop chrome / anonymize the screenshots (drop-in, same filenames).
-3. ~~Decide `termsOfServiceURL`~~ — done (Apache `LICENSE`; legal can swap later).
-4. **Kit:** ✅ `interface` wired (brand icons + color) and validated. Package is **submission-ready** — waiting only on OpenAI identity verification to submit skills-only (Cursor / VS Code to follow).
+1. ~~OpenAI identity verification~~ — ✅ done (org "The Agile Monkeys" verified).
+2. **You / an org owner:** grant the submitter **"Apps Management" = Write** (`.../organization/people/roles`). **This is the only remaining gate.**
+3. ~~Design: logo / composerIcon / brandColor / screenshots~~ — done. Optional polish: crop chrome / anonymize the screenshots (drop-in, same filenames).
+4. ~~Decide `termsOfServiceURL` / website~~ — done (`LICENSE`; website = repo; legal can swap later).
+5. **Kit:** ✅ `interface` wired (brand icons + color) and validated. Package is **submission-ready** — once the Apps Management role is granted, submit skills-only via the portal (Cursor / VS Code to follow).
