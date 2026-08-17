@@ -8,6 +8,10 @@ a release is only "live" for users once that is bumped and published.
 
 ## [Unreleased]
 
+## [0.19.5] - 2026-08-17
+### Fixed
+- **Listing `interface.category`.** OpenAI's plugin uploader rejects `Engineering`; changed to **`Developer Tools`** (a valid category in the portal's enum). Mirrored to the portable manifest by the build. Unblocks the OpenAI directory submission.
+
 ## [0.19.4] - 2026-08-14
 ### Added
 - **Listing screenshots.** Wired 3 workflow screenshots into the plugin `interface` (mirrored to the portable manifest): the GitHub PR (AI-generated badge + verification evidence), the Codex plan-approval gate, and the updated Jira ticket — in `plugins/fullstack-dev-kit/assets/screenshots/`. With this, the listing metadata is complete. (Raw captures for now; design can drop in cropped/anonymized versions under the same filenames.)
