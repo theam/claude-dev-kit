@@ -48,9 +48,21 @@ The kit ships baseline "iteration zero" profiles for common stacks in [`instruct
 
 1. Add or edit `instructions/stacks/<id>.md` following the format in [`instructions/stacks/README.md`](instructions/stacks/README.md): detection signals, commands (incl. test-with-coverage → report path + format), e2e framework, conventions and prerequisites.
 2. Add the detection signal to the table in `skills/dev-kit-setup/SKILL.md` if the stack is new.
-3. That's it — skills pick the profile up automatically via `stacks` in `.claude/dev-kit.json`. No code to touch (the skills are prompts).
+3. Run `node scripts/build-codex-plugin.mjs` and commit the result. `instructions/` and `skills/` are copied into `plugins/fullstack-dev-kit/` for Codex and the portable clients, so an edit that skips this ships the old text to them. `node scripts/validate-codex-plugin.mjs` fails if the copies are stale.
+4. That's it — skills pick the profile up automatically via `stacks` in `.claude/dev-kit.json`. No prompt or agent rewiring needed (the skills are prompts).
 
 ## Testing your changes locally
+
+Before pushing, rebuild the bundle and run the checks (no dependencies, no build step):
+
+```bash
+node scripts/build-codex-plugin.mjs   # refresh plugins/fullstack-dev-kit/ from the sources
+node scripts/validate-codex-plugin.mjs
+node --test                            # scripts/*.test.mjs
+git diff --exit-code                   # a dirty tree here means the bundle was not committed
+```
+
+Then exercise it in a real session:
 
 ```bash
 claude plugin marketplace add /path/to/your/clone

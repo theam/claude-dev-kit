@@ -7,6 +7,14 @@ The `version` in `.claude-plugin/plugin.json` is what reaches installed clients 
 a release is only "live" for users once that is bumped and published.
 
 ## [Unreleased]
+### Fixed
+- **Bundle drift is now caught by validation.** `plugins/fullstack-dev-kit/{skills,instructions}/`
+  are generated copies, but `validate-codex-plugin.mjs` only checked that referenced files
+  *existed* — editing a stack profile and skipping the build shipped the old text to Codex,
+  Cursor and Copilot while validation still passed. The validator now compares every copy
+  against its source (and reports bundle files no source produces); builder and validator
+  share one mapping in `scripts/lib/bundle-sources.mjs` so they cannot disagree. Covered by
+  `scripts/validate-codex-plugin.test.mjs` (`node --test`). Tooling only — no plugin version bump.
 
 ## [0.19.5] - 2026-08-17
 ### Fixed

@@ -14,8 +14,9 @@
  *   node scripts/validate-codex-plugin.mjs
  */
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { syncedFilePairs, orphanedBundleFiles } from './lib/bundle-sources.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PLUGIN = join(ROOT, 'plugins', 'fullstack-dev-kit');
@@ -93,9 +94,24 @@ if (existsSync(skillsDir)) {
   }
 }
 
+// 5. The bundle is a copy, so "present" is not the same as "current". Check 4 proves
+// every referenced instructions file exists; this proves the copies still match their
+// canonical sources, which is what makes editing a source without rebuilding a caught
+// mistake rather than a silently shipped stale file.
+const drifted = [];
+const missing = [];
+for (const { src, dst, label } of syncedFilePairs(ROOT)) {
+  if (!existsSync(dst)) { missing.push(label); continue; }
+  if (readFileSync(src).equals(readFileSync(dst))) continue;
+  drifted.push(label);
+}
+for (const label of missing) errs.push(`bundle is missing "${label}" — run build-codex-plugin.mjs`);
+for (const label of drifted) errs.push(`bundle copy of "${label}" differs from the source — run build-codex-plugin.mjs`);
+for (const orphan of orphanedBundleFiles(ROOT)) errs.push(`bundle still carries "${orphan}", which no source produces — run build-codex-plugin.mjs`);
+
 if (errs.length) {
   console.error('✗ Codex plugin validation failed:');
   for (const e of errs) console.error('  - ' + e);
   process.exit(1);
 }
-console.log('✓ Codex plugin bundle is valid (marketplace + manifest + self-contained instructions).');
+console.log('✓ Codex plugin bundle is valid (marketplace + manifest + self-contained, in-sync instructions).');

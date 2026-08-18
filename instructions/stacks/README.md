@@ -47,7 +47,9 @@ Layout, test naming, mocking style, prerequisites (e.g. a coverage driver), and 
 
 ## Contributing a stack (or improving one)
 
-Add or edit one file here — nothing else is required for the kit to pick it up.
+Add or edit one file here, then run `node scripts/build-codex-plugin.mjs` and commit
+the result — this folder is copied into `plugins/fullstack-dev-kit/instructions/` for
+Codex and the portable clients, and only the copy reaches them.
 Prefer the mainstream toolchain for the stack, note prerequisites (e.g. PHP needs
 Xdebug/PCOV for coverage), and keep it to what the kit actually needs: how to run
 tests, get coverage, run e2e, and the conventions a reviewer would expect. See the
