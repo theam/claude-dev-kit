@@ -12,47 +12,35 @@
  *
  *   node scripts/build-codex-plugin.mjs
  */
-import { readFileSync, writeFileSync, rmSync, mkdirSync, cpSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, rmSync, mkdirSync, cpSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import { SKILL_SOURCES, TREE_SOURCES, skillDirs } from './lib/bundle-sources.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SRC_SKILLS = join(ROOT, 'skills');
-const SRC_INSTR = join(ROOT, 'instructions');
 const PLUGIN = join(ROOT, 'plugins', 'fullstack-dev-kit');
 const DST_SKILLS = join(PLUGIN, 'skills');
 const DST_INSTR = join(PLUGIN, 'instructions');
 
-// 1. Resync skills (canonical top-level skills/ → plugin/skills/).
+// 1. Resync every mapped tree from lib/bundle-sources.mjs. The map is shared with the
+// validator, so a source added here is a source the validator checks for staleness.
+// `skills/` ships everywhere; `codex/skills/` is bundle-only (the work-story playbook
+// for hosts with no orchestrator subagent). instructions/ has to travel too, or a
+// native Codex install cannot run the kit's own security/testing/stack rules.
 rmSync(DST_SKILLS, { recursive: true, force: true });
 mkdirSync(DST_SKILLS, { recursive: true });
 let n = 0;
-for (const name of readdirSync(SRC_SKILLS)) {
-  if (!existsSync(join(SRC_SKILLS, name, 'SKILL.md'))) continue;
-  cpSync(join(SRC_SKILLS, name), join(DST_SKILLS, name), { recursive: true });
-  n++;
-}
-
-// 1a. Bundle-only skills (codex/skills/): shipped to the plugin (Codex + portable
-// clients like Cursor/Copilot) but NOT to the Claude Code plugin. This is where the
-// `work-story` orchestration playbook lives — hosts without an orchestrator subagent
-// follow it directly, whereas Claude Code uses its /work-story command + coding-agent.
-const SRC_BUNDLE_SKILLS = join(ROOT, 'codex', 'skills');
-if (existsSync(SRC_BUNDLE_SKILLS)) {
-  for (const name of readdirSync(SRC_BUNDLE_SKILLS)) {
-    if (!existsSync(join(SRC_BUNDLE_SKILLS, name, 'SKILL.md'))) continue;
-    cpSync(join(SRC_BUNDLE_SKILLS, name), join(DST_SKILLS, name), { recursive: true });
+for (const { src, dst } of SKILL_SOURCES) {
+  for (const name of skillDirs(ROOT, src)) {
+    cpSync(join(ROOT, src, name), join(ROOT, dst, name), { recursive: true });
     n++;
   }
 }
-
-// 1b. Resync the instructions the skills reference (secure-coding, testing-standards,
-// stacks/…). Without these the bundle isn't self-contained — a native Codex install
-// can't run the kit's own security/testing/stack rules. Their relative paths
-// (`instructions/…`) resolve from the plugin root, same as from the repo root.
-rmSync(DST_INSTR, { recursive: true, force: true });
-if (existsSync(SRC_INSTR)) cpSync(SRC_INSTR, DST_INSTR, { recursive: true });
+for (const { src, dst } of TREE_SOURCES) {
+  rmSync(join(ROOT, dst), { recursive: true, force: true });
+  if (existsSync(join(ROOT, src))) cpSync(join(ROOT, src), join(ROOT, dst), { recursive: true });
+}
 
 // 2. Keep the Codex plugin version aligned with the kit version.
 const kitVersion = JSON.parse(readFileSync(join(ROOT, '.claude-plugin', 'plugin.json'), 'utf8')).version;
