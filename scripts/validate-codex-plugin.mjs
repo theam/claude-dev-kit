@@ -16,7 +16,14 @@
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { syncedFilePairs, orphanedBundleFiles } from './lib/bundle-sources.mjs';
+import {
+  syncedFilePairs,
+  orphanedBundleFiles,
+  skillNameCollisions,
+  portableManifestFrom,
+  serializeManifest,
+  PORTABLE_SCHEMA,
+} from './lib/bundle-sources.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PLUGIN = join(ROOT, 'plugins', 'fullstack-dev-kit');
@@ -66,11 +73,34 @@ if (!existsSync(portPath)) errs.push(`missing portable ${portPath} — run build
 else {
   let pm; try { pm = readJson(portPath); } catch (e) { errs.push(`portable plugin.json is not valid JSON: ${e.message}`); }
   if (pm) {
-    if (pm.$schema !== 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json') errs.push('portable plugin.json: $schema must be the Agent Plugins 1.0.0 const URI');
+    if (pm.$schema !== PORTABLE_SCHEMA) errs.push('portable plugin.json: $schema must be the Agent Plugins 1.0.0 const URI');
     if (!pm.name || !/^(?!.*(?:--|\.\.))[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/.test(pm.name)) errs.push(`portable plugin.json: name "${pm.name}" fails the 1.0.0 pattern`);
     if (pm.author && typeof pm.author !== 'object') errs.push('portable plugin.json: author must be an object {name,email,url}');
     for (const bad of ['skills', 'interface']) if (bad in pm) errs.push(`portable plugin.json: "${bad}" is not allowed by the closed schema — put it under extensions instead`);
   }
+
+  // The portable manifest is *generated* from the Codex one. Structure alone cannot tell
+  // us it is current, so re-derive it and byte-compare — the same rule the skill and
+  // instruction trees are held to.
+  if (existsSync(manPath)) {
+    let expected;
+    try {
+      expected = serializeManifest(portableManifestFrom(readJson(manPath)));
+    } catch {
+      /* the Codex manifest is already reported as unreadable above */
+    }
+    if (expected !== undefined && readFileSync(portPath, 'utf8') !== expected) {
+      errs.push(
+        `portable ${relative(ROOT, portPath)} differs from the source it is generated from ` +
+          `(${relative(ROOT, manPath)}) — run build-codex-plugin.mjs`,
+      );
+    }
+  }
+}
+
+// 3b. Skill-name collisions across collections that share a destination.
+for (const { name, sources } of skillNameCollisions(ROOT)) {
+  errs.push(`skill "${name}" is defined in both ${sources[0]}/ and ${sources[1]}/ — they copy to the same place`);
 }
 
 // 4. Self-contained bundle + portable skill-name rules.

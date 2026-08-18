@@ -16,18 +16,34 @@ import { readFileSync, writeFileSync, rmSync, mkdirSync, cpSync, existsSync } fr
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { SKILL_SOURCES, TREE_SOURCES, skillDirs } from './lib/bundle-sources.mjs';
+import {
+  SKILL_SOURCES,
+  TREE_SOURCES,
+  skillDirs,
+  skillNameCollisions,
+  portableManifestFrom,
+  serializeManifest,
+} from './lib/bundle-sources.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PLUGIN = join(ROOT, 'plugins', 'fullstack-dev-kit');
 const DST_SKILLS = join(PLUGIN, 'skills');
-const DST_INSTR = join(PLUGIN, 'instructions');
 
 // 1. Resync every mapped tree from lib/bundle-sources.mjs. The map is shared with the
 // validator, so a source added here is a source the validator checks for staleness.
 // `skills/` ships everywhere; `codex/skills/` is bundle-only (the work-story playbook
 // for hosts with no orchestrator subagent). instructions/ has to travel too, or a
 // native Codex install cannot run the kit's own security/testing/stack rules.
+// Two collections share the bundle's skills/ dir on purpose; the same skill *name* in
+// both would be silently second-wins here and unfixable drift in the validator.
+const collisions = skillNameCollisions(ROOT);
+if (collisions.length) {
+  for (const { name, sources } of collisions) {
+    console.error(`skill "${name}" is defined in both ${sources[0]}/ and ${sources[1]}/ — they copy to the same place`);
+  }
+  process.exit(1);
+}
+
 rmSync(DST_SKILLS, { recursive: true, force: true });
 mkdirSync(DST_SKILLS, { recursive: true });
 let n = 0;
@@ -55,23 +71,11 @@ if (manifest.version !== kitVersion) {
 // Codex reads .codex-plugin/plugin.json (required — verified: Codex 0.147 errors
 // "missing plugin.json" without it); portable clients (Cursor, VS Code, Copilot, …)
 // read this root plugin.json. Generated from the Codex manifest = one source of truth.
-// The portable schema is closed and has no home for Codex's `interface`/`skills` keys,
-// so `skills` is dropped (skills are auto-discovered from skills/) and `interface`
-// rides under our reverse-DNS extensions namespace.
+// The derivation lives in lib/bundle-sources.mjs so the validator can re-derive it and
+// byte-compare — without that, editing the Codex manifest and skipping this build
+// leaves the portable copy stale and validation still passes.
 const cm = JSON.parse(readFileSync(manifestPath, 'utf8'));
-const portable = {
-  $schema: 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json',
-  name: cm.name,
-  version: cm.version,
-  description: cm.description,
-  author: cm.author,          // {name, url} object — valid under the portable schema
-  homepage: cm.homepage,
-  repository: cm.repository,
-  license: cm.license,
-  keywords: cm.keywords,
-  extensions: { 'com.theagilemonkeys.dev-kit': { interface: cm.interface } },
-};
-writeFileSync(join(PLUGIN, 'plugin.json'), JSON.stringify(portable, null, 2) + '\n');
+writeFileSync(join(PLUGIN, 'plugin.json'), serializeManifest(portableManifestFrom(cm)));
 
 console.log(`Codex plugin built: ${n} skills + instructions/ synced, version ${kitVersion} (native + portable manifests).`);
 

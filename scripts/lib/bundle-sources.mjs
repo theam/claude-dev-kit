@@ -24,6 +24,64 @@ export const SKILL_SOURCES = [
  * is only self-contained if the copy is current, not merely present. */
 export const TREE_SOURCES = [{ src: 'instructions', dst: join(PLUGIN_DIR, 'instructions') }];
 
+/*
+ * The manifest pair. Codex reads `.codex-plugin/plugin.json` from inside the bundle;
+ * portable clients (Cursor, VS Code, Copilot, …) read the bundle-root `plugin.json`,
+ * which is *generated* from it. Same rule as the trees above: the derivation lives here
+ * so the builder and the validator cannot disagree about what it should contain. Without
+ * this, editing the Codex manifest and skipping the build leaves the portable copy stale
+ * and validation still passes — the exact bug class the tree guard exists to prevent.
+ */
+export const CODEX_MANIFEST = join(PLUGIN_DIR, '.codex-plugin', 'plugin.json');
+export const PORTABLE_MANIFEST = join(PLUGIN_DIR, 'plugin.json');
+export const PORTABLE_SCHEMA = 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json';
+
+/*
+ * The portable Agent Plugins 1.0.0 manifest, derived from the Codex manifest. The
+ * portable schema is closed, so it has no home for Codex's `skills` (dropped — portable
+ * hosts auto-discover from skills/) or `interface` (rides under our reverse-DNS
+ * extensions namespace).
+ */
+export function portableManifestFrom(codex) {
+  return {
+    $schema: PORTABLE_SCHEMA,
+    name: codex.name,
+    version: codex.version,
+    description: codex.description,
+    author: codex.author,
+    homepage: codex.homepage,
+    repository: codex.repository,
+    license: codex.license,
+    keywords: codex.keywords,
+    extensions: { 'com.theagilemonkeys.dev-kit': { interface: codex.interface } },
+  };
+}
+
+/** Serialised exactly as the builder writes it, so a byte comparison is meaningful. */
+export function serializeManifest(manifest) {
+  return `${JSON.stringify(manifest, null, 2)}\n`;
+}
+
+/*
+ * Two skill collections deliberately share one destination (`skills/` and `codex/skills/`
+ * both land in the bundle's `skills/`). A skill *name* in both would make the build
+ * second-wins and the validator would then report drift with no way to fix it. Nothing
+ * collides today; this makes a future one fail at its cause instead.
+ */
+export function skillNameCollisions(root) {
+  const owner = new Map();
+  const collisions = [];
+  for (const { src, dst } of SKILL_SOURCES) {
+    for (const name of skillDirs(root, src)) {
+      const key = join(dst, name);
+      const previous = owner.get(key);
+      if (previous) collisions.push({ name, sources: [previous, src] });
+      else owner.set(key, src);
+    }
+  }
+  return collisions;
+}
+
 /** Directories under `src` that are skills (have a SKILL.md). */
 export function skillDirs(root, src) {
   const dir = join(root, src);
