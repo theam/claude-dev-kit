@@ -8,13 +8,19 @@
  * no PR URL, repo, title, or body. See TELEMETRY.md.
  */
 
+// A create invocation must sit at a COMMAND POSITION — the start of the command, or
+// right after a shell separator (`;` `&&` `||` `|` `&`), optionally behind `sudo` or
+// env-var assignments — so the phrase quoted inside grep/echo/commit messages, in a
+// comment, or in a file being read does NOT count. `-h`/`--help` invocations are excluded.
+// This is a best-effort COUNT (a loose upper bound): a retried or failed attempt can
+// over-count. Only the integer is ever emitted — never the command. See TELEMETRY.md.
+const CREATE_CLI = /(?:^|[;&|]\s*)(?:sudo\s+)?(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*(?:gh\s+pr\s+create|glab\s+mr\s+create)\b(?![^\n]*\s(?:-h|--help)\b)/;
+
 /** True if an executed shell command opens a PR on one of the hosts create-pr supports. */
 export function isPrCreate(cmd) {
-  return typeof cmd === 'string' && (
-    /\bgh\s+pr\s+create\b/.test(cmd) ||                                          // github
-    /\bglab\s+mr\s+create\b/.test(cmd) ||                                        // gitlab
-    (/api\.bitbucket\.org/.test(cmd) && /pullrequests\b/.test(cmd) && /\bPOST\b/.test(cmd)) // bitbucket REST
-  );
+  if (typeof cmd !== 'string') return false;
+  if (CREATE_CLI.test(cmd)) return true;                                          // github / gitlab CLI
+  return /api\.bitbucket\.org/.test(cmd) && /pullrequests\b/.test(cmd) && /\bPOST\b/.test(cmd); // bitbucket REST
 }
 
 /**
