@@ -5,7 +5,7 @@
  * the copies still match. Both import this module so they cannot disagree: a mapping
  * added for the builder is a mapping the validator enforces, with no second edit.
  */
-import { readdirSync, existsSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync, existsSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 export const PLUGIN_DIR = join('plugins', 'fullstack-dev-kit');
@@ -90,4 +90,78 @@ export function orphanedBundleFiles(root) {
     }
   }
   return orphans;
+}
+
+/** Byte-level drift of every synced source→bundle file pair. */
+export function syncedFileDrift(root) {
+  const missing = [];
+  const drifted = [];
+  for (const { src, dst, label } of syncedFilePairs(root)) {
+    if (!existsSync(dst)) { missing.push(label); continue; }
+    if (readFileSync(src).equals(readFileSync(dst))) continue;
+    drifted.push(label);
+  }
+  return { missing, drifted };
+}
+
+/**
+ * Skill names that appear in more than one skill source. Both SKILL_SOURCES copy into
+ * the same bundle `skills/` dir, so a shared name is a copy-into-same-dst collision:
+ * the build is second-wins and the validator then reports drift no rebuild can fix.
+ * There is none today (only `work-story` under codex/skills/), so this is a guardrail.
+ */
+export function collidingSkillNames(root) {
+  const counts = new Map();
+  for (const { src } of SKILL_SOURCES) {
+    for (const name of skillDirs(root, src)) counts.set(name, (counts.get(name) || 0) + 1);
+  }
+  return [...counts.entries()].filter(([, count]) => count > 1).map(([name]) => name);
+}
+
+// The portable Agent Plugins 1.0.0 manifest is a pure transform of the Codex manifest.
+// Keeping that transform here (not inline in the builder) lets the validator re-derive
+// the expected portable manifest and byte-compare it to the committed one — closing the
+// drift class the tree guard already closes, for the generated manifest pair.
+export const PORTABLE_SCHEMA = 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json';
+export const PORTABLE_EXTENSION = 'com.theagilemonkeys.dev-kit';
+
+/**
+ * Derive the portable root plugin.json from the Codex `.codex-plugin/plugin.json`.
+ * The portable schema is closed: `skills` has no home (skills are auto-discovered) and
+ * `interface` rides under our reverse-DNS extensions namespace.
+ */
+export function derivePortableManifest(cm) {
+  return {
+    $schema: PORTABLE_SCHEMA,
+    name: cm.name,
+    version: cm.version,
+    description: cm.description,
+    author: cm.author,
+    homepage: cm.homepage,
+    repository: cm.repository,
+    license: cm.license,
+    keywords: cm.keywords,
+    extensions: { [PORTABLE_EXTENSION]: { interface: cm.interface } },
+  };
+}
+
+/** Exact on-disk serialization the builder writes (so byte-compare is meaningful). */
+export function serializeManifest(obj) {
+  return JSON.stringify(obj, null, 2) + '\n';
+}
+
+/**
+ * Whether the committed portable plugin.json still matches what the current Codex
+ * manifest would generate. Returns null when in sync (or when either manifest is
+ * absent — that is the structural checks' job), else a human-readable reason.
+ */
+export function portableManifestDrift(root) {
+  const codexPath = join(root, PLUGIN_DIR, '.codex-plugin', 'plugin.json');
+  const portPath = join(root, PLUGIN_DIR, 'plugin.json');
+  if (!existsSync(codexPath) || !existsSync(portPath)) return null;
+  let cm;
+  try { cm = JSON.parse(readFileSync(codexPath, 'utf8')); } catch { return null; }
+  const expected = serializeManifest(derivePortableManifest(cm));
+  if (readFileSync(portPath, 'utf8') === expected) return null;
+  return 'portable plugin.json differs from what .codex-plugin/plugin.json would generate';
 }

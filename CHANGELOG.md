@@ -15,6 +15,14 @@ a release is only "live" for users once that is bumped and published.
   against its source (and reports bundle files no source produces); builder and validator
   share one mapping in `scripts/lib/bundle-sources.mjs` so they cannot disagree. Covered by
   `scripts/validate-codex-plugin.test.mjs` (`node --test`). Tooling only — no plugin version bump.
+- **Drift guard now covers the generated manifests too** (#41, follow-up to the above). The
+  portable root `plugin.json` is derived from `.codex-plugin/plugin.json`, but validation only
+  checked it structurally — editing the Codex manifest without rebuilding left a stale portable
+  manifest and still passed. The derive transform now lives in `bundle-sources.mjs`, and the
+  validator re-derives + byte-compares it, so "builder and validator cannot disagree" holds for
+  the manifest pair end-to-end. Also: a `collidingSkillNames` guard (a skill name in both
+  `skills/` and `codex/skills/`), removal of a dead `DST_INSTR`, and the drift tests now run on a
+  throwaway `DEVKIT_ROOT` fixture instead of mutating a tracked file. Tooling only — no version bump.
 
 ## [0.19.5] - 2026-08-17
 ### Fixed

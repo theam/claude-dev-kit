@@ -14,11 +14,13 @@
  *   node scripts/validate-codex-plugin.mjs
  */
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
-import { join, dirname, relative } from 'node:path';
+import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { syncedFilePairs, orphanedBundleFiles } from './lib/bundle-sources.mjs';
+import { syncedFileDrift, orphanedBundleFiles, collidingSkillNames, portableManifestDrift } from './lib/bundle-sources.mjs';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+// DEVKIT_ROOT lets the test suite validate a throwaway fixture tree; unset, it resolves
+// to the repo root as before.
+const ROOT = process.env.DEVKIT_ROOT ? resolve(process.env.DEVKIT_ROOT) : join(dirname(fileURLToPath(import.meta.url)), '..');
 const PLUGIN = join(ROOT, 'plugins', 'fullstack-dev-kit');
 const errs = [];
 const readJson = (p) => JSON.parse(readFileSync(p, 'utf8'));
@@ -96,18 +98,16 @@ if (existsSync(skillsDir)) {
 
 // 5. The bundle is a copy, so "present" is not the same as "current". Check 4 proves
 // every referenced instructions file exists; this proves the copies still match their
-// canonical sources, which is what makes editing a source without rebuilding a caught
-// mistake rather than a silently shipped stale file.
-const drifted = [];
-const missing = [];
-for (const { src, dst, label } of syncedFilePairs(ROOT)) {
-  if (!existsSync(dst)) { missing.push(label); continue; }
-  if (readFileSync(src).equals(readFileSync(dst))) continue;
-  drifted.push(label);
-}
+// canonical sources — and that the generated portable manifest still matches the Codex
+// manifest it is derived from — so editing a source (or the manifest) without rebuilding
+// is a caught mistake rather than a silently shipped stale file.
+const { missing, drifted } = syncedFileDrift(ROOT);
 for (const label of missing) errs.push(`bundle is missing "${label}" — run build-codex-plugin.mjs`);
 for (const label of drifted) errs.push(`bundle copy of "${label}" differs from the source — run build-codex-plugin.mjs`);
 for (const orphan of orphanedBundleFiles(ROOT)) errs.push(`bundle still carries "${orphan}", which no source produces — run build-codex-plugin.mjs`);
+const manifestDrift = portableManifestDrift(ROOT);
+if (manifestDrift) errs.push(`${manifestDrift} — run build-codex-plugin.mjs`);
+for (const name of collidingSkillNames(ROOT)) errs.push(`skill "${name}" exists in more than one skill source — names must be unique across skills/ and codex/skills/`);
 
 if (errs.length) {
   console.error('✗ Codex plugin validation failed:');

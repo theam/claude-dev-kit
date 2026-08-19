@@ -13,15 +13,18 @@
  *   node scripts/build-codex-plugin.mjs
  */
 import { readFileSync, writeFileSync, rmSync, mkdirSync, cpSync, existsSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { SKILL_SOURCES, TREE_SOURCES, skillDirs } from './lib/bundle-sources.mjs';
+import { SKILL_SOURCES, TREE_SOURCES, skillDirs, derivePortableManifest, serializeManifest } from './lib/bundle-sources.mjs';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+// DEVKIT_ROOT lets the test suite build against a throwaway fixture tree instead of the
+// real repo; unset, it resolves to the repo root as before. SCRIPT_DIR always points at
+// the real scripts/ (where the validator lives), independent of which tree we build.
+const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
+const ROOT = process.env.DEVKIT_ROOT ? resolve(process.env.DEVKIT_ROOT) : join(SCRIPT_DIR, '..');
 const PLUGIN = join(ROOT, 'plugins', 'fullstack-dev-kit');
 const DST_SKILLS = join(PLUGIN, 'skills');
-const DST_INSTR = join(PLUGIN, 'instructions');
 
 // 1. Resync every mapped tree from lib/bundle-sources.mjs. The map is shared with the
 // validator, so a source added here is a source the validator checks for staleness.
@@ -54,27 +57,13 @@ if (manifest.version !== kitVersion) {
 // 3. Dual-emit the PORTABLE Agent Plugins 1.0.0 manifest at the plugin root.
 // Codex reads .codex-plugin/plugin.json (required — verified: Codex 0.147 errors
 // "missing plugin.json" without it); portable clients (Cursor, VS Code, Copilot, …)
-// read this root plugin.json. Generated from the Codex manifest = one source of truth.
-// The portable schema is closed and has no home for Codex's `interface`/`skills` keys,
-// so `skills` is dropped (skills are auto-discovered from skills/) and `interface`
-// rides under our reverse-DNS extensions namespace.
+// read this root plugin.json. The transform lives in lib/bundle-sources.mjs so the
+// validator can re-derive it and catch a stale portable manifest (drift guard).
 const cm = JSON.parse(readFileSync(manifestPath, 'utf8'));
-const portable = {
-  $schema: 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json',
-  name: cm.name,
-  version: cm.version,
-  description: cm.description,
-  author: cm.author,          // {name, url} object — valid under the portable schema
-  homepage: cm.homepage,
-  repository: cm.repository,
-  license: cm.license,
-  keywords: cm.keywords,
-  extensions: { 'com.theagilemonkeys.dev-kit': { interface: cm.interface } },
-};
-writeFileSync(join(PLUGIN, 'plugin.json'), JSON.stringify(portable, null, 2) + '\n');
+writeFileSync(join(PLUGIN, 'plugin.json'), serializeManifest(derivePortableManifest(cm)));
 
 console.log(`Codex plugin built: ${n} skills + instructions/ synced, version ${kitVersion} (native + portable manifests).`);
 
 // Validate the freshly-built bundle (structure, enums, self-contained instructions).
-const v = spawnSync(process.execPath, [join(ROOT, 'scripts', 'validate-codex-plugin.mjs')], { stdio: 'inherit' });
+const v = spawnSync(process.execPath, [join(SCRIPT_DIR, 'validate-codex-plugin.mjs')], { stdio: 'inherit' });
 if (v.status !== 0) process.exit(v.status || 1);
