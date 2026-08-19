@@ -18,6 +18,21 @@ a release is only "live" for users once that is bumped and published.
   against its source (and reports bundle files no source produces); builder and validator
   share one mapping in `scripts/lib/bundle-sources.mjs` so they cannot disagree. Covered by
   `scripts/validate-codex-plugin.test.mjs` (`node --test`). Tooling only — no plugin version bump.
+- **The generated manifests are under the same guard.** The portable root
+  `plugins/fullstack-dev-kit/plugin.json` is dual-emitted from `.codex-plugin/plugin.json`, but the
+  validator only checked it *structurally* — editing the Codex manifest and skipping the build left
+  the portable copy stale and validation still passed, the same bug class the tree guard was added
+  for. The derivation now lives in `scripts/lib/bundle-sources.mjs`, and the validator re-derives and
+  byte-compares, so "builder and validator cannot disagree" holds for the manifests too.
+- **A skill name in two collections fails loudly.** `skills/` and `codex/skills/` deliberately copy
+  into the same bundle directory; the same skill *name* in both was second-wins at build time and
+  then unfixable drift at validation. Both now report it and exit non-zero. No collision exists today.
+### Changed
+- Bundle-guard tests run against a disposable copy of the tree instead of editing
+  `instructions/stacks/php.md` in place. A run killed between the edit and its `finally` restore used
+  to leave the working tree dirty, which then failed both the in-sync test and CONTRIBUTING's
+  `git diff --exit-code` step on the next run.
+- Removed a dead `DST_INSTR` constant left by the `bundle-sources` refactor.
 
 ## [0.19.5] - 2026-08-17
 ### Fixed
