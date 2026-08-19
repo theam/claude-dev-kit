@@ -101,13 +101,19 @@ if (existsSync(skillsDir)) {
 // canonical sources — and that the generated portable manifest still matches the Codex
 // manifest it is derived from — so editing a source (or the manifest) without rebuilding
 // is a caught mistake rather than a silently shipped stale file.
-const { missing, drifted } = syncedFileDrift(ROOT);
-for (const label of missing) errs.push(`bundle is missing "${label}" — run build-codex-plugin.mjs`);
-for (const label of drifted) errs.push(`bundle copy of "${label}" differs from the source — run build-codex-plugin.mjs`);
-for (const orphan of orphanedBundleFiles(ROOT)) errs.push(`bundle still carries "${orphan}", which no source produces — run build-codex-plugin.mjs`);
+// A name collision makes the "losing" copy read as drift, so the per-file drift/orphan
+// lines would be derivative noise — lead with the cause and suppress them when a
+// collision is present. Manifest drift is orthogonal, so it is always checked.
+const collisions = collidingSkillNames(ROOT);
+for (const name of collisions) errs.push(`skill "${name}" exists in more than one skill source — names must be unique across skills/ and codex/skills/`);
+if (!collisions.length) {
+  const { missing, drifted } = syncedFileDrift(ROOT);
+  for (const label of missing) errs.push(`bundle is missing "${label}" — run build-codex-plugin.mjs`);
+  for (const label of drifted) errs.push(`bundle copy of "${label}" differs from the source — run build-codex-plugin.mjs`);
+  for (const orphan of orphanedBundleFiles(ROOT)) errs.push(`bundle still carries "${orphan}", which no source produces — run build-codex-plugin.mjs`);
+}
 const manifestDrift = portableManifestDrift(ROOT);
 if (manifestDrift) errs.push(`${manifestDrift} — run build-codex-plugin.mjs`);
-for (const name of collidingSkillNames(ROOT)) errs.push(`skill "${name}" exists in more than one skill source — names must be unique across skills/ and codex/skills/`);
 
 if (errs.length) {
   console.error('✗ Codex plugin validation failed:');

@@ -65,7 +65,10 @@ function makeFixture() {
 function builtFixture() {
   const root = makeFixture();
   const r = build(root);
-  assert.equal(r.status, 0, `builder failed on a fresh fixture:\n${r.stderr}`);
+  if (r.status !== 0) {
+    rmSync(root, { recursive: true, force: true }); // don't leak the tmp dir on the failure path
+    assert.fail(`builder failed on a fresh fixture:\n${r.stderr}`);
+  }
   return root;
 }
 
@@ -142,6 +145,8 @@ test('a skill name in two sources is reported as a collision', () => {
     const r = validate(root);
     assert.equal(r.status, 1, 'a colliding skill name passed validation');
     assert.match(r.stderr, /exists in more than one skill source/);
+    // The collision is the root cause; the derivative per-file drift line is suppressed.
+    assert.doesNotMatch(r.stderr, /differs from the source/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
