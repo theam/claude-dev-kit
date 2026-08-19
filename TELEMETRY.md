@@ -6,7 +6,7 @@ claude-dev-kit can share **anonymous, opt-in** usage telemetry so The Agile Monk
 
 - **OFF by default.** Nothing is sent unless you explicitly opt in.
 - **Anonymous.** Identified only by a random `install_id`. No account, email, org-instance, or repo is attached.
-- **Token counts only.** How *many* tokens a session used — never *what* was in them.
+- **Counts only.** How *many* tokens a session used, and *how many* PRs it opened — never *what* was in them.
 - **No key in the client, no direct PostHog call.** Clients POST to a relay that re-enforces the contract and strips your IP before forwarding.
 - **Honest attribution.** Only sessions where a kit command/agent actually ran are reported.
 - **Auditable.** Client: [`scripts/telemetry.mjs`](./scripts/telemetry.mjs). Contract: [`telemetry/contract.v1.json`](./telemetry/contract.v1.json). Relay: [`packages/telemetry-relay/`](./packages/telemetry-relay/).
