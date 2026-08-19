@@ -5,6 +5,14 @@
 
 An open-source [Claude Code](https://code.claude.com) plugin by [The Agile Monkeys](https://www.theagilemonkeys.com): a **stack-agnostic issue-to-PR workflow** with enforced quality gates. Also runs on **OpenAI Codex**, **Cursor**, and other [Agent Plugins 1.0.0](https://agent-plugins.org) clients.
 
+## Demo
+
+The kit taking a ticket all the way to an opened PR (test project *yardflow*):
+
+https://github.com/user-attachments/assets/21afb5ab-b52b-4418-bf01-d247e8d73208
+
+## How it works
+
 Give the `coding-agent` a user story ID from your tracker and it orchestrates the whole flow:
 
 ```
