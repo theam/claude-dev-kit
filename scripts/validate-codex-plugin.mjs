@@ -98,11 +98,6 @@ else {
   }
 }
 
-// 3b. Skill-name collisions across collections that share a destination.
-for (const { name, sources } of skillNameCollisions(ROOT)) {
-  errs.push(`skill "${name}" is defined in both ${sources[0]}/ and ${sources[1]}/ — they copy to the same place`);
-}
-
 // 4. Self-contained bundle + portable skill-name rules.
 const skillsDir = join(PLUGIN, 'skills');
 if (existsSync(skillsDir)) {
@@ -135,9 +130,18 @@ for (const { src, dst, label } of syncedFilePairs(ROOT)) {
   if (readFileSync(src).equals(readFileSync(dst))) continue;
   drifted.push(label);
 }
-for (const label of missing) errs.push(`bundle is missing "${label}" — run build-codex-plugin.mjs`);
-for (const label of drifted) errs.push(`bundle copy of "${label}" differs from the source — run build-codex-plugin.mjs`);
-for (const orphan of orphanedBundleFiles(ROOT)) errs.push(`bundle still carries "${orphan}", which no source produces — run build-codex-plugin.mjs`);
+// A name collision makes the "losing" copy read as drift, so the per-file drift/orphan
+// lines below would be derivative noise. Lead with the cause and suppress them while a
+// collision is present; the manifest pair is orthogonal to it, so that stays unconditional.
+const collisions = skillNameCollisions(ROOT);
+for (const { name, sources } of collisions) {
+  errs.push(`skill "${name}" is defined in both ${sources[0]}/ and ${sources[1]}/ — they copy to the same place`);
+}
+if (!collisions.length) {
+  for (const label of missing) errs.push(`bundle is missing "${label}" — run build-codex-plugin.mjs`);
+  for (const label of drifted) errs.push(`bundle copy of "${label}" differs from the source — run build-codex-plugin.mjs`);
+  for (const orphan of orphanedBundleFiles(ROOT)) errs.push(`bundle still carries "${orphan}", which no source produces — run build-codex-plugin.mjs`);
+}
 
 if (errs.length) {
   console.error('✗ Codex plugin validation failed:');

@@ -44,8 +44,10 @@ function sandbox() {
   return dir;
 }
 
+/* The sandbox carries its own scripts/, and each script self-locates via import.meta.url,
+ * so invoking the copy is what targets the copy. No cwd or env override is involved. */
 const run = (root, script) =>
-  spawnSync(process.execPath, [join(root, 'scripts', script)], { encoding: 'utf8', cwd: root });
+  spawnSync(process.execPath, [join(root, 'scripts', script)], { encoding: 'utf8' });
 const validate = (root) => run(root, 'validate-codex-plugin.mjs');
 const build = (root) => run(root, 'build-codex-plugin.mjs');
 
@@ -154,6 +156,44 @@ test('a skill name in two collections is rejected rather than silently overwritt
     const result = validate(dir);
     assert.equal(result.status, 1, 'validator ignored the collision');
     assert.match(result.stderr, /defined in both/);
+  });
+});
+
+test('a collision leads, and does not drag the drift it causes along with it', () => {
+  inSandbox((dir) => {
+    // Give the two collections a same-named skill whose contents differ, so the losing
+    // copy would otherwise also be reported as drift — the derivative noise this hides.
+    const dup = join(dir, 'skills', 'work-story');
+    cpSync(join(dir, 'codex', 'skills', 'work-story'), dup, { recursive: true });
+    writeFileSync(join(dup, 'SKILL.md'), `${readFileSync(join(dup, 'SKILL.md'), 'utf8')}\n<!-- diverged -->\n`);
+
+    const result = validate(dir);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /defined in both/, 'the cause is not reported');
+    assert.doesNotMatch(
+      result.stderr,
+      /differs from the source|bundle is missing|which no source produces/,
+      'per-file drift lines should be suppressed while a collision is present',
+    );
+  });
+});
+
+test('manifest drift is still reported while a collision is present', () => {
+  // The manifest pair is orthogonal to skill-name collisions, so suppressing the
+  // per-file lines must not suppress it too.
+  inSandbox((dir) => {
+    cpSync(join(dir, 'codex', 'skills', 'work-story'), join(dir, 'skills', 'work-story'), {
+      recursive: true,
+    });
+    const codex = join(dir, CODEX_MANIFEST);
+    const manifest = JSON.parse(readFileSync(codex, 'utf8'));
+    manifest.description = `${manifest.description} (drift probe)`;
+    writeFileSync(codex, `${JSON.stringify(manifest, null, 2)}\n`);
+
+    const result = validate(dir);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /defined in both/);
+    assert.match(result.stderr, /differs from the source it is generated from/);
   });
 });
 
