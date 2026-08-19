@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # 1. The committed bundle must be valid and in sync with its sources.
+      - name: Validate the plugin bundle
+        run: node scripts/validate-codex-plugin.mjs
+
+      # 2. Zero-dep test suite (node:test): drift guard + PR-create detector + contract parity.
+      - name: Run tests
+        run: node --test scripts/*.test.mjs
+
+      # 3. Rebuilding must be a no-op on a committed tree — proves the bundle and the
+      #    generated manifests match their canonical sources (skip-build drift = failure).
+      - name: Rebuild and assert no drift
+        run: |
+          node scripts/build-codex-plugin.mjs
+          git diff --exit-code
