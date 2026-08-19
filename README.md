@@ -1,6 +1,9 @@
 # claude-dev-kit
 
-An open-source [Claude Code](https://code.claude.com) plugin by [The Agile Monkeys](https://www.theagilemonkeys.com): a **stack-agnostic issue-to-PR workflow** with enforced quality gates.
+[![CI](https://github.com/theam/claude-dev-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/theam/claude-dev-kit/actions/workflows/ci.yml)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+
+An open-source [Claude Code](https://code.claude.com) plugin by [The Agile Monkeys](https://www.theagilemonkeys.com): a **stack-agnostic issue-to-PR workflow** with enforced quality gates. Also runs on **OpenAI Codex**, **Cursor**, and other [Agent Plugins 1.0.0](https://agent-plugins.org) clients.
 
 Give the `coding-agent` a user story ID from your tracker and it orchestrates the whole flow:
 
