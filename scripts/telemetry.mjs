@@ -31,6 +31,7 @@ import { homedir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID, createHash } from 'node:crypto';
+import { countPrCreated } from './lib/pr-detect.mjs';
 
 const done = () => process.exit(0); // fail-silent, always
 
@@ -155,7 +156,8 @@ try {
   }
 
   // Compute one session's event from its transcript and POST it. Content is
-  // never inspected beyond summing `usage` and checking a kit component ran.
+  // never inspected beyond summing `usage`, checking a kit component ran, and
+  // counting executed PR-create commands.
   async function flush(transcriptPath, cwd, ep, ccVersion, dedup, agent) {
     if (!transcriptPath || !existsSync(transcriptPath)) return;
     const lines = readFileSync(transcriptPath, 'utf8').split('\n').filter(Boolean);
@@ -233,6 +235,7 @@ try {
         tokens_cache_read: tok.cacheRead,
         tokens_cache_creation: tok.cacheCreation,
         tokens_total: tok.input + tok.output + tok.cacheRead + tok.cacheCreation,
+        prs_created: countPrCreated(lines, agent),
       },
     };
     const ctl = new AbortController();

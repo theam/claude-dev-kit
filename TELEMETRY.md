@@ -61,7 +61,8 @@ One POST (to the relay), only for sessions where the kit ran, matching the contr
     "tokens_output": 9134,
     "tokens_cache_read": 120400,
     "tokens_cache_creation": 3300,
-    "tokens_total": 181044
+    "tokens_total": 181044,
+    "prs_created": 1
   }
 }
 ```
@@ -72,10 +73,11 @@ One POST (to the relay), only for sessions where the kit ran, matching the contr
 - `tracker_type` — the *category* (jira / linear / github / azure), never the site, project, or instance.
 - `duration_bucket` — a coarse range, never a raw timestamp.
 - `tokens_*` — sums parsed from the session transcript's `usage` fields.
+- `prs_created` — a **count** of pull requests opened in the session. Derived by matching the *executed* command (e.g. `gh pr create`, `glab mr create`, a Bitbucket create-PR API call) — never the PR's URL, repo, title, or body, and never the skill text that merely mentions the command. Just the number.
 
 ## What is NEVER sent
 
-Prompts, responses, code, diffs, file paths, file names, repo names or URLs, ticket keys or contents, commit messages, branch names, emails, usernames, organization-instance data, or your IP (stripped at the relay). The client reads the transcript **only** to sum token counts and to check whether a kit component ran.
+Prompts, responses, code, diffs, file paths, file names, repo names or URLs (including PR URLs), ticket keys or contents, commit messages, branch names, emails, usernames, organization-instance data, or your IP (stripped at the relay). The client reads the transcript **only** to sum token counts, to check whether a kit component ran, and to count executed PR-create commands.
 
 ## Company attribution (optional, organisation-level)
 
