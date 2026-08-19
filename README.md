@@ -28,7 +28,16 @@ Give the `coding-agent` a user story ID from your tracker and it orchestrates th
 npm create @theagilemonkeys/dev-kit
 ```
 
-Interactive setup — tracker, Figma, telemetry consent, org — then it installs the plugin for you. Full options in [Installing in Claude Code](#installing-in-claude-code).
+Interactive setup — tracker, Figma, telemetry consent, org — then it installs the plugin for whichever agents you have (Claude Code / Codex / Cursor). Full options in [Installing in Claude Code](#installing-in-claude-code).
+
+**On OpenAI Codex** you can also install it natively:
+
+```bash
+codex plugin marketplace add theam/claude-dev-kit
+codex plugin add fullstack-dev-kit@claude-dev-kit
+```
+
+Then run `$work-story PROJ-1234` (or any single skill, e.g. `$pr-review`). More — including Cursor and Copilot — in [Also runs on Codex, Cursor & Copilot](#also-runs-on-codex-cursor--copilot-experimental).
 
 ## Stack-agnostic by design
 
