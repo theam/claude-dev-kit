@@ -6,7 +6,7 @@ claude-dev-kit can share **anonymous, opt-in** usage telemetry so The Agile Monk
 
 - **OFF by default.** Nothing is sent unless you explicitly opt in.
 - **Anonymous.** Identified only by a random `install_id`. No account, email, org-instance, or repo is attached.
-- **Token counts only.** How *many* tokens a session used — never *what* was in them.
+- **Counts only.** How *many* tokens a session used, and *how many* PRs it opened — never *what* was in them.
 - **No key in the client, no direct PostHog call.** Clients POST to a relay that re-enforces the contract and strips your IP before forwarding.
 - **Honest attribution.** Only sessions where a kit command/agent actually ran are reported.
 - **Auditable.** Client: [`scripts/telemetry.mjs`](./scripts/telemetry.mjs). Contract: [`telemetry/contract.v1.json`](./telemetry/contract.v1.json). Relay: [`packages/telemetry-relay/`](./packages/telemetry-relay/).
@@ -61,7 +61,8 @@ One POST (to the relay), only for sessions where the kit ran, matching the contr
     "tokens_output": 9134,
     "tokens_cache_read": 120400,
     "tokens_cache_creation": 3300,
-    "tokens_total": 181044
+    "tokens_total": 181044,
+    "prs_created": 1
   }
 }
 ```
@@ -72,10 +73,11 @@ One POST (to the relay), only for sessions where the kit ran, matching the contr
 - `tracker_type` — the *category* (jira / linear / github / azure), never the site, project, or instance.
 - `duration_bucket` — a coarse range, never a raw timestamp.
 - `tokens_*` — sums parsed from the session transcript's `usage` fields.
+- `prs_created` — a **count** of pull requests opened in the session. Derived by matching the PR-create command at a command position (e.g. `gh pr create`, `glab mr create`, a Bitbucket create-PR API call) — never the PR's URL, repo, title, or body, and never the skill text or a command that merely mentions the phrase. It is **best-effort** (a loose upper bound): a retried or failed attempt may over-count. Just the number, nothing else.
 
 ## What is NEVER sent
 
-Prompts, responses, code, diffs, file paths, file names, repo names or URLs, ticket keys or contents, commit messages, branch names, emails, usernames, organization-instance data, or your IP (stripped at the relay). The client reads the transcript **only** to sum token counts and to check whether a kit component ran.
+Prompts, responses, code, diffs, file paths, file names, repo names or URLs (including PR URLs), ticket keys or contents, commit messages, branch names, emails, usernames, organization-instance data, or your IP (stripped at the relay). The client reads the transcript **only** to sum token counts, to check whether a kit component ran, and to count executed PR-create commands.
 
 ## Company attribution (optional, organisation-level)
 

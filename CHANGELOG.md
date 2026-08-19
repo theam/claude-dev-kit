@@ -7,6 +7,9 @@ The `version` in `.claude-plugin/plugin.json` is what reaches installed clients 
 a release is only "live" for users once that is bumped and published.
 
 ## [Unreleased]
+### Added
+- **`prs_created` telemetry (opt-in, anonymous).** Each session event now carries a **count** of pull requests opened, so aggregate impact can be measured by outcome (PRs shipped), not just token usage. Derived by matching the *executed* PR-create command per host (`gh pr create` · `glab mr create` · Bitbucket create-PR API) — never the PR's URL, repo, title, or body, and never the skill text that mentions the command. Added to the contract (both copies) and documented in `TELEMETRY.md`. Kit → **0.19.6** (client `scripts/telemetry.mjs` ships to users; relay redeploys with the new contract).
+
 ### Fixed
 - **Bundle drift is now caught by validation.** `plugins/fullstack-dev-kit/{skills,instructions}/`
   are generated copies, but `validate-codex-plugin.mjs` only checked that referenced files
