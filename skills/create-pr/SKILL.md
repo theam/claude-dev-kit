@@ -31,6 +31,7 @@ Open the PR on the configured host (`prHost` in `.claude/dev-kit.json`; default 
 - **github** — `gh pr create` (`gh` authenticated).
 - **bitbucket** — push the branch, then create the PR via the REST API: `POST https://api.bitbucket.org/2.0/repositories/{workspace}/{repo_slug}/pullrequests` with `{title, source:{branch:{name}}, destination:{branch:{name}}}`, authenticated with a Bitbucket app password / access token from the environment (e.g. `BITBUCKET_TOKEN`). The `acli` CLI works too if the team uses it. Derive `{workspace}/{repo_slug}` from the `origin` remote.
 - **gitlab** — `glab mr create` (`glab` authenticated).
+- **azure** — `az repos pr create --source-branch <branch> --target-branch <base> --title <title> --description <body>` (Azure CLI with the `azure-devops` extension, `az login` authenticated; run `az extension add --name azure-devops` once if missing). The org/project/repo come from the `origin` remote or `az devops configure --defaults`.
 - **other/none** — print the branch and the ready-to-paste PR title/body and let the user open it.
 
 The body must include (adapt field names to the host — GitHub/GitLab render Markdown; Bitbucket PR descriptions accept Markdown too):
