@@ -63,6 +63,50 @@ export function serializeManifest(manifest) {
 }
 
 /*
+ * Cursor manifests. Cursor's marketplace wants either a root `plugin.json` (which our
+ * monorepo can't have — the plugin lives in a subdir) or a root `.cursor-plugin/
+ * marketplace.json` whose entry `source` points at a subdir carrying its own
+ * `.cursor-plugin/plugin.json`. So we generate both from the same Codex manifest, exactly
+ * like the portable one. Cursor's plugin manifest is its own (non-portable) format, so it
+ * *may* carry a `skills` path; the skills auto-discover from the plugin dir anyway.
+ */
+export const CURSOR_MARKETPLACE = join('.cursor-plugin', 'marketplace.json'); // at repo root
+export const CURSOR_PLUGIN_MANIFEST = join(PLUGIN_DIR, '.cursor-plugin', 'plugin.json');
+const PLUGIN_DIR_POSIX = 'plugins/fullstack-dev-kit'; // forward-slash for the JSON `source`
+
+export function cursorPluginManifestFrom(codex) {
+  return {
+    name: codex.name,
+    version: codex.version,
+    description: codex.description,
+    // Cursor's author schema is {name, email?} — drop the portable {url}.
+    author: codex.author?.name ? { name: codex.author.name } : codex.author,
+    homepage: codex.homepage,
+    repository: codex.repository,
+    license: codex.license,
+    keywords: codex.keywords,
+    logo: codex.interface?.logo || './assets/logo.png',
+    skills: './skills/',
+  };
+}
+
+export function cursorMarketplaceFrom(codex) {
+  return {
+    name: 'claude-dev-kit',
+    owner: { name: codex.author?.name || 'The Agile Monkeys' },
+    metadata: { description: codex.description },
+    plugins: [
+      {
+        name: codex.name,
+        source: PLUGIN_DIR_POSIX,
+        description: codex.interface?.shortDescription || codex.description,
+        category: codex.interface?.category,
+      },
+    ],
+  };
+}
+
+/*
  * Two skill collections deliberately share one destination (`skills/` and `codex/skills/`
  * both land in the bundle's `skills/`). A skill *name* in both would make the build
  * second-wins and the validator would then report drift with no way to fix it. Nothing

@@ -23,6 +23,9 @@ import {
   portableManifestFrom,
   serializeManifest,
   PORTABLE_SCHEMA,
+  CURSOR_MARKETPLACE,
+  cursorPluginManifestFrom,
+  cursorMarketplaceFrom,
 } from './lib/bundle-sources.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -141,6 +144,23 @@ if (!collisions.length) {
   for (const label of missing) errs.push(`bundle is missing "${label}" — run build-codex-plugin.mjs`);
   for (const label of drifted) errs.push(`bundle copy of "${label}" differs from the source — run build-codex-plugin.mjs`);
   for (const orphan of orphanedBundleFiles(ROOT)) errs.push(`bundle still carries "${orphan}", which no source produces — run build-codex-plugin.mjs`);
+}
+
+// 6. Cursor manifests (root .cursor-plugin/marketplace.json → subdir .cursor-plugin/
+// plugin.json), also generated from the Codex manifest. Re-derive + byte-compare so a
+// stale or missing copy is caught, same rule as the portable manifest.
+if (existsSync(manPath)) {
+  let codex; try { codex = readJson(manPath); } catch { codex = null; }
+  if (codex) {
+    for (const [path, derive, label] of [
+      [join(ROOT, CURSOR_MARKETPLACE), cursorMarketplaceFrom, '.cursor-plugin/marketplace.json'],
+      [join(PLUGIN, '.cursor-plugin', 'plugin.json'), cursorPluginManifestFrom, 'plugins/fullstack-dev-kit/.cursor-plugin/plugin.json'],
+    ]) {
+      const expected = serializeManifest(derive(codex));
+      if (!existsSync(path)) errs.push(`missing ${label} — run build-codex-plugin.mjs`);
+      else if (readFileSync(path, 'utf8') !== expected) errs.push(`${label} differs from the source it is generated from — run build-codex-plugin.mjs`);
+    }
+  }
 }
 
 if (errs.length) {

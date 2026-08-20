@@ -23,6 +23,8 @@ import {
   skillNameCollisions,
   portableManifestFrom,
   serializeManifest,
+  cursorPluginManifestFrom,
+  cursorMarketplaceFrom,
 } from './lib/bundle-sources.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -77,7 +79,16 @@ if (manifest.version !== kitVersion) {
 const cm = JSON.parse(readFileSync(manifestPath, 'utf8'));
 writeFileSync(join(PLUGIN, 'plugin.json'), serializeManifest(portableManifestFrom(cm)));
 
-console.log(`Codex plugin built: ${n} skills + instructions/ synced, version ${kitVersion} (native + portable manifests).`);
+// 4. Emit the Cursor manifests, also derived from the Codex manifest. Cursor needs a root
+// plugin.json (impossible for our subdir plugin) OR a root .cursor-plugin/marketplace.json
+// whose entry points at the subdir's .cursor-plugin/plugin.json. The CI rebuild + git-diff
+// step catches drift here just like for the portable manifest.
+mkdirSync(join(PLUGIN, '.cursor-plugin'), { recursive: true });
+writeFileSync(join(PLUGIN, '.cursor-plugin', 'plugin.json'), serializeManifest(cursorPluginManifestFrom(cm)));
+mkdirSync(join(ROOT, '.cursor-plugin'), { recursive: true });
+writeFileSync(join(ROOT, '.cursor-plugin', 'marketplace.json'), serializeManifest(cursorMarketplaceFrom(cm)));
+
+console.log(`Codex plugin built: ${n} skills + instructions/ synced, version ${kitVersion} (native + portable + cursor manifests).`);
 
 // Validate the freshly-built bundle (structure, enums, self-contained instructions).
 const v = spawnSync(process.execPath, [join(ROOT, 'scripts', 'validate-codex-plugin.mjs')], { stdio: 'inherit' });

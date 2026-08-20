@@ -1,0 +1,17 @@
+{
+  "name": "claude-dev-kit",
+  "owner": {
+    "name": "The Agile Monkeys"
+  },
+  "metadata": {
+    "description": "Issue-to-PR workflow for any tech stack: fetch stories from Jira/Linear/GitHub/Azure and Figma designs, plan-approval gate, adaptive quality + coverage gates, e2e generation, PR creation and review."
+  },
+  "plugins": [
+    {
+      "name": "fullstack-dev-kit",
+      "source": "plugins/fullstack-dev-kit",
+      "description": "Issue-to-PR workflow with quality gates, for any stack.",
+      "category": "Developer Tools"
+    }
+  ]
+}
