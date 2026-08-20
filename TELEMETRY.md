@@ -73,7 +73,7 @@ One POST (to the relay), only for sessions where the kit ran, matching the contr
 - `tracker_type` — the *category* (jira / linear / github / azure), never the site, project, or instance.
 - `duration_bucket` — a coarse range, never a raw timestamp.
 - `tokens_*` — sums parsed from the session transcript's `usage` fields.
-- `prs_created` — a **count** of pull requests opened in the session. Derived by matching the PR-create command at a command position (e.g. `gh pr create`, `glab mr create`, a Bitbucket create-PR API call) — never the PR's URL, repo, title, or body, and never the skill text or a command that merely mentions the phrase. It is **best-effort** (a loose upper bound): a retried or failed attempt may over-count. Just the number, nothing else.
+- `prs_created` — a **count** of pull requests opened in the session. Derived by matching the PR-create command at a command position (e.g. `gh pr create`, `glab mr create`, `az repos pr create`, a Bitbucket create-PR API call) — never the PR's URL, repo, title, or body, and never the skill text or a command that merely mentions the phrase. It is **best-effort** (a loose upper bound): a retried or failed attempt may over-count. Just the number, nothing else.
 
 ## What is NEVER sent
 

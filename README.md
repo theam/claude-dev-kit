@@ -58,7 +58,7 @@ It integrates with your tools through **adapters**, not hardcoded dependencies:
 | Concern | Supported | How it's chosen |
 |---|---|---|
 | Issue tracker | Jira, Linear, GitHub Issues, Azure DevOps | Detected/asked once by `dev-kit-setup`, stored in `.claude/dev-kit.json` |
-| PR host | GitHub (`gh`), Bitbucket (REST), GitLab (`glab`) | Detected from the `origin` remote, stored as `prHost` |
+| PR host | GitHub (`gh`), Bitbucket (REST), GitLab (`glab`), Azure DevOps (`az repos`) | Detected from the `origin` remote, stored as `prHost` |
 | Design (optional) | Figma | Activated when a ticket links a Figma URL |
 
 ## Installing in Claude Code

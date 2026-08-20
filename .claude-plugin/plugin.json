@@ -1,6 +1,6 @@
 {
   "name": "fullstack-dev-kit",
-  "version": "0.19.6",
+  "version": "0.19.7",
   "description": "Issue-to-PR workflow kit for any tech stack. Fetch a user story from your tracker (Jira, Linear, GitHub Issues, Azure DevOps) and any linked Figma designs, implement with plan approval, enforce >95% coverage and a security pass, generate e2e tests, open the PR, fix review findings, and move the ticket to review.",
   "license": "Apache-2.0",
   "homepage": "https://github.com/theam/claude-dev-kit",

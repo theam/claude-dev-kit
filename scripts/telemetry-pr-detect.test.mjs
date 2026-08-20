@@ -18,12 +18,15 @@ const codexOutput = (out) => JSON.stringify({ payload: { type: 'function_call_ou
 test('isPrCreate matches create commands per host, not reads/views', () => {
   assert.ok(isPrCreate('gh pr create --fill'));
   assert.ok(isPrCreate('glab mr create -t x'));
+  assert.ok(isPrCreate('az repos pr create --source-branch feat/x --target-branch main --title X'));
   assert.ok(isPrCreate('cd repo && gh pr create --fill'));                 // after a shell separator
   assert.ok(isPrCreate('GH_TOKEN=xxx gh pr create --fill'));               // behind an env assignment
   assert.ok(isPrCreate("curl -X POST https://api.bitbucket.org/2.0/repositories/w/r/pullrequests -d @body.json"));
   assert.ok(!isPrCreate('gh pr view 12'));
   assert.ok(!isPrCreate('gh pr edit 12 --add-label ai-generated'));
   assert.ok(!isPrCreate('gh pr list'));
+  assert.ok(!isPrCreate('az repos pr list'));
+  assert.ok(!isPrCreate('az repos pr show --id 7'));
   assert.ok(!isPrCreate('gh pr create --help'));                           // help, not a real create
   assert.ok(!isPrCreate("grep 'gh pr create' skills/create-pr/SKILL.md")); // the phrase quoted in a read
   assert.ok(!isPrCreate('echo "next: gh pr create"'));                     // narration echoed to the shell
