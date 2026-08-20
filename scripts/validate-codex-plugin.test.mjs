@@ -32,7 +32,7 @@ import {
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 /* Everything the builder and validator read. Copied, so the real tree is never touched. */
-const TREES = ['scripts', 'skills', 'codex', 'instructions', 'plugins', '.claude-plugin', '.agents'];
+const TREES = ['scripts', 'skills', 'codex', 'instructions', 'plugins', '.claude-plugin', '.agents', '.cursor-plugin'];
 
 /** A disposable copy of the repo. Returns its path; the caller removes it. */
 function sandbox() {

@@ -1,0 +1,21 @@
+{
+  "name": "fullstack-dev-kit",
+  "version": "0.19.7",
+  "description": "Issue-to-PR workflow for any tech stack: fetch stories from Jira/Linear/GitHub/Azure and Figma designs, plan-approval gate, adaptive quality + coverage gates, e2e generation, PR creation and review.",
+  "author": {
+    "name": "The Agile Monkeys"
+  },
+  "homepage": "https://github.com/theam/claude-dev-kit",
+  "repository": "https://github.com/theam/claude-dev-kit",
+  "license": "Apache-2.0",
+  "keywords": [
+    "issue-to-pr",
+    "code-review",
+    "coverage",
+    "jira",
+    "linear",
+    "workflow"
+  ],
+  "logo": "./assets/logo.png",
+  "skills": "./skills/"
+}
