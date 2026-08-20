@@ -8,6 +8,7 @@ a release is only "live" for users once that is bumped and published.
 
 ## [Unreleased]
 ### Added
+- **Stack-profile completeness check (CI).** `scripts/stack-profiles.test.mjs` asserts every `instructions/stacks/<id>.md` carries the sections the documented format requires (Detect / Commands / Coverage / E2E / Conventions & gotchas), each non-empty — so an incomplete or malformed profile fails CI instead of silently degrading the kit for that stack. First (completeness) half of per-stack validation; real end-to-end sample-repo runs are a later step.
 - **Azure DevOps as a PR host.** `create-pr` can now open the PR on Azure DevOps via `az repos pr create` (Azure CLI + `azure-devops` extension), alongside GitHub / GitLab / Bitbucket. The `prs_created` telemetry detector counts it too. Closes the gap where the tracker supported `azure` but PR creation didn't. Kit → **0.19.7**.
 - **CI (GitHub Actions).** `.github/workflows/ci.yml` runs on every push to `main` and every PR: validate the bundle, `node --test`, then rebuild and `git diff --exit-code` to assert the committed bundle/manifests are in sync. Catches skip-build drift, stale manifests, and contract divergence automatically — the failure modes we previously found by hand.
 - **Contract-parity guard.** `scripts/contract-parity.test.mjs` asserts the two `contract.v1.json` copies (client + relay) are byte-identical, so a property added to one but not the other can't silently drift.
