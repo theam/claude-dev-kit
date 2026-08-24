@@ -1,0 +1,24 @@
+{
+  "name": "theam/dev-kit-php-sample",
+  "description": "Minimal PHP project exercising the kit's unit + coverage gates in CI — the first real-world row of the stack matrix (#50).",
+  "license": "Apache-2.0",
+  "require": {
+    "php": ">=8.3"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^12.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "DevKitSample\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "DevKitSample\\Tests\\": "tests/"
+    }
+  },
+  "config": {
+    "sort-packages": true
+  }
+}

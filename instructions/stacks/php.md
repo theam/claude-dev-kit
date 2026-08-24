@@ -1,6 +1,6 @@
 # PHP — stack profile
 
-> **Iteration zero.** A starting baseline, not yet verified end to end. If you work in this stack, please improve it — corrections and additions are very welcome via PR (see [README](./README.md)).
+> **Install/tests/coverage verified in CI.** The Stacks workflow runs this profile's install, test, and coverage commands (PCOV driver) against the real project in `samples/php/` on every change to either — a stale command fails loudly. E2E remains iteration zero: if you run Dusk/Panther/Codeception daily, corrections are very welcome via PR (see [README](./README.md)).
 
 Baseline for PHP projects (Laravel, Symfony, or plain). The repo's `CLAUDE.md` and `composer.json` scripts win over this.
 
@@ -14,6 +14,7 @@ Baseline for PHP projects (Laravel, Symfony, or plain). The repo's `CLAUDE.md` a
 - Unit tests: `vendor/bin/phpunit` · `vendor/bin/pest` · Laravel `php artisan test`
 - Tests with coverage: `XDEBUG_MODE=coverage vendor/bin/phpunit --coverage-clover coverage.xml`
   (Pest: `vendor/bin/pest --coverage --coverage-clover coverage.xml`)
+  Under PCOV, plain `vendor/bin/phpunit --coverage-clover coverage.xml` is enough — `XDEBUG_MODE` only matters for the Xdebug driver (this is what the Stacks CI job runs).
 
 ## Coverage
 - **A coverage driver is required** or PHPUnit reports *no* coverage — detect its absence and say so rather than reporting 0%:
