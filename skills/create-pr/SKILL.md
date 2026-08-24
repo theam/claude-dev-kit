@@ -78,7 +78,7 @@ Use the repo's PR template instead if one exists (`.github/PULL_REQUEST_TEMPLATE
 
 **AI traceability metadata**, best effort after creation:
 
-- Add an `ai-generated` label/tag to the PR when the host supports it — GitHub: `gh pr edit <url> --add-label ai-generated` (create it once with `gh label create ai-generated --color 8A2BE2` if missing); Bitbucket/GitLab: skip or use the host's equivalent. If not possible, skip silently — the badge and footer already carry the signal.
+- Add an `ai-generated` label/tag to the PR when the host supports it — GitHub: `gh pr edit <url> --add-label ai-generated` (create it once with `gh label create ai-generated --color 8A2BE2` if missing), then **verify it stuck** with `gh pr view <url> --json labels` — `gh pr edit` can error without applying anything on repos whose org ever used classic Projects; on a miss, apply via REST: `gh api repos/<owner>/<repo>/issues/<pr-number>/labels -f "labels[]=ai-generated"`. Bitbucket/GitLab: skip or use the host's equivalent. If not possible, skip silently — the badge and footer already carry the signal.
 
 ## After creation
 
