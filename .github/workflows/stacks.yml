@@ -1,0 +1,48 @@
+name: Stacks
+
+# Real-world half of #50: run each stack profile's documented commands against a
+# small sample project, so a profile that goes stale fails CI loudly instead of
+# silently degrading the kit for that stack. (The completeness half is
+# scripts/stack-profiles.test.mjs in the main CI.) One job per stack; adding a
+# stack is a sample directory plus a job here.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - 'samples/**'
+      - 'instructions/stacks/**'
+      - 'scripts/check-clover.mjs'
+      - '.github/workflows/stacks.yml'
+
+jobs:
+  php:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: samples/php
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: pcov
+
+      # The three steps below run the PHP profile's own commands
+      # (instructions/stacks/php.md) — editing the profile without keeping
+      # them true breaks this job, which is the point. The coupling is manual:
+      # these commands are copies, so a profile edit must update them (and vice
+      # versa) — reviewers, hold that line until a step derives them from the
+      # profile itself.
+      - name: Install (profile command)
+        run: composer install --no-interaction --no-progress
+
+      - name: Unit tests with coverage (profile command, PCOV driver)
+        run: vendor/bin/phpunit --coverage-clover coverage.xml
+
+      - name: Enforce the kit's coverage bar (default ≥ 95% per file)
+        run: node ../../scripts/check-clover.mjs coverage.xml 95

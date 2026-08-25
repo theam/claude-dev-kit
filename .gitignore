@@ -8,3 +8,11 @@ node_modules/
 # Claude Code local harness settings (never commit)
 .claude/settings.json
 .claude/settings.local.json
+
+# PHP stack sample (samples/php) — deps and reports are produced by the Stacks CI job;
+# the lock is deliberately uncommitted so the profile is exercised against current deps.
+samples/php/vendor/
+samples/php/composer.lock
+samples/php/coverage.xml
+samples/php/.phpunit.cache/
+samples/php/.phpunit.result.cache
