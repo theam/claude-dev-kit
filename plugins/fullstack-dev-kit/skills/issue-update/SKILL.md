@@ -56,6 +56,7 @@ Move the item to the team's review status. **Never hardcode transition/state IDs
 - Comment: `gh issue comment <number> --repo <owner/name> --body-file -`.
 - Owner: `gh issue edit <number> --add-assignee @me` if unassigned.
 - "Review status": GitHub issues have no workflow states — apply the label the team uses (e.g. `in-review`) via `gh issue edit --add-label`, and/or move it in the project board if one is configured. Persist the label under `tracker.reviewState`.
+- **Verify both writes by read-back — never trust the exit code.** `gh issue edit` can fail while applying nothing (its project-fields prefetch trips on repos whose org ever used classic Projects), which is the worst shape for the step the story is not done without. After editing, run `gh issue view <number> --json assignees,labels` and confirm the assignee and label actually landed; on a miss, apply via REST instead — `gh api repos/<owner>/<repo>/issues/<number>/assignees -f "assignees[]=<login>"` / `gh api repos/<owner>/<repo>/issues/<number>/labels -f "labels[]=<label>"` — and report which path worked.
 
 ### Azure DevOps (`type: "azure"`)
 - Comment and assign via the Azure DevOps MCP or REST / `az boards`.
