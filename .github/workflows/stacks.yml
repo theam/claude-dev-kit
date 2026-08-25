@@ -34,7 +34,10 @@ jobs:
 
       # The three steps below run the PHP profile's own commands
       # (instructions/stacks/php.md) — editing the profile without keeping
-      # them true breaks this job, which is the point.
+      # them true breaks this job, which is the point. The coupling is manual:
+      # these commands are copies, so a profile edit must update them (and vice
+      # versa) — reviewers, hold that line until a step derives them from the
+      # profile itself.
       - name: Install (profile command)
         run: composer install --no-interaction --no-progress
 
