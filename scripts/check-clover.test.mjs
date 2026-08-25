@@ -54,3 +54,26 @@ test('verdicts fail exactly the files below the bar', () => {
 test('an empty or non-Clover document yields no rows', () => {
   assert.deepEqual(parseClover('<coverage/>'), []);
 });
+
+test('a file present without statement metrics fails, at any bar', () => {
+  // Absence of measurement is not a pass: a report that lists the file but
+  // stops measuring it must not leave the gate green.
+  const xml = `<coverage><project>
+    <file name="/app/src/NoMetrics.php"><line num="1" type="stmt" count="0"/></file>
+    <file name="/app/src/HalfMetrics.php"><metrics loc="5" methods="1" coveredmethods="1"/></file>
+    <file name="/app/src/Measured.php"><metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0"/></file>
+  </project></coverage>`;
+  const files = parseClover(xml);
+  assert.deepEqual(
+    files.map((file) => [file.name.split('/').pop(), file.lines]),
+    [
+      ['NoMetrics.php', null],
+      ['HalfMetrics.php', null],
+      ['Measured.php', 100],
+    ],
+  );
+  for (const bar of [95, 0]) {
+    const rows = verdicts(files, bar);
+    assert.deepEqual(rows.map((row) => row.pass), [false, false, true], `bar ${bar}`);
+  }
+});

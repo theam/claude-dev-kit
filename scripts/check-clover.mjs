@@ -13,8 +13,11 @@
  * class-level one). Branch coverage comes from conditionals when the driver
  * reports them; PHPUnit under PCOV always writes conditionals="0" (branch
  * data needs Xdebug path coverage), and "the driver reported none" is n/a,
- * not a failure — stated plainly, never fabricated. Attribute parsing is
- * order-independent: Clover writers do not agree on attribute order.
+ * not a failure — stated plainly, never fabricated. The opposite asymmetry
+ * also holds: a <file> that appears in the report without statement metrics
+ * FAILS rather than being skipped — absence of measurement is not a pass,
+ * and a report that stops measuring must not stay green. Attribute parsing
+ * is order-independent: Clover writers do not agree on attribute order.
  */
 import { readFileSync } from 'node:fs';
 
@@ -23,7 +26,12 @@ export function parseClover(xml) {
   const re = /<file name="([^"]+)"[^>]*>([\s\S]*?)<\/file>/g;
   for (const [, name, body] of xml.matchAll(re)) {
     const metrics = [...body.matchAll(/<metrics([^>]*?)\/?>/g)];
-    if (metrics.length === 0) continue;
+    // Present but unmeasured is a finding, not a skip: emit the file with
+    // null metrics so the verdict fails it (lines: null never passes a bar).
+    if (metrics.length === 0) {
+      files.push({ name, lines: null, branches: null });
+      continue;
+    }
     const attrs = metrics[metrics.length - 1][1];
     const attr = (key) => {
       const found = attrs.match(new RegExp(`\\b${key}="(\\d+)"`));
@@ -31,7 +39,10 @@ export function parseClover(xml) {
     };
     const statements = attr('statements');
     const covered = attr('coveredstatements');
-    if (statements === null || covered === null) continue;
+    if (statements === null || covered === null) {
+      files.push({ name, lines: null, branches: null });
+      continue;
+    }
     const conditionals = attr('conditionals') ?? 0;
     const coveredConditionals = attr('coveredconditionals') ?? 0;
     files.push({
@@ -47,7 +58,9 @@ export function parseClover(xml) {
 export function verdicts(files, bar) {
   return files.map((file) => ({
     ...file,
-    pass: file.lines >= bar && (file.branches === null || file.branches >= bar),
+    // lines === null means the report carries no statement metrics for the
+    // file — never passable, at any bar.
+    pass: file.lines !== null && file.lines >= bar && (file.branches === null || file.branches >= bar),
   }));
 }
 
@@ -67,10 +80,9 @@ if (invokedDirectly) {
     process.exit(1);
   }
   for (const row of rows) {
+    const lines = row.lines === null ? 'unmeasured (no statement metrics)' : `${row.lines.toFixed(1)}%`;
     const branches = row.branches === null ? 'n/a (driver reports none)' : `${row.branches.toFixed(1)}%`;
-    console.log(
-      `${row.pass ? 'PASS' : 'FAIL'}  lines ${row.lines.toFixed(1)}%  branches ${branches}  ${row.name}`,
-    );
+    console.log(`${row.pass ? 'PASS' : 'FAIL'}  lines ${lines}  branches ${branches}  ${row.name}`);
   }
   const failed = rows.filter((row) => !row.pass);
   if (failed.length > 0) {
