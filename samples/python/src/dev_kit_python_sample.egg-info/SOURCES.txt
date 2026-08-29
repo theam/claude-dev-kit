@@ -1,0 +1,10 @@
+README.md
+pyproject.toml
+src/dev_kit_python_sample.egg-info/PKG-INFO
+src/dev_kit_python_sample.egg-info/SOURCES.txt
+src/dev_kit_python_sample.egg-info/dependency_links.txt
+src/dev_kit_python_sample.egg-info/requires.txt
+src/dev_kit_python_sample.egg-info/top_level.txt
+src/dev_kit_sample/__init__.py
+src/dev_kit_sample/coverage_gate.py
+tests/test_coverage_gate.py

@@ -1,0 +1,10 @@
+Metadata-Version: 2.4
+Name: dev-kit-python-sample
+Version: 0.1.0
+Summary: Minimal Python project exercising the kit's lint + unit + coverage gates in CI — the Python row of the stack matrix (#50).
+License: Apache-2.0
+Requires-Python: >=3.11
+Provides-Extra: dev
+Requires-Dist: pytest>=8; extra == "dev"
+Requires-Dist: pytest-cov>=6; extra == "dev"
+Requires-Dist: ruff>=0.6; extra == "dev"
