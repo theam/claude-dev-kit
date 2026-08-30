@@ -14,8 +14,8 @@ The plugin is already a valid **Agent Plugins 1.0.0** package (portable root `pl
 | Directory | Covers | How to submit |
 | --- | --- | --- |
 | **OpenAI Plugins Directory** | Codex + ChatGPT | Web submission portal (`developers.openai.com/plugins/deploy/submission`) |
-| **Cursor marketplace** | Cursor | `cursor.com/marketplace` (official) or community `cursor.directory` |
-| **VS Code Extensions** | GitHub Copilot / VS Code | Package + publish so it surfaces under `@agentPlugins` |
+| **Cursor marketplace** | Cursor | Owner submits the public repo link at `cursor.com/marketplace/publish` (steps below) |
+| **VS Code / Copilot** | GitHub Copilot / VS Code / Copilot CLI + app | List in `github/awesome-copilot`, a default marketplace — plugins then surface under `@agentPlugins` (steps + status below) |
 
 Start with **OpenAI** (largest reach: Codex + ChatGPT); Cursor and VS Code can follow.
 
@@ -31,6 +31,45 @@ Start with **OpenAI** (largest reach: Codex + ChatGPT); Cursor and VS Code can f
    - **Global** — target countries/regions.
    - **Submit** — release notes + policy attestations → **Submit for Review**.
 4. **After approval** — the developer publishes; it then appears in the Directory.
+
+### Cursor submission — exact steps (verified Aug 2026)
+
+1. **Manifest** — Cursor's publish flow accepts an Agent Plugin with a root
+   `plugin.json`, or a Cursor Plugin with `.cursor-plugin/plugin.json`. **Resolved in
+   practice:** the publish form **accepted** our root `.cursor-plugin/marketplace.json` →
+   subdir plugin (`plugins/fullstack-dev-kit`) as submitted — no root single-plugin
+   manifest was needed. (Teams can also import the repo as a marketplace — README
+   documents that path.)
+2. **Name rules** — lowercase kebab-case, alphanumerics/hyphens/periods, starts and ends
+   alphanumeric. `fullstack-dev-kit` ✅ complies.
+3. **Logo** — must be committed to the repo and referenced by **relative path** (Cursor
+   renders it from `raw.githubusercontent.com`). Brand icons are in `assets/` ✅ — verify the
+   manifest references them relatively, not by absolute URL.
+4. **Submit** — owner-only; ✅ **done**: the owner submitted the public repository link
+   at `cursor.com/marketplace/publish`.
+5. **Review** — every plugin is manually reviewed before listing, and **every update is
+   re-reviewed**. All marketplace plugins must be open source (we are, Apache-2.0).
+   **Status: ⏳ in Cursor's manual review — submitted, not yet listed.**
+
+### VS Code / Copilot (`@agentPlugins`) — steps + status (verified Aug 2026)
+
+Agent Plugins 1.0 went GA in VS Code, Copilot CLI, and the Copilot app on **2026-08-12**
+(GitHub changelog), on all Copilot plans. Discovery: users search `@agentPlugins` in the
+Extensions view, which browses the configured marketplaces — by default `copilot-plugins`
+and **`github/awesome-copilot`**. Getting listed in awesome-copilot is therefore the
+"surfaces under `@agentPlugins`" box, with no VSIX packaging or Azure DevOps publisher
+account involved. (Users can also add this repo itself as a marketplace via the
+`chat.plugins.marketplaces` setting — the README documents install-from-source today.)
+
+**Status: submitted and declined — no open action.** The CLI-filed intake
+([#2730](https://github.com/github/awesome-copilot/issues/2730), 2026-08-20) was closed in
+favor of the **web-form resubmission (#2731)**, which passed automated intake the same day
+and was then **rejected by a maintainer on 2026-08-26 on curation grounds** — in their
+words, the skills are "either overly simplistic … or replicate functionality built into
+the harness (such as the issue/PR skills)." Copilot users still get the kit today via
+**install-from-source** (verified; the README documents it), and `chat.plugins.marketplaces`
+can point at this repo directly. Re-approaching the directory would mean addressing the
+curation feedback first, not resubmitting as-is.
 
 ## Requirements checklist
 
@@ -91,3 +130,5 @@ URL, no `.well-known/openai-apps-challenge` domain verification, no tool-annotat
 3. ~~Design: logo / composerIcon / brandColor / screenshots~~ — done. Optional polish: crop chrome / anonymize the screenshots (drop-in, same filenames).
 4. ~~Decide `termsOfServiceURL` / website~~ — done (`LICENSE`; website = repo; legal can swap later).
 5. **Kit:** ✅ `interface` wired (brand icons + color) and validated. Package is **submission-ready** — once the Apps Management role is granted, submit skills-only via the portal (Cursor / VS Code to follow).
+6. **Cursor:** ✅ submitted (marketplace repo accepted as-is) — ⏳ awaiting Cursor's manual review; nothing to do until they answer.
+7. **Copilot:** ⛔ awesome-copilot **declined 2026-08-26** (curation: skills judged too simple / overlapping the harness's built-ins). Install-from-source remains the documented path; a future re-approach starts from the curation feedback, not a resubmission.
