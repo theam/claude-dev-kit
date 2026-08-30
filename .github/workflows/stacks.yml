@@ -46,3 +46,33 @@ jobs:
 
       - name: Enforce the kit's coverage bar (default ≥ 95% per file)
         run: node ../../scripts/check-clover.mjs coverage.xml 95
+
+  python:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: samples/python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # The steps below run the Python profile's own commands
+      # (instructions/stacks/python.md) — same manual coupling as the php job:
+      # these are copies, so a profile edit must update them (and vice versa).
+      - name: Install (profile command)
+        run: pip install -e '.[dev]'
+
+      - name: Lint + format check (profile commands)
+        run: |
+          ruff check .
+          ruff format --check .
+
+      # pytest-cov emits Cobertura, which the kit's per-file check-clover.mjs
+      # gate cannot parse, so the bar is enforced inline exactly as the profile
+      # documents (--cov-fail-under + [tool.coverage.report] fail_under) —
+      # repo-wide rather than per-file. A per-file Cobertura gate is a natural
+      # follow-up if the matrix wants parity with the php row.
+      - name: Unit tests with coverage bar (profile command)
+        run: pytest --cov=dev_kit_sample --cov-branch --cov-report=xml --cov-report=term-missing --cov-fail-under=95
