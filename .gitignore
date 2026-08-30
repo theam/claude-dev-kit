@@ -16,3 +16,9 @@ samples/php/composer.lock
 samples/php/coverage.xml
 samples/php/.phpunit.cache/
 samples/php/.phpunit.result.cache
+
+# Python stack sample (samples/python) — build/test artifacts, produced by the Stacks CI job
+samples/python/**/__pycache__/
+samples/python/**/*.egg-info/
+samples/python/.pytest_cache/
+samples/python/coverage.xml
