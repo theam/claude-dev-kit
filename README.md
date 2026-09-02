@@ -4,6 +4,7 @@
 [![Stacks](https://github.com/theam/claude-dev-kit/actions/workflows/stacks.yml/badge.svg)](https://github.com/theam/claude-dev-kit/actions/workflows/stacks.yml)
 [![Release](https://img.shields.io/github/v/release/theam/claude-dev-kit)](https://github.com/theam/claude-dev-kit/releases)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![OpenAI Plugins Directory](https://img.shields.io/badge/OpenAI-Plugins_Directory-black)](https://chatgpt.com/plugins/plugins_6a82e3d1df508191bfffcec222b18433)
 
 An open-source [Claude Code](https://code.claude.com) plugin by [The Agile Monkeys](https://www.theagilemonkeys.com): a **stack-agnostic issue-to-PR workflow** with enforced quality gates. Also runs on **OpenAI Codex**, **Cursor**, and other [Agent Plugins 1.0.0](https://agent-plugins.org) clients.
 
@@ -52,7 +53,7 @@ Interactive setup — tracker, Figma, telemetry consent, org — then it install
 | Host | One-liner |
 |---|---|
 | **Claude Code** | `claude plugin marketplace add theam/claude-dev-kit && claude plugin install fullstack-dev-kit@claude-dev-kit` |
-| **OpenAI Codex** | `codex plugin marketplace add theam/claude-dev-kit && codex plugin add fullstack-dev-kit@claude-dev-kit` — then `$work-story PROJ-1234` |
+| **OpenAI Codex / ChatGPT** | `codex plugin marketplace add theam/claude-dev-kit && codex plugin add fullstack-dev-kit@claude-dev-kit` — then `$work-story PROJ-1234`. Or add it from the [OpenAI Plugins Directory](https://chatgpt.com/plugins/plugins_6a82e3d1df508191bfffcec222b18433). |
 | **Cursor** | the wizard above — it detects Cursor and drops the portable plugin into `~/.cursor/plugins/local/` ([details](#cursor--no-git-url-installer-yet)) |
 | **Copilot (VS Code)** | Command Palette → **"Chat: Install Plugin From Source"** → `https://github.com/theam/claude-dev-kit` |
 
