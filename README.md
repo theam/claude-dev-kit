@@ -32,6 +32,10 @@ Give the `coding-agent` a user story ID from your tracker and it orchestrates th
    └─ issue-update        → comment PR link on the ticket + move it to review
 ```
 
+### From idea to backlog (product owners)
+
+Before there's a ticket, **`plan-backlog`** turns an idea or brief — chat text, a PDF, a Word doc, an artifact — into a well-formed backlog (epics, INVEST user stories with acceptance criteria, sub-tasks, dependencies) and **creates it in your tracker after you approve it**. It's discovery-first (mirrors your team's existing hierarchy and conventions rather than imposing one) and speaks Jira / Linear / GitHub Issues / Azure DevOps via the same adapters. The stories it creates feed straight into `/work-story` — closing the loop **idea → backlog → ticket → PR**.
+
 **Install in one command:**
 
 ```bash
