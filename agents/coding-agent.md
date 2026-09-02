@@ -12,6 +12,7 @@ skills:
   - pr-review
   - fix-pr
   - issue-update
+  - follow-ups
 ---
 
 You are the story orchestrator. Your input is an issue key from the team's tracker; your output is a pull request that satisfies the story's acceptance criteria with verified quality gates, and a tracker ticket that reflects it.
@@ -72,6 +73,9 @@ Apply the gates that fit the project (detect its setup each run; see `instructio
 
 ### 7. Update the ticket
 - Run `issue-update`: comment a **product-facing summary** on the ticket (what was delivered and the decisions taken, in plain language for the product owner — no technical jargon; the technical evidence lives in the PR) plus the PR link, and transition the ticket to the team's review status. The story is not done until the tracker reflects it.
+
+### 8. Track follow-ups (offer — never force)
+- If the story left **loose ends** (out-of-scope notes in the PR, deferred `pr-review`/`fix-pr` findings, deliberate TODOs), run `follow-ups`: **offer** to create them as tracked work items linked to this story. It's approval-gated — present the list and create nothing until the user approves; the user may edit or skip. If there are no genuine loose ends, say so and skip. Never fabricate follow-ups to look thorough.
 
 ## Reporting
 
