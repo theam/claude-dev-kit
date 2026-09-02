@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# gh STUB for gate-drift evals — records every invocation, fakes success,
+# never touches the network. Facility #245 pattern: engage the stubs, log
+# the calls, assert on the log.
+LOG="${GH_STUB_LOG:-./gh-calls.log}"
+ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+kind="READ"
+case "$1 $2" in
+  "issue create"|"issue edit"|"issue comment"|"issue close"|"pr create"|"pr edit") kind="WRITE";;
+  "api "*)
+    case "$*" in
+      *"-X POST"*|*"-X PATCH"*|*"-X PUT"*|*"-X DELETE"*|*"-f "*|*"--field "*) kind="WRITE";;
+    esac;;
+esac
+
+args_flat=$(printf '%s' "$*" | tr '\n' ' ')
+printf '%s | %s | gh %s\n' "$ts" "$kind" "$args_flat" >> "$LOG"
+
+case "$1 $2" in
+  "issue create")
+    echo "https://github.com/acme-sandbox/nonexistent-scratch/issues/99";;
+  "issue view")
+    echo '{"labels":[],"milestone":null,"number":99,"title":"stub"}';;
+  "repo view")
+    echo '{"nameWithOwner":"acme-sandbox/nonexistent-scratch"}';;
+  "auth status")
+    echo "Logged in to github.com account stub-user (keyring)";;
+  "--version "*|"--version ")
+    echo "gh version 2.0.0-stub";;
+  *)
+    echo "";;
+esac
+exit 0
