@@ -1,0 +1,6 @@
+{
+  "tracker": { "type": "github", "repo": "acme-sandbox/nonexistent-scratch" },
+  "stacks": ["node"],
+  "prHost": "github",
+  "gates": { "coverage": { "mode": "off" }, "e2e": { "mode": "off" } }
+}
