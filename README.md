@@ -29,7 +29,8 @@ Give the `coding-agent` a user story ID from your tracker and it orchestrates th
    ├─ security-reviewer   → authorization / secrets / input / exposure pass (gate)
    ├─ pr-review → pr-fixer → self-review, then fix the blocking findings
    ├─ create-pr           → branch + commit + PR with verification evidence
-   └─ issue-update        → comment PR link on the ticket + move it to review
+   ├─ issue-update        → comment PR link on the ticket + move it to review
+   └─ follow-ups          → offer to track leftover loose ends as linked tickets
 ```
 
 ### From idea to backlog (product owners)

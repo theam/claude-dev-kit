@@ -68,6 +68,12 @@ Run **`issue-update`**: comment a product-facing summary (plain language) plus t
 and transition the ticket to the team's review status. The story isn't done until the
 tracker reflects it.
 
+## 8. Track follow-ups (offer — never force)
+If the story left **loose ends** (out-of-scope notes in the PR, deferred `pr-review`/`fix-pr`
+findings, deliberate TODOs), run **`follow-ups`**: offer to create them as tracked work items
+linked to this story. Approval-gated — present the list, create nothing until approved; the
+user may edit or skip. No genuine loose ends → say so and skip. Never fabricate follow-ups.
+
 ## Reporting
 At every step, state plainly what passed, what failed (with output), and what was skipped.
 Never report a gate as passed without having run it.
