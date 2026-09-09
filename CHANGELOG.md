@@ -7,6 +7,9 @@ The `version` in `.claude-plugin/plugin.json` is what reaches installed clients 
 a release is only "live" for users once that is bumped and published.
 
 ## [Unreleased]
+### Added
+- **Rich review artifact for `plan-backlog` (#74).** On hosts that support artifacts (Claude Code / claude.ai), a non-trivial backlog draft is now presented as a **navigable artifact** at the review step — collapsible epics → stories with acceptance criteria, labels, sizing and dependencies, plus search/filter and a table of contents — so a large backlog is easy to scan and drill into. The in-chat draft + approval question stay the gate (the artifact is a review aid, not a substitute); portable hosts (Codex/Cursor/Copilot) keep Markdown. From @santielizondo's idea. Kit → **0.19.12**.
+
 ### Changed
 - **`plan-backlog` is now guided by default (#72).** Instead of emitting a whole backlog in one shot, it elaborates progressively — **zoom-out → zoom-in** across three levels (framing → epics → stories), presenting **2–4 alternatives** and waiting for the PO's decision at each, so the definition work stays with the human. One-shot is still available via `--quick`. The mode is judged **per invocation** from repo docs + brief context (never persisted — a mature project can hold a brand-new feature), always keeping a light framing check. The guided flow runs in the main conversation (`/plan-backlog`); the `backlog-planner` subagent remains the engine for `--quick` and for discovery/creation. From early-user feedback. Kit → **0.19.11**.
 
