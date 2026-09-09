@@ -1,13 +1,13 @@
 ---
 name: plan-backlog
-description: Turn an idea or description (in any format) into a well-formed backlog — epics, user stories with acceptance criteria, sub-tasks — and create it in the team's tracker after approval. Supports Jira, Linear, GitHub Issues, and Azure DevOps via adapters. Use when a product owner wants to draft or create tickets from an idea, brief, or document.
+description: Turn an idea or description (in any format) into a well-formed backlog — epics, user stories with acceptance criteria, sub-tasks — and create it in the team's tracker after approval. Elaborates progressively (guided, the default) or in one shot (`--quick`). Supports Jira, Linear, GitHub Issues, and Azure DevOps via adapters. Use when a product owner wants to draft or create tickets from an idea, brief, or document.
 ---
 
 # Plan Backlog
 
 Turn a product idea into a structured, well-formed backlog in the team's tracker — the **upstream** half of the issue-to-PR workflow, for the product-owner persona. It closes the loop **idea → backlog → ticket → PR** (created stories feed straight into `work-story`).
 
-This is the *write* counterpart to `issue-fetch` (which reads). **Nothing is created until you approve the draft.**
+This is the *write* counterpart to `issue-fetch` (which reads). **Nothing is created until you approve the draft.** You **facilitate** the PO's thinking — offer options and ask for decisions; never decide the product for them.
 
 ## Trigger
 
@@ -43,22 +43,49 @@ Don't impose a structure; **mirror the team's.** Using the adapter for `tracker.
 
 Ask only what can't be discovered.
 
-## 3. Draft — a neutral model mapped to native types
+## 3. Choose the mode — guided by default
 
-Work with a neutral backlog model, then map it onto the tracker's native types (§5):
+Two modes; **decide per invocation, never persist a mode** — a mature project can still hold a brand-new feature, so there are **two maturities: the project's and the feature's**. Judge each run.
+
+- **Guided (default):** elaborate progressively, zoom-out → zoom-in, offering alternatives and asking for a decision at each level (§4). This is the right default; it keeps the PO doing the *definition* work instead of handing every decision to the agent.
+- **Quick (`--quick`):** produce the whole backlog in one draft (§4, Quick). An explicit opt-in for when the PO just wants a fast draft.
+
+**Signals for how much guidance a run needs** (discovery-first, never assumed):
+- **Repo docs:** an empty/greenfield repo vs. one with a defined stack, conventions, and `CLAUDE.md` — the emptier it is, the more definition help the framing step should give.
+- **Brief context:** how much useful context the idea/brief already carries.
+
+Even on a mature project, still do a **light framing check** (§4a) — don't skip framing on the assumption it isn't needed. If the mode is genuinely ambiguous, **ask once**.
+
+## 4. Draft the backlog
+
+### Guided mode (default) — zoom-out → zoom-in
+
+Move through **three levels**; at each, present **2–4 alternatives** (as many as the situation needs, no padding), recommend one with a reason, and **wait for the PO's decision** before going deeper. Ground every option in the intake + discovery — never fabricate.
+
+**4a. Framing (zoom-out) — help *define*, not just structure.** Restate the goal and map the problem space (users, outcomes, constraints, unknowns). Offer 2–4 **framing alternatives** — e.g. MVP vs. full, different ways to slice the initiative, different sequencing — with the trade-offs of each. → PO chooses the framing.
+
+**4b. Epics / themes.** For the chosen framing, propose the epics/themes with **alternatives** where the breakdown could reasonably differ. → PO adjusts.
+
+**4c. Stories.** Within each chosen epic, propose user stories (*"As a `<role>`, I want `<capability>`, so that `<value>`"*) with Given/When/Then **acceptance criteria**, INVEST-sized, offering **scoping alternatives** (split/merge, in/out) where it matters. → PO refines.
+
+Then assemble the full draft and go to the approval gate (§5).
+
+### Quick mode (`--quick`) — one-shot draft
+
+Work with a neutral backlog model and produce the whole thing at once:
 
 - **Initiative / Epic** → the outcome / theme.
-- **User Story** → *"As a `<role>`, I want `<capability>`, so that `<value>`."* with **acceptance criteria** written as Given / When / Then, and **INVEST**-sized.
+- **User Story** → *"As a `<role>`, I want `<capability>`, so that `<value>`."* with Given/When/Then **acceptance criteria**, **INVEST**-sized.
 - **Sub-tasks** → concrete steps, when they add clarity.
 - **Dependencies**, sizing hints, labels/components, and explicit **out-of-scope** notes.
 
-Recommend a shape based on discovery and **confirm it** with the user (e.g. *"1 Epic + 5 stories, or split by feature/milestone?"*) — don't force one.
+Recommend a shape based on discovery and **confirm it** with the user — don't force one. Then go to the approval gate (§5).
 
-## 4. Approval gate (mandatory — create nothing yet)
+## 5. Approval gate (mandatory — create nothing yet)
 
-Present the **full draft**: the hierarchy plus each item's title, description, acceptance criteria, labels, and links. **Wait for explicit approval**; the user may edit anything. Only after approval proceed to create. (Same doctrine as `work-story`'s plan gate — never create tickets without a human OK.)
+Present the **full assembled draft**: the hierarchy plus each item's title, description, acceptance criteria, labels, and links. **Wait for explicit approval**; the user may edit anything. Only after approval proceed to create. (Same doctrine as `work-story`'s plan gate — never create tickets without a human OK. In guided mode the per-level decisions do not replace this final gate.)
 
-## 5. Create — via the tracker's write adapter
+## 6. Create — via the tracker's write adapter
 
 Create **parents before children**, link children to parents, and set labels/components/points where discovered. Report each created item with its key/URL.
 
@@ -84,13 +111,14 @@ Config: `org`, `project`.
 
 If the adapter's backend is not authenticated (MCP connector not authorized, `gh`/`az` not logged in), tell the user exactly how to authenticate — MCP connectors via `/mcp` or claude.ai connector settings; CLIs via `gh auth login` / `az login` — and stop. **Never create partial or placeholder items.**
 
-## 6. Handoff
+## 7. Handoff
 
 List the created items with their keys/URLs and hand off: each story is ready for **`work-story <KEY>` → PR**. That completes the loop **idea → backlog → ticket → PR**.
 
 ## Guardrails
 
 - **Never create anything before explicit approval.**
+- **Facilitate, don't decide:** offer alternatives and ask for the PO's decision at each level — don't hand them a finished product and call it done.
 - **Discovery-first:** mirror the team's hierarchy and conventions; don't impose one.
 - **Don't fabricate** scope or acceptance criteria — ground everything in the source plus user confirmation.
 - Watch for **secrets/PII** in the source material; don't copy them into tickets.
