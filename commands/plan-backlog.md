@@ -20,7 +20,7 @@ The guided flow is interactive, so conduct it in the main conversation (do not h
    - **Framing (zoom-out):** the goal, the problem space, and framing options (MVP vs full, ways to slice it).
    - **Epics / themes** for the chosen framing.
    - **Stories** (with Given/When/Then acceptance criteria) within each epic.
-3. **Approval gate:** print the full assembled draft in the conversation, then ask the user to approve, adjust, or cancel. (The per-level decisions do not replace this final gate.)
+3. **Approval gate:** print a concise hierarchy summary in the conversation and ask the user to approve, adjust, or cancel. For a non-trivial backlog, also render the full draft as a **navigable artifact** (collapsible epics → stories, searchable) as the rich review surface — but the approval still happens in the chat (the artifact is not a substitute for the gate). See the `plan-backlog` skill's review step. (The per-level decisions do not replace this final gate.)
 4. **Create** on approval, via the tracker adapter (you may delegate the creation writes to `backlog-planner`), then report each item's key/URL and the handoff note (each story ready for `/work-story <KEY>`).
 
 ## `--quick` — one-shot draft (delegate)
@@ -31,7 +31,7 @@ Delegate to the `backlog-planner` subagent in two phases:
 
 **Approval gate — two separate steps, in this exact order:**
 
-1. **FIRST, print the draft**: write a normal assistant message containing the backlog-planner's FULL draft (hierarchy + each item's title, acceptance criteria, labels, links), verbatim. This message is a hard requirement — a selection dialog is not a substitute, and putting the draft only inside a dialog's option text does not count.
+1. **FIRST, print the draft**: write a normal assistant message containing the backlog-planner's FULL draft (hierarchy + each item's title, acceptance criteria, labels, links), verbatim. This message is a hard requirement — a selection dialog is not a substitute, and putting the draft only inside a dialog's option text does not count. For a non-trivial backlog you may *additionally* render it as a navigable artifact (see the skill's review step), but the in-chat draft + question remain the gate.
 2. **THEN, and only after that message is visible**, ask the user to approve, adjust, or cancel.
 
 Never collapse these two steps into one dialog. Only if the arguments contain `--auto-approve` (automated runs), skip the gate.

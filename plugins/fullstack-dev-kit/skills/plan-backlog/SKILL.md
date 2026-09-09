@@ -81,9 +81,11 @@ Work with a neutral backlog model and produce the whole thing at once:
 
 Recommend a shape based on discovery and **confirm it** with the user — don't force one. Then go to the approval gate (§5).
 
-## 5. Approval gate (mandatory — create nothing yet)
+## 5. Review & approval gate (mandatory — create nothing yet)
 
 Present the **full assembled draft**: the hierarchy plus each item's title, description, acceptance criteria, labels, and links. **Wait for explicit approval**; the user may edit anything. Only after approval proceed to create. (Same doctrine as `work-story`'s plan gate — never create tickets without a human OK. In guided mode the per-level decisions do not replace this final gate.)
+
+**Rich review surface (when the host supports artifacts — e.g. Claude Code / claude.ai).** For anything beyond a couple of items, also render the draft as a **navigable artifact** so a large backlog is easy to scan and drill into — collapsible **epics → stories**, each showing its user story, Given/When/Then acceptance criteria, labels, sizing, and dependencies; with search/filter and a table-of-contents. Load the `artifact-design` skill before building it. The artifact is a *review aid, not the gate itself*: still print a concise hierarchy summary and ask for approval **in the conversation** (a page or dialog is not a substitute — the user must be able to approve in the chat). On hosts without artifacts (Codex / Cursor / Copilot), present the draft as Markdown.
 
 ## 6. Create — via the tracker's write adapter
 

@@ -28,7 +28,7 @@ Build the backlog draft per `plan-backlog`: the hierarchy plus each item's title
 
 **If you are running as a subagent** (your caller relays to the user): return the FULL draft as your result and stop — do not ask for approval yourself and do not create anything. Your caller shows it to the user and resumes you with the decision. Approving an unseen draft is worthless.
 
-**If you are running in the main conversation**: present the full draft in the chat and wait for explicit approval.
+**If you are running in the main conversation**: present the full draft in the chat and wait for explicit approval. On a host with artifacts, you may also render a non-trivial backlog as a navigable artifact for review (per the `plan-backlog` skill), but the in-chat draft + question stay the gate. (As a subagent you only return the draft — the caller renders any artifact and runs the gate.)
 
 ### 3. Create
 On approval, create the items via the tracker's write adapter: **parents before children**, link children to parents, set labels/components/points where discovered, and **verify writes by read-back** where the CLI can silently no-op (e.g. GitHub). Ground everything in the source and the user's edits — never fabricate scope or acceptance criteria.
