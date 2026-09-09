@@ -38,7 +38,7 @@ Give the `coding-agent` a user story ID from your tracker and it orchestrates th
 
 Before there's a ticket, **`plan-backlog`** turns an idea or brief — chat text, a PDF, a Word doc, an artifact — into a well-formed backlog (epics, INVEST user stories with acceptance criteria, sub-tasks, dependencies) and **creates it in your tracker after you approve it**. It's discovery-first (mirrors your team's existing hierarchy and conventions rather than imposing one) and speaks Jira / Linear / GitHub Issues / Azure DevOps via the same adapters. The stories it creates feed straight into `/work-story` — closing the loop **idea → backlog → ticket → PR**.
 
-In **Claude Code**, run `/plan-backlog <idea | path/to/brief.pdf | URL>` (a `backlog-planner` orchestrator drafts it, waits for your approval, then creates it). On **Codex / Cursor / Copilot**, invoke the `plan-backlog` skill directly.
+It's **guided by default** — it elaborates progressively (framing → epics → stories), offering alternatives and asking for your decision at each level, so the definition stays yours; add `--quick` for a one-shot draft. In **Claude Code**, run `/plan-backlog <idea | path/to/brief.pdf | URL> [--quick]`. On **Codex / Cursor / Copilot**, invoke the `plan-backlog` skill directly.
 
 **Install in one command:**
 
