@@ -14,7 +14,11 @@ The kit taking a ticket all the way to an opened PR (test project *yardflow*):
 
 https://github.com/user-attachments/assets/21afb5ab-b52b-4418-bf01-d247e8d73208
 
-## How it works
+---
+
+# What it does
+
+## The issue-to-PR flow
 
 Give the `coding-agent` a user story ID from your tracker and it orchestrates the whole flow:
 
@@ -34,30 +38,28 @@ Give the `coding-agent` a user story ID from your tracker and it orchestrates th
    └─ follow-ups          → offer to track leftover loose ends as linked tickets
 ```
 
-### From idea to backlog (product owners)
+## From idea to backlog (product owners)
 
 Before there's a ticket, **`plan-backlog`** turns an idea or brief — chat text, a PDF, a Word doc, an artifact — into a well-formed backlog (epics, INVEST user stories with acceptance criteria, sub-tasks, dependencies) and **creates it in your tracker after you approve it**. It's discovery-first (mirrors your team's existing hierarchy and conventions rather than imposing one) and speaks Jira / Linear / GitHub Issues / Azure DevOps via the same adapters. The stories it creates feed straight into `/work-story` — closing the loop **idea → backlog → ticket → PR**.
 
 It's **guided by default** — it elaborates progressively (framing → epics → stories), offering alternatives and asking for your decision at each level, so the definition stays yours; add `--quick` for a one-shot draft. On Claude, a non-trivial backlog is shown as a **navigable artifact** for review (approval still happens in the chat). In **Claude Code**, run `/plan-backlog <idea | path/to/brief.pdf | URL> [--quick]`. On **Codex / Cursor / Copilot**, invoke the `plan-backlog` skill directly.
 
-**Install in one command:**
+## Quality gates
 
-```bash
-npm create @theagilemonkeys/dev-kit
-```
+**Always apply** (regardless of stack or test setup):
 
-Interactive setup — tracker, Figma, telemetry consent, org — then it installs the plugin for whichever agents you have (Claude Code / Codex / Cursor). Full options in [Installing in Claude Code](#installing-in-claude-code).
+- No code before the plan is approved (unless `--auto-approve` for pipelines).
+- Security pass (`security-reviewer`) with no blocking findings.
+- PR body carries the verification evidence; the ticket gets the PR link and moves to review.
 
-**Or install directly on your host:**
+**Adaptive — enforce the project's *own* standard, detected each run** (the kit never imposes tests or scaffolds a framework on a project that doesn't use one):
 
-| Host | One-liner |
-|---|---|
-| **Claude Code** | `claude plugin marketplace add theam/claude-dev-kit && claude plugin install fullstack-dev-kit@claude-dev-kit` |
-| **OpenAI Codex / ChatGPT** | `codex plugin marketplace add theam/claude-dev-kit && codex plugin add fullstack-dev-kit@claude-dev-kit` — then `$work-story PROJ-1234`. Or add it from the [OpenAI Plugins Directory](https://chatgpt.com/plugins/plugins_6a82e3d1df508191bfffcec222b18433). |
-| **Cursor** | the wizard above — it detects Cursor and drops the portable plugin into `~/.cursor/plugins/local/` ([details](#cursor--no-git-url-installer-yet)) |
-| **Copilot (VS Code)** | Command Palette → **"Chat: Install Plugin From Source"** → `https://github.com/theam/claude-dev-kit` |
+- If the project has tests/coverage: touched files meet its bar (default ≥ 95%) and don't regress; suites pass; lint clean.
+- User-facing changes get e2e **when the project already does e2e**.
+- No test/e2e/lint setup → the kit **recommends** it and says so in the PR — it doesn't block. Teams wanting a hard bar set a `gates` policy (`auto` (default) · `required` · `off`) in `.claude/dev-kit.json`.
+- **Accessibility (frontend only):** when a change touches user-facing UI in a frontend stack, the review automatically covers the a11y basics (alt text, labels, accessible names, keyboard/focus, contrast, correct ARIA) — using the repo's own a11y tooling if it has any, never scaffolding one. It's **automatic and non-blocking by default**, costs nothing on backend/non-UI changes, and needs no setup. To change it, set `"a11y"` in `.claude/dev-kit.json` to `auto` (default) · `required` (make it a blocking gate) · `off` (never run) — edit it by hand, or just **ask the kit to do it** (e.g. *"make accessibility a required gate"*) and it updates the file for you.
 
-More — including which hosts are validated end to end — in [Also runs on Codex, Cursor & Copilot](#also-runs-on-codex-cursor--copilot-experimental).
+Either way, a skipped gate is **reported, never hidden**.
 
 ## Stack-agnostic by design
 
@@ -73,23 +75,38 @@ It integrates with your tools through **adapters**, not hardcoded dependencies:
 | PR host | GitHub (`gh`), Bitbucket (REST), GitLab (`glab`), Azure DevOps (`az repos`) | Detected from the `origin` remote, stored as `prHost` |
 | Design (optional) | Figma | Activated when a ticket links a Figma URL |
 
-## Installing in Claude Code
+---
 
-The kit is a Claude Code **plugin**. Install it once per developer; it then loads in every session across every surface — the [CLI](https://code.claude.com), the desktop app, the VS Code / JetBrains extensions, and the web app (claude.ai/code).
+# Getting started
+
+## Installation
+
+The kit is a Claude Code **plugin** (and an [Agent Plugins 1.0.0](https://agent-plugins.org) plugin for other clients). Install it once per developer; it then loads in every session across every surface — the [CLI](https://code.claude.com), the desktop app, the VS Code / JetBrains extensions, and the web app (claude.ai/code).
 
 **Prerequisites:** [Claude Code](https://code.claude.com) (`claude --version`) and the [GitHub CLI](https://cli.github.com) authenticated (`gh auth status`).
 
-### Install with npm (recommended)
+### Recommended: the setup wizard
 
 ```bash
 npm create @theagilemonkeys/dev-kit
 ```
 
-The wizard picks your issue tracker and whether you use Figma, **shows exactly what anonymous telemetry would be collected and lets you opt in or out**, sets your organisation label, writes `.claude/dev-kit.json`, and runs the plugin install for you. Then authorize your connectors (below) and you're done.
+Interactive setup — tracker, Figma, telemetry consent, org — then it installs the plugin for whichever agents you have (Claude Code / Codex / Cursor). The wizard picks your issue tracker and whether you use Figma, **shows exactly what anonymous telemetry would be collected and lets you opt in or out**, sets your organisation label, writes `.claude/dev-kit.json`, and runs the plugin install for you. Then authorize your connectors ([below](#connect-your-tracker-one-time)) and you're done.
 
-### Manual install (what the wizard automates)
+### Or install directly on your host
 
-From a **terminal** — plugin management is CLI-only; the VS Code / JetBrains chat panels reject `/plugin` commands:
+| Host | One-liner |
+|---|---|
+| **Claude Code** | `claude plugin marketplace add theam/claude-dev-kit && claude plugin install fullstack-dev-kit@claude-dev-kit` |
+| **OpenAI Codex / ChatGPT** | `codex plugin marketplace add theam/claude-dev-kit && codex plugin add fullstack-dev-kit@claude-dev-kit` — then `$work-story PROJ-1234`. Or add it from the [OpenAI Plugins Directory](https://chatgpt.com/plugins/plugins_6a82e3d1df508191bfffcec222b18433). |
+| **Cursor** | the wizard above — it detects Cursor and drops the portable plugin into `~/.cursor/plugins/local/` ([details](#cursor)) |
+| **Copilot (VS Code)** | Command Palette → **"Chat: Install Plugin From Source"** → `https://github.com/theam/claude-dev-kit` |
+
+Per-host details and caveats follow.
+
+### Claude Code
+
+**Manual install (what the wizard automates)** — from a **terminal** (plugin management is CLI-only; the VS Code / JetBrains chat panels reject `/plugin` commands):
 
 ```bash
 claude plugin marketplace add theam/claude-dev-kit
@@ -98,7 +115,67 @@ claude plugin install fullstack-dev-kit@claude-dev-kit
 
 Installation is **user-level and permanent** — every future session (CLI or IDE extension) loads the kit automatically, no reinstall per session or project. Verify with `claude plugin list`, or type `/` in a session and search `fullstack-dev-kit:` (you should see `work-story`, `launch-story`, and the skills; agents show under `/agents`).
 
-### Connect the tracker your team uses (one-time)
+**Enable auto-update:** `/plugin` → **Marketplaces** tab → `claude-dev-kit` → **Enable auto-update**. New versions then arrive at session startup. To pull manually instead:
+
+```bash
+claude plugin marketplace update claude-dev-kit
+```
+
+**Team-wide install (optional — one config for everyone).** Instead of each developer running the two install commands, a consuming repo can commit the marketplace + plugin to its own `.claude/settings.json`. Teammates then get the kit when they open and **trust** the repo — in the CLI and the Desktop app's Code tab alike:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "claude-dev-kit": {
+      "source": { "source": "github", "repo": "theam/claude-dev-kit" }
+    }
+  },
+  "enabledPlugins": {
+    "fullstack-dev-kit@claude-dev-kit": true
+  }
+}
+```
+
+Pin to a release by adding `"ref": "v0.5.0"` (or a `"sha"`) to `source`; omit it to always track the default branch. Requires the marketplace repo to be public (or teammates to have git access to it).
+
+> Heads-up: auto-load on folder-trust is the intended behavior, but a known Claude Code issue ([#32606](https://github.com/anthropics/claude-code/issues/32606)) means some setups still need a one-time manual `claude plugin install fullstack-dev-kit@claude-dev-kit`. Test with one teammate before rolling out to everyone.
+
+### OpenAI Codex
+
+Validated on codex-cli 0.147.
+
+```bash
+codex plugin marketplace add theam/claude-dev-kit
+codex plugin add fullstack-dev-kit@claude-dev-kit
+```
+
+Then invoke `$work-story PROJ-1234` (or any single skill like `$pr-review`). The `npm create` wizard also installs the **connector your tracker implies** (Jira → `atlassian-rovo`, Linear → `linear`, Figma → `figma`; GitHub/Azure use their CLIs) and schedules the telemetry sweep. Details: [`codex/README.md`](./codex/README.md).
+
+### GitHub Copilot (VS Code)
+
+*Experimental in VS Code.* Command Palette → **"Chat: Install Plugin From Source"** → paste `https://github.com/theam/claude-dev-kit`. VS Code clones and installs it; skills load from the plugin's `skills/` and any `mcp.json` starts automatically. Add your tracker's MCP via **MCP: Add Server** (or `.vscode/mcp.json`). *Feature is labeled Experimental — behavior may shift.*
+
+### Cursor
+
+*No git-URL installer yet.* Cursor has no "install from git URL" command today, so:
+
+- **Easiest:** run **`npm create @theagilemonkeys/dev-kit`** — the wizard detects Cursor and drops the portable plugin into `~/.cursor/plugins/local/fullstack-dev-kit` for you, or
+- clone it yourself: `git clone https://github.com/theam/claude-dev-kit ~/.cursor/plugins/local/claude-dev-kit`, or
+- (Teams/Enterprise) an admin imports the repo: Dashboard → Plugins → **Add Marketplace → Import from Repo**.
+
+Restart Cursor; skills then auto-load. Enable MCP under **Cursor Settings → Tools & MCP** (`~/.cursor/mcp.json`). No telemetry on Cursor.
+
+### How it works across clients
+
+Beyond Claude Code, the kit ships as a plugin for **any [Agent Plugins 1.0.0](https://agent-plugins.org) client**. This repo doubles as the plugin: a Codex marketplace ([`.agents/plugins/marketplace.json`](./.agents/plugins/marketplace.json)) plus a portable plugin at [`plugins/fullstack-dev-kit/`](./plugins/fullstack-dev-kit/) that carries **both** a Codex-native `.codex-plugin/plugin.json` **and** a portable root `plugin.json`. The same `skills/` (generated from the canonical top-level `skills/`) serve every client.
+
+**What travels:** the skills, including a portable **`work-story`** orchestration playbook the host agent runs end to end (fetch → plan → implement → gates → review → PR → ticket). **What doesn't:** Claude Code's `coding-agent` subagent and curated Codex connectors are host-specific; each client uses its own agent + its own MCP/connector auth.
+
+> **Telemetry note:** the anonymous usage sweep is set up **only by the `npm create` wizard** (Codex). A plain plugin install — and any install on Cursor/Copilot — carries **no telemetry**. If you want usage attributed, install via the wizard.
+
+> **Status, honestly:** the Agent Plugins standard is days old (published 2026-08-06) and client support is early. We've **validated Codex 0.147 end to end**; **Cursor and Copilot are not yet verified by us** — the plugin is format-compliant, but confirm install + skill invocation on your client version.
+
+## Connect your tracker (one-time)
 
 **The easiest way is to just ask the kit** — tell it, in plain language, what you want:
 
@@ -126,36 +203,9 @@ Authorization is **per developer, one-time** — it persists across sessions. Th
 
 > When authorizing an MCP via OAuth, complete the browser flow **immediately** — the link is tied to a live local callback and expires with it. Don't reuse old tabs or restart the session mid-flow.
 
-### Enable auto-update
+---
 
-`/plugin` → **Marketplaces** tab → `claude-dev-kit` → **Enable auto-update**. New versions then arrive at session startup. To pull manually instead:
-
-```bash
-claude plugin marketplace update claude-dev-kit
-```
-
-> **Troubleshooting:** if `/work-story` is unknown, the session started before the install — restart it (VS Code: *Developer: Reload Window*) and remember the namespace `/fullstack-dev-kit:work-story`. More cases in [Troubleshooting](#troubleshooting) below.
-
-### Team-wide install (optional — one config for everyone)
-
-Instead of each developer running the two install commands, a consuming repo can commit the marketplace + plugin to its own `.claude/settings.json`. Teammates then get the kit when they open and **trust** the repo — in the CLI and the Desktop app's Code tab alike:
-
-```json
-{
-  "extraKnownMarketplaces": {
-    "claude-dev-kit": {
-      "source": { "source": "github", "repo": "theam/claude-dev-kit" }
-    }
-  },
-  "enabledPlugins": {
-    "fullstack-dev-kit@claude-dev-kit": true
-  }
-}
-```
-
-Pin to a release by adding `"ref": "v0.5.0"` (or a `"sha"`) to `source`; omit it to always track the default branch. Requires the marketplace repo to be public (or teammates to have git access to it).
-
-> Heads-up: auto-load on folder-trust is the intended behavior, but a known Claude Code issue ([#32606](https://github.com/anthropics/claude-code/issues/32606)) means some setups still need a one-time manual `claude plugin install fullstack-dev-kit@claude-dev-kit`. Test with one teammate before rolling out to everyone.
+# Using it
 
 ## First use — zero config
 
@@ -167,11 +217,12 @@ fetch PROJ-1234
 
 The kit runs `dev-kit-setup`: it detects your tracker, discovers what it can (site/project/team/fields), asks only genuine choices, and persists the result to `.claude/dev-kit.json` — **no secrets, safe to commit**, so one setup serves the whole team. If that works, everything works.
 
-## Day-to-day usage
+## Day-to-day
 
 | You want to… | Type |
 |---|---|
 | Work a story end to end (current window) | `/fullstack-dev-kit:work-story PROJ-1234` |
+| Draft & create a backlog from an idea/brief | `/fullstack-dev-kit:plan-backlog <idea | brief.pdf>` |
 | Prepare a story worktree + new VS Code window | `/fullstack-dev-kit:launch-story PROJ-1234` |
 | Unattended run (no plan gate — pipelines only) | append `--auto-approve` |
 | Review a PR or your current diff | `/fullstack-dev-kit:pr-review #42` |
@@ -194,11 +245,22 @@ You don't need a tracker (or a ticket) to use the kit — the ticket integration
 
 Full **`/work-story <TICKET>`** flow is ticket-first (it fetches the story and moves it to review); everything else works ticketless. Teams with no tracker can set `tracker: none` in `dev-kit-setup`.
 
+## Parallel stories — one worktree per story
+
+`/work-story` works **in the current directory**. To work several stories at once, use `/launch-story PROJ-1234` per story: it creates a dedicated git worktree, opens a **new VS Code window on it**, and hands you the `work-story` command to paste there.
+
+> Caveat: stories whose e2e gates boot dev servers on fixed ports can collide if run at the exact same time — stagger them, or parameterize ports in the consuming repo.
+
+---
+
+# Reference
+
 ## What's inside
 
 | Component | Type | Purpose |
 |---|---|---|
 | `coding-agent` | agent | Orchestrator: story ID → PR → updated ticket, with plan-approval gate |
+| `backlog-planner` | agent | Product-owner orchestrator: idea/brief → approved backlog created in the tracker |
 | `pr-reviewer` | agent | High-signal diff review: correctness, contract drift, security, tests |
 | `pr-fixer` | agent | Resolves review/CI findings, re-verifies gates, pushes |
 | `security-reviewer` | agent | Focused security pass: auth, secrets, input, exposure (gate) |
@@ -207,6 +269,8 @@ Full **`/work-story <TICKET>`** flow is ticket-first (it fetches the story and m
 | `dev-kit-setup` | skill | First-use bootstrap: detects the tracker, writes `.claude/dev-kit.json` |
 | `issue-fetch` | skill | Ticket + acceptance criteria + comments (Jira/Linear/GitHub/Azure) |
 | `issue-update` | skill | Comment PR + evidence on the ticket, transition to review |
+| `plan-backlog` | skill | Idea/brief → well-formed backlog, created in the tracker after approval |
+| `follow-ups` | skill | Track a story's loose ends as linked tickets, after approval |
 | `figma-fetch` | skill | Frame hierarchy + text content from a Figma URL |
 | `coverage-check` | skill | Runs the repo's coverage command, enforces the project's coverage bar (default 95%) when it has one |
 | `e2e-generate` | skill | Playbook for creating/updating e2e tests |
@@ -215,81 +279,12 @@ Full **`/work-story <TICKET>`** flow is ticket-first (it fetches the story and m
 | `fix-pr` | skill | Playbook: findings → fixes → re-verified gates → push |
 | `instructions/` | rules | Always-on, language-agnostic: secure coding, testing standards |
 | `/work-story` | command | Entry point: `/work-story PROJ-1234` |
+| `/plan-backlog` | command | Entry point: `/plan-backlog <idea | brief.pdf>` |
 | `/launch-story` | command | Creates a story worktree and opens a new VS Code window on it |
-
-## Quality gates
-
-**Always apply** (regardless of stack or test setup):
-
-- No code before the plan is approved (unless `--auto-approve` for pipelines).
-- Security pass (`security-reviewer`) with no blocking findings.
-- PR body carries the verification evidence; the ticket gets the PR link and moves to review.
-
-**Adaptive — enforce the project's *own* standard, detected each run** (the kit never imposes tests or scaffolds a framework on a project that doesn't use one):
-
-- If the project has tests/coverage: touched files meet its bar (default ≥ 95%) and don't regress; suites pass; lint clean.
-- User-facing changes get e2e **when the project already does e2e**.
-- No test/e2e/lint setup → the kit **recommends** it and says so in the PR — it doesn't block. Teams wanting a hard bar set a `gates` policy (`auto` (default) · `required` · `off`) in `.claude/dev-kit.json`.
-- **Accessibility (frontend only):** when a change touches user-facing UI in a frontend stack, the review automatically covers the a11y basics (alt text, labels, accessible names, keyboard/focus, contrast, correct ARIA) — using the repo's own a11y tooling if it has any, never scaffolding one. It's **automatic and non-blocking by default**, costs nothing on backend/non-UI changes, and needs no setup. To change it, set `"a11y"` in `.claude/dev-kit.json` to `auto` (default) · `required` (make it a blocking gate) · `off` (never run) — edit it by hand, or just **ask the kit to do it** (e.g. *"make accessibility a required gate"*) and it updates the file for you.
-
-Either way, a skipped gate is **reported, never hidden**.
-
-## Also runs on Codex, Cursor & Copilot (experimental)
-
-Beyond Claude Code, the kit ships as a plugin for **any [Agent Plugins 1.0.0](https://agent-plugins.org)
-client**. This repo doubles as the plugin: a Codex marketplace
-([`.agents/plugins/marketplace.json`](./.agents/plugins/marketplace.json)) plus a portable
-plugin at [`plugins/fullstack-dev-kit/`](./plugins/fullstack-dev-kit/) that carries **both** a
-Codex-native `.codex-plugin/plugin.json` **and** a portable root `plugin.json`. The same
-`skills/` (generated from the canonical top-level `skills/`) serve every client.
-
-**What travels:** the skills, including a portable **`work-story`** orchestration playbook the
-host agent runs end to end (fetch → plan → implement → gates → review → PR → ticket). **What
-doesn't:** Claude Code's `coding-agent` subagent and curated Codex connectors are host-specific;
-each client uses its own agent + its own MCP/connector auth.
-
-> **Telemetry note:** the anonymous usage sweep is set up **only by the `npm create` wizard**
-> (Codex). A plain plugin install — and any install on Cursor/Copilot — carries **no
-> telemetry**. If you want usage attributed, install via the wizard.
-
-### OpenAI Codex (validated on codex-cli 0.147)
-```bash
-codex plugin marketplace add theam/claude-dev-kit
-codex plugin add fullstack-dev-kit@claude-dev-kit
-```
-Then invoke `$work-story PROJ-1234` (or any single skill like `$pr-review`). The `npm create`
-wizard also installs the **connector your tracker implies** (Jira → `atlassian-rovo`, Linear →
-`linear`, Figma → `figma`; GitHub/Azure use their CLIs) and schedules the telemetry sweep.
-Details: [`codex/README.md`](./codex/README.md).
-
-### GitHub Copilot (VS Code) — *experimental in VS Code*
-Command Palette → **“Chat: Install Plugin From Source”** → paste `https://github.com/theam/claude-dev-kit`.
-VS Code clones and installs it; skills load from the plugin's `skills/` and any `mcp.json` starts
-automatically. Add your tracker's MCP via **MCP: Add Server** (or `.vscode/mcp.json`). *Feature is
-labeled Experimental — behavior may shift.*
-
-### Cursor — *no git-URL installer yet*
-Cursor has no “install from git URL” command today, so:
-- **Easiest:** run **`npm create @theagilemonkeys/dev-kit`** — the wizard detects Cursor and drops the portable plugin into `~/.cursor/plugins/local/fullstack-dev-kit` for you, or
-- clone it yourself: `git clone https://github.com/theam/claude-dev-kit ~/.cursor/plugins/local/claude-dev-kit`, or
-- (Teams/Enterprise) an admin imports the repo: Dashboard → Plugins → **Add Marketplace → Import from Repo**.
-
-Restart Cursor; skills then auto-load. Enable MCP under **Cursor Settings → Tools & MCP** (`~/.cursor/mcp.json`). No telemetry on Cursor.
-
-> **Status, honestly:** the Agent Plugins standard is days old (published 2026-08-06) and client
-> support is early. We've **validated Codex 0.147 end to end**; **Cursor and Copilot are not yet
-> verified by us** — the plugin is format-compliant, but confirm install + skill invocation on your
-> client version.
 
 ## Relationship to project repos
 
 Each consuming repo keeps its own `.claude/` with project-specific rules: build/test/lint/coverage commands, architecture conventions, and stack subagents (e.g. `backend-implementer` / `frontend-implementer`). The kit reads the consuming repo's `CLAUDE.md` for those conventions and its own `.claude/dev-kit.json` (auto-generated on first use) for tracker specifics.
-
-## Parallel stories — one worktree per story
-
-`/work-story` works **in the current directory**. To work several stories at once, use `/launch-story PROJ-1234` per story: it creates a dedicated git worktree, opens a **new VS Code window on it**, and hands you the `work-story` command to paste there.
-
-> Caveat: stories whose e2e gates boot dev servers on fixed ports can collide if run at the exact same time — stagger them, or parameterize ports in the consuming repo.
 
 ## Extending the kit
 
