@@ -40,9 +40,11 @@ Give the `coding-agent` a user story ID from your tracker and it orchestrates th
 
 ## From idea to backlog (product owners)
 
-Before there's a ticket, **`plan-backlog`** turns an idea or brief — chat text, a PDF, a Word doc, an artifact — into a well-formed backlog (epics, INVEST user stories with acceptance criteria, sub-tasks, dependencies) and **creates it in your tracker after you approve it**. It's discovery-first (mirrors your team's existing hierarchy and conventions rather than imposing one) and speaks Jira / Linear / GitHub Issues / Azure DevOps via the same adapters. The stories it creates feed straight into `/work-story` — closing the loop **idea → backlog → ticket → PR**.
+Before there's a ticket, **`plan-backlog`** turns an idea or brief — chat text, a PDF, a Word doc, an artifact — into a well-formed backlog (epics, INVEST user stories with acceptance criteria, sub-tasks, dependencies) and **creates it in your tracker after you approve it**. It's discovery-first (mirrors your team's existing hierarchy and conventions rather than imposing one) and speaks Jira / Linear / GitHub Issues / Azure DevOps via the same adapters. The stories it creates feed straight into `/work-story` — closing the loop **define → backlog → ticket → PR**.
 
 It's **guided by default** — it elaborates progressively (framing → epics → stories), offering alternatives and asking for your decision at each level, so the definition stays yours; add `--quick` for a one-shot draft. On Claude, a non-trivial backlog is shown as a **navigable artifact** for review (approval still happens in the chat). In **Claude Code**, run `/plan-backlog <idea | path/to/brief.pdf | URL> [--quick]`. On **Codex / Cursor / Copilot**, invoke the `plan-backlog` skill directly.
+
+**Even earlier — defining the problem.** When the idea is still a rough spark, **`plan-definition`** runs the discovery phase *before* the backlog: a guided, Socratic pass that frames the problem (users, outcome, why-now, constraints, success metrics, non-goals), explores 2–4 directions with trade-offs, and produces an approved **product definition** — a definition doc, not tickets. That definition then feeds `plan-backlog`, whose framing is lighter because the problem is already defined. Run `/plan-definition <idea | brief>` (or invoke the `plan-definition` skill). It facilitates your thinking; it never decides the product for you.
 
 ## Quality gates
 
@@ -222,6 +224,7 @@ The kit runs `dev-kit-setup`: it detects your tracker, discovers what it can (si
 | You want to… | Type |
 |---|---|
 | Work a story end to end (current window) | `/fullstack-dev-kit:work-story PROJ-1234` |
+| Define a problem before there's a backlog | `/fullstack-dev-kit:plan-definition <idea | brief>` |
 | Draft & create a backlog from an idea/brief | `/fullstack-dev-kit:plan-backlog <idea | brief.pdf>` |
 | Prepare a story worktree + new VS Code window | `/fullstack-dev-kit:launch-story PROJ-1234` |
 | Unattended run (no plan gate — pipelines only) | append `--auto-approve` |
@@ -260,6 +263,7 @@ Full **`/work-story <TICKET>`** flow is ticket-first (it fetches the story and m
 | Component | Type | Purpose |
 |---|---|---|
 | `coding-agent` | agent | Orchestrator: story ID → PR → updated ticket, with plan-approval gate |
+| `plan-definer` | agent | Product-owner discovery orchestrator: spark → approved product definition (no tickets) |
 | `backlog-planner` | agent | Product-owner orchestrator: idea/brief → approved backlog created in the tracker |
 | `pr-reviewer` | agent | High-signal diff review: correctness, contract drift, security, tests |
 | `pr-fixer` | agent | Resolves review/CI findings, re-verifies gates, pushes |
@@ -269,6 +273,7 @@ Full **`/work-story <TICKET>`** flow is ticket-first (it fetches the story and m
 | `dev-kit-setup` | skill | First-use bootstrap: detects the tracker, writes `.claude/dev-kit.json` |
 | `issue-fetch` | skill | Ticket + acceptance criteria + comments (Jira/Linear/GitHub/Azure) |
 | `issue-update` | skill | Comment PR + evidence on the ticket, transition to review |
+| `plan-definition` | skill | Spark → guided discovery → approved product definition (feeds `plan-backlog`) |
 | `plan-backlog` | skill | Idea/brief → well-formed backlog, created in the tracker after approval |
 | `follow-ups` | skill | Track a story's loose ends as linked tickets, after approval |
 | `figma-fetch` | skill | Frame hierarchy + text content from a Figma URL |
@@ -279,6 +284,7 @@ Full **`/work-story <TICKET>`** flow is ticket-first (it fetches the story and m
 | `fix-pr` | skill | Playbook: findings → fixes → re-verified gates → push |
 | `instructions/` | rules | Always-on, language-agnostic: secure coding, testing standards |
 | `/work-story` | command | Entry point: `/work-story PROJ-1234` |
+| `/plan-definition` | command | Entry point: `/plan-definition <idea | brief>` (define before backlog) |
 | `/plan-backlog` | command | Entry point: `/plan-backlog <idea | brief.pdf>` |
 | `/launch-story` | command | Creates a story worktree and opens a new VS Code window on it |
 

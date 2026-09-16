@@ -64,6 +64,8 @@ Move through **three levels**; at each, present **2–4 alternatives** (as many 
 
 **4a. Framing (zoom-out) — help *define*, not just structure.** Restate the goal and map the problem space (users, outcomes, constraints, unknowns). Offer 2–4 **framing alternatives** — e.g. MVP vs. full, different ways to slice the initiative, different sequencing — with the trade-offs of each. → PO chooses the framing.
 
+> **If a `plan-definition` product definition was handed in** (problem statement, users, goals/non-goals, metrics, chosen direction), the problem is already framed. Run a **lighter framing**: *confirm* the definition's direction and slice from it, rather than re-deriving the problem space from scratch. Only re-open framing if the definition leaves the backlog-relevant slicing genuinely undecided.
+
 **4b. Epics / themes.** For the chosen framing, propose the epics/themes with **alternatives** where the breakdown could reasonably differ. → PO adjusts.
 
 **4c. Stories.** Within each chosen epic, propose user stories (*"As a `<role>`, I want `<capability>`, so that `<value>`"*) with Given/When/Then **acceptance criteria**, INVEST-sized, offering **scoping alternatives** (split/merge, in/out) where it matters. → PO refines.
