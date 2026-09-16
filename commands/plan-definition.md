@@ -8,14 +8,14 @@ Follow the `plan-definition` skill. This is the **most upstream** step — it *d
 
 Rules:
 
-- If the arguments contain no idea or source, ask for one — but a **one-liner is a valid start** (this step is for vague sparks; you draw the rest out with questions). Accept pasted text, a path to a file (PDF / Word / Markdown), or a URL / artifact / Figma-FigJam link.
+- If the arguments contain no idea or source, ask for one — but a **one-liner is a valid start** (this step is for vague sparks; you draw the rest out with questions). Accept pasted text, a path to a file (PDF / Word / Markdown), or a URL / artifact / Figma design link.
 - **Facilitate, never decide.** Ask, propose candidate answers grounded in the intake, and let the PO confirm or adjust at each step.
 
 ## Run it in THIS conversation (guided, interactive)
 
 The definition flow is interactive, so conduct it in the main conversation — the PO makes a decision at each step (do not hand it to a context-isolated subagent, whose output the user can't see mid-run). You may delegate **intake reading** (e.g. a large PDF/Figma fetch) to the `plan-definer` subagent to keep this context clean.
 
-1. **Intake** — read the spark in whatever form it arrives (§1 of the skill). If it references Figma/FigJam, run `figma-fetch` for context.
+1. **Intake** — read the spark in whatever form it arrives (§1 of the skill). If it references a Figma design, run `figma-fetch` for context (FigJam `/board/` URLs aren't fetched yet — take a board's content as pasted text).
 2. **Frame the problem (zoom-out)** — draw out users, problem/outcome, why-now, constraints, success metrics, risks/unknowns, non-goals through guided questions with proposed answers. Work them conversationally, a few at a time — don't interrogate all seven at once. Leave genuinely-undecided items as open questions.
 3. **Directions & trade-offs (zoom-in)** — propose **2–4 solution directions** with trade-offs, recommend one, and **wait for the PO to choose or refine.**
 4. **Definition + approval gate:** assemble the definition (problem statement, users, goals & non-goals, success metrics, chosen direction + alternatives, key decisions, open questions) and ask the PO to approve, adjust, or cancel. For a non-trivial definition, also render it as a **navigable artifact** (see the skill's review step) — but the approval still happens in the chat.

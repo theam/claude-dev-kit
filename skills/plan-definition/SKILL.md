@@ -26,7 +26,7 @@ The input is deliberately vaguer than `plan-backlog`'s — **a one-liner is a va
 - **PDF** → read it (page range as needed).
 - **Word (`.docx`)** → convert first (`textutil -convert txt file.docx -output -` on macOS, or `pandoc file.docx -t markdown`), then read. If neither tool is available, ask the user to paste the text or export a PDF.
 - **Artifact / Confluence page / URL** → fetch it.
-- **Figma / FigJam link** (`figma.com/(design|file|board)/…`) → run `figma-fetch` for design/whiteboard context. FigJam boards (`/board/`) are read as **context only** in v1 — the definition is not written back to the board.
+- **Figma link** (`figma.com/(design|file)/…`) → run `figma-fetch` for design context. For a **FigJam** board, `figma-fetch` doesn't read `/board/` URLs yet — ask the PO to paste the board's content as text. v1 treats any whiteboard as **read-only context**; nothing is written back to it.
 
 Work only from what the source says plus what the user confirms — **never invent the problem, users, or metrics.** If the spark is thin, that's expected: the framing step (§2) is where you draw it out with questions.
 
