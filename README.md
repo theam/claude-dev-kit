@@ -224,8 +224,8 @@ The kit runs `dev-kit-setup`: it detects your tracker, discovers what it can (si
 | You want to… | Type |
 |---|---|
 | Work a story end to end (current window) | `/fullstack-dev-kit:work-story PROJ-1234` |
-| Define a problem before there's a backlog | `/fullstack-dev-kit:plan-definition <idea | brief>` |
-| Draft & create a backlog from an idea/brief | `/fullstack-dev-kit:plan-backlog <idea | brief.pdf>` |
+| Define a problem before there's a backlog | `/fullstack-dev-kit:plan-definition <idea \| brief>` |
+| Draft & create a backlog from an idea/brief | `/fullstack-dev-kit:plan-backlog <idea \| brief.pdf>` |
 | Prepare a story worktree + new VS Code window | `/fullstack-dev-kit:launch-story PROJ-1234` |
 | Unattended run (no plan gate — pipelines only) | append `--auto-approve` |
 | Review a PR or your current diff | `/fullstack-dev-kit:pr-review #42` |
@@ -284,8 +284,8 @@ Full **`/work-story <TICKET>`** flow is ticket-first (it fetches the story and m
 | `fix-pr` | skill | Playbook: findings → fixes → re-verified gates → push |
 | `instructions/` | rules | Always-on, language-agnostic: secure coding, testing standards |
 | `/work-story` | command | Entry point: `/work-story PROJ-1234` |
-| `/plan-definition` | command | Entry point: `/plan-definition <idea | brief>` (define before backlog) |
-| `/plan-backlog` | command | Entry point: `/plan-backlog <idea | brief.pdf>` |
+| `/plan-definition` | command | Entry point: `/plan-definition <idea \| brief>` (define before backlog) |
+| `/plan-backlog` | command | Entry point: `/plan-backlog <idea \| brief.pdf>` |
 | `/launch-story` | command | Creates a story worktree and opens a new VS Code window on it |
 
 ## Relationship to project repos
