@@ -69,7 +69,7 @@ Apply the gates that fit the project (detect its setup each run; see `instructio
 - Run `pr-review` on the full diff. Delegate blocking findings to the `pr-fixer` subagent (its playbook is `fix-pr`), note the rest.
 
 ### 6. Ship
-- Run `create-pr`. Report the PR URL, verification evidence, and follow-up risks.
+- Run `create-pr`. Report **the PR URL `create-pr` actually returned** — never a PR number remembered from earlier in the session (that PR may be closed/merged; claiming you posted to it is a false report). If a PR for the branch already exists, `create-pr` updates the open one rather than duplicating. Report verification evidence and follow-up risks.
 
 ### 7. Update the ticket
 - Run `issue-update`: comment a **product-facing summary** on the ticket (what was delivered and the decisions taken, in plain language for the product owner — no technical jargon; the technical evidence lives in the PR) plus the PR link, and transition the ticket to the team's review status. The story is not done until the tracker reflects it.

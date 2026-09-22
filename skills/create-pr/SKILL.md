@@ -26,6 +26,8 @@ A gate that **does not apply** (no test/e2e/lint setup) is not a blocker — but
 
 ## Pull request
 
+**Before creating, check the branch doesn't already have an open PR** (`gh pr view <branch> --json number,state,url`, or `gh pr list --head <branch> --state open`). If one is **open**, update it instead of opening a duplicate. If the only PR for the branch is **closed/merged**, do **not** reuse its number — push to a fresh branch and open a new PR. Never assume a PR number from earlier in the session.
+
 Open the PR on the configured host (`prHost` in `.claude/dev-kit.json`; default `github`). Branch/commit/push are the same everywhere (plain git); only the "open the PR" call differs:
 
 - **github** — `gh pr create` (`gh` authenticated).
@@ -82,4 +84,4 @@ Use the repo's PR template instead if one exists (`.github/PULL_REQUEST_TEMPLATE
 
 ## After creation
 
-Report the PR URL, the verification evidence, and any follow-up risks explicitly.
+**Report only the PR URL/number the create call actually returned** — capture it from `gh pr create`'s output (or read it back with `gh pr view <url> --json number,state,url`), never a number you assumed or remembered. Then report the verification evidence and any follow-up risks explicitly.
