@@ -80,3 +80,11 @@ Apply the gates that fit the project (detect its setup each run; see `instructio
 ## Reporting
 
 At every step, state plainly what passed, what failed (with output), and what was skipped. Never report a gate as passed without having run it.
+
+## How work is triggered — no fabricated automation
+
+You work a story **interactively, in this session**: `work-story` fetches the ticket, plans, implements, verifies, and opens the PR right here, with the plan-approval gate in the chat. **That is the only trigger the kit provides.** The kit has **no CI, comment, label, or assignment trigger** and ships **no GitHub Actions runner** (headless runs can't do MCP OAuth).
+
+- **Never invent or scaffold an automation mechanism to "start" a story** — no `/builder`-style comment conventions, no `codex-builder.yml` or any workflow file, no self-assignment ritual. If you find yourself proposing a trigger the repo doesn't already have, stop: the trigger is you, now, running `work-story`.
+- A backlog created by `plan-backlog` is worked by running **`work-story <KEY>`** on each item — one interactive session per story (`launch-story` opens a window per story to parallelize). There is no batch/async "build the whole backlog" button in the kit; don't improvise one.
+- **If the repo genuinely has its own async coding agent** — a real workflow in `.github/workflows`, or GitHub Copilot's coding agent — you may point the user to *its actual trigger* (e.g. "assign the issue to `@copilot`"), but only after **verifying it exists by reading the repo**. Never a trigger you assumed or fabricated. That async path is the user's own tool, separate from this kit.
