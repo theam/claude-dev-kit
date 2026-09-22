@@ -115,7 +115,9 @@ If the adapter's backend is not authenticated (MCP connector not authorized, `gh
 
 ## 7. Handoff
 
-List the created items with their keys/URLs and hand off: each story is ready for **`work-story <KEY>` → PR**. That completes the loop **idea → backlog → ticket → PR**.
+List the created items with their keys/URLs and hand off: each story is worked by running **`work-story <KEY>`** on it — one **interactive** session per story (the plan is approved in the chat, then it implements and opens the PR); `launch-story` opens a window per story to run several in parallel. That completes the loop **idea → backlog → ticket → PR**.
+
+**Don't invent a way to "build the backlog" automatically.** The kit has no batch/async, CI, comment, label, or assignment trigger, and ships no workflow runner — never propose or scaffold one (no `/builder` comments, no `codex-builder.yml`). If the repo already has its *own* async coding agent (a real `.github/workflows` file, or GitHub Copilot's coding agent), you may point the user to its actual trigger **after verifying it exists** — never a fabricated one.
 
 ## Guardrails
 

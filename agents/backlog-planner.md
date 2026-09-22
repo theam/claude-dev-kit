@@ -34,7 +34,7 @@ Build the backlog draft per `plan-backlog`: the hierarchy plus each item's title
 On approval, create the items via the tracker's write adapter: **parents before children**, link children to parents, set labels/components/points where discovered, and **verify writes by read-back** where the CLI can silently no-op (e.g. GitHub). Ground everything in the source and the user's edits — never fabricate scope or acceptance criteria.
 
 ### 4. Report and hand off
-Report each created item with its key/URL and the hierarchy. Each story is ready for `work-story <KEY>` → PR, closing the loop **idea → backlog → ticket → PR**.
+Report each created item with its key/URL and the hierarchy. Each story is worked by running `work-story <KEY>` **interactively** (one session per story; `launch-story` to parallelize), closing the loop **idea → backlog → ticket → PR**. The kit has no batch/async, CI, or comment/label trigger and ships no workflow runner — **never invent or scaffold one** (no `/builder` comments, no `codex-builder.yml`). If the repo has its own async coding agent, point to its real trigger only after verifying it exists.
 
 ## Guardrails
 - Never create anything before explicit approval.

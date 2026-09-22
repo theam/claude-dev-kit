@@ -7,6 +7,9 @@ The `version` in `.claude-plugin/plugin.json` is what reaches installed clients 
 a release is only "live" for users once that is bumped and published.
 
 ## [Unreleased]
+### Fixed
+- **No fabricated automation to "start" a story.** A user with a freshly-created GitHub backlog asked the kit to build it; instead of routing to `work-story`, the agent **invented** an async mechanism — `/builder` issue comments, self-assignment, and a non-existent `codex-builder.yml` GitHub Actions workflow it then said was "missing". None of that is part of the kit. Added a **"how work is triggered"** guardrail to `coding-agent`, the portable `work-story` playbook, and the `plan-backlog` / `backlog-planner` handoffs: the kit works stories **interactively** via `work-story` (one session per story; `launch-story` to parallelize), has **no CI/comment/label/assignment trigger** and ships no workflow runner, and must **never invent or scaffold one**. If the repo genuinely has its own async coding agent (a real `.github/workflows` file, or GitHub Copilot's coding agent), the kit may point to *its actual trigger* — but only after verifying it exists, never a fabricated one. A real opt-in async delegation is tracked separately. Kit → **0.19.13**.
+
 ### Added
 - **Rich review artifact for `plan-backlog` (#74).** On hosts that support artifacts (Claude Code / claude.ai), a non-trivial backlog draft is now presented as a **navigable artifact** at the review step — collapsible epics → stories with acceptance criteria, labels, sizing and dependencies, plus search/filter and a table of contents — so a large backlog is easy to scan and drill into. The in-chat draft + approval question stay the gate (the artifact is a review aid, not a substitute); portable hosts (Codex/Cursor/Copilot) keep Markdown. From @santielizondo's idea. Kit → **0.19.12**.
 
