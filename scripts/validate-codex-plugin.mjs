@@ -32,6 +32,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PLUGIN = join(ROOT, 'plugins', 'fullstack-dev-kit');
 const errs = [];
 const readJson = (p) => JSON.parse(readFileSync(p, 'utf8'));
+const normalizeEol = (s) => (typeof s === 'string' ? s.replace(/\r\n/g, '\n') : s);
 
 // 1. Marketplace manifest.
 const mpPath = join(ROOT, '.agents', 'plugins', 'marketplace.json');
@@ -92,7 +93,7 @@ else {
     } catch {
       /* the Codex manifest is already reported as unreadable above */
     }
-    if (expected !== undefined && readFileSync(portPath, 'utf8') !== expected) {
+    if (expected !== undefined && normalizeEol(readFileSync(portPath, 'utf8')) !== normalizeEol(expected)) {
       errs.push(
         `portable ${relative(ROOT, portPath)} differs from the source it is generated from ` +
           `(${relative(ROOT, manPath)}) — run build-codex-plugin.mjs`,
@@ -158,7 +159,7 @@ if (existsSync(manPath)) {
     ]) {
       const expected = serializeManifest(derive(codex));
       if (!existsSync(path)) errs.push(`missing ${label} — run build-codex-plugin.mjs`);
-      else if (readFileSync(path, 'utf8') !== expected) errs.push(`${label} differs from the source it is generated from — run build-codex-plugin.mjs`);
+      else if (normalizeEol(readFileSync(path, 'utf8')) !== normalizeEol(expected)) errs.push(`${label} differs from the source it is generated from — run build-codex-plugin.mjs`);
     }
   }
 }

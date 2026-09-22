@@ -134,7 +134,7 @@ test('editing the Codex manifest without rebuilding fails validation', () => {
 test('the generated manifest is exactly what the shared derivation produces', () => {
   const codex = JSON.parse(readFileSync(join(ROOT, CODEX_MANIFEST), 'utf8'));
   assert.equal(
-    readFileSync(join(ROOT, PORTABLE_MANIFEST), 'utf8'),
+    readFileSync(join(ROOT, PORTABLE_MANIFEST), 'utf8').replace(/\r\n/g, '\n'),
     serializeManifest(portableManifestFrom(codex)),
     'the committed portable manifest is not a byte-for-byte derivation of its source',
   );
