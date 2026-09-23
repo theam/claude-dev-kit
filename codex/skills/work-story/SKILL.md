@@ -61,7 +61,10 @@ Run **`pr-review`** on the full diff. Fix blocking findings (its counterpart pla
 **`fix-pr`**) and re-verify; note the non-blocking ones.
 
 ## 6. Ship
-Run **`create-pr`**. Report the PR URL, the verification evidence, and any follow-up risks.
+Run **`create-pr`**. Report **the PR URL `create-pr` actually returned** — never a PR number
+remembered from earlier in the session (it may be closed/merged; claiming you posted to it is a
+false report). `create-pr` updates an existing open PR for the branch rather than duplicating.
+Report the verification evidence and any follow-up risks.
 
 ## 7. Update the ticket
 Run **`issue-update`**: comment a product-facing summary (plain language) plus the PR link,
@@ -77,3 +80,16 @@ user may edit or skip. No genuine loose ends → say so and skip. Never fabricat
 ## Reporting
 At every step, state plainly what passed, what failed (with output), and what was skipped.
 Never report a gate as passed without having run it.
+
+## How work is triggered — no fabricated automation
+You work a story **interactively, in this session** — that is the only trigger the kit provides.
+The kit has **no CI, comment, label, or assignment trigger** and ships **no workflow runner**.
+- **Never invent or scaffold an automation mechanism to "start" a story** — no `/builder`-style
+  comment conventions, no `codex-builder.yml` or any workflow file, no self-assignment ritual. If
+  you're proposing a trigger the repo doesn't already have, stop: the trigger is you, running
+  `work-story` now.
+- A `plan-backlog` backlog is worked by running **`work-story <KEY>`** on each item — one
+  interactive session per story. There is no batch/async "build the whole backlog" in the kit.
+- **If the repo genuinely has its own async coding agent** (a real `.github/workflows` file, or
+  GitHub Copilot's coding agent), you may point the user to *its actual trigger* — but only after
+  verifying it exists by reading the repo, never one you assumed. That path is the user's own tool.
