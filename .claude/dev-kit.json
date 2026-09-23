@@ -1,0 +1,5 @@
+{
+  "tracker": { "type": "github", "repo": "theam/claude-dev-kit" },
+  "prHost": "github",
+  "stacks": ["node"]
+}
