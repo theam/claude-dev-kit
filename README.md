@@ -205,6 +205,20 @@ Authorization is **per developer, one-time** — it persists across sessions. Th
 
 > When authorizing an MCP via OAuth, complete the browser flow **immediately** — the link is tied to a live local callback and expires with it. Don't reuse old tabs or restart the session mid-flow.
 
+**No Atlassian MCP? (enterprise-blocked, or you just don't use it.)** Jira also works over its **REST API** with a token — no MCP required. Set `"authMode": "rest"` in the tracker block of `.claude/dev-kit.json` and put the credentials in a **git-ignored `.env`** (never in the committed config):
+
+```bash
+# Jira Cloud
+JIRA_BASE_URL=https://<org>.atlassian.net
+JIRA_EMAIL=you@company.com
+JIRA_API_TOKEN=<create at id.atlassian.com/manage-profile/security/api-tokens>
+
+# Jira Server / Data Center (instead of the two above)
+# JIRA_PAT=<personal access token>
+```
+
+The kit also **detects this for you**: if the Atlassian MCP is unavailable or blocked and those `JIRA_*` vars are present, it uses REST automatically and offers to persist `authMode: "rest"` so later runs skip the blocked MCP. `dev-kit-setup` will set it up if you ask (*"connect Jira over REST"*).
+
 ---
 
 # Using it
@@ -313,4 +327,4 @@ The kit can share **anonymous token counts** so the maintainers can show aggrega
 
 [Apache 2.0](./LICENSE) © The Agile Monkeys. See [NOTICE](./NOTICE).
 
-> Headless/CI runs can't do MCP OAuth. **Jira** already has a REST + token fallback for clients without the Atlassian MCP — set `"authMode": "rest"` in the tracker config and supply credentials via the environment (`JIRA_EMAIL` + `JIRA_API_TOKEN` for Cloud, or `JIRA_PAT` for Server/DC, plus `JIRA_BASE_URL`; keep them in a git-ignored `.env`, never in `.claude/dev-kit.json`). The other trackers' token fallbacks can be added the same way.
+> Headless/CI runs can't do MCP OAuth. **Jira** has a REST + token fallback for exactly this (and for enterprise-blocked MCPs) — see [Connect your tracker](#connect-your-tracker-one-time) above (`"authMode": "rest"` + a git-ignored `.env`). The other trackers' token fallbacks can be added the same way.

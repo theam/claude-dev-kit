@@ -45,7 +45,7 @@ Config: `site`, `cloudId`, `projectKey`, `fields` (custom field IDs for acceptan
 - Fetch: `GET <base>/rest/api/3/issue/<KEY>?fields=summary,description,status,comment,<ACfieldId>,<sprintFieldId>,<pointsFieldId>` (use `/rest/api/2/` on older Server). Read acceptance criteria from the configured `fields` IDs and comments from `fields.comment.comments`.
 - If a required env var is missing, **stop** and tell the user exactly which to set, and to add `.env` to `.gitignore` — never invent credentials or fetch without them.
 
-**Automatic fallback.** If `authMode` is unset or `"mcp"` but the Atlassian MCP is unavailable/unauthorized and the `JIRA_*` env vars are present, use REST and say so. If neither the MCP nor the env credentials are available, stop and offer both paths (authorize the MCP, or set `authMode: "rest"` + the env vars).
+**Automatic fallback (MCP unavailable or blocked).** When `authMode` is unset or `"mcp"`, first check the Atlassian MCP is actually usable. If it is **not** — not installed, not authorized, or **blocked by policy** (e.g. an enterprise that disables third-party MCPs) — and the `JIRA_*` env vars are present, **use REST automatically** and say so. Don't repeatedly retry a blocked MCP: when the block looks permanent (a policy/enterprise block rather than a missing one-time OAuth), **offer to persist `authMode: "rest"`** in `.claude/dev-kit.json` so every later run goes straight to REST. If neither the MCP nor the env credentials are available, stop and offer both paths (authorize the MCP, or set `authMode: "rest"` + the env vars).
 
 - If a configured field ID turns out to be invalid, re-run `dev-kit-setup` discovery for that field and update the config.
 
