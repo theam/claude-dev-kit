@@ -7,6 +7,16 @@ description: Resolve the findings on an existing pull request - review comments,
 
 Drive a PR's feedback to done: run a review, triage **every** item to a decision, fix what deserves fixing, file what deserves doing later, discard what deserves nothing, answer every reviewer, and re-check after pushing in case late feedback (bots, CI) arrives. The bar for correctness is high; the bar for new machinery is low — fix the defect, don't redesign around it.
 
+## 0. Confirm the PR exists and is open (before anything else)
+
+**Resolve the PR from the current branch — never trust a PR number carried over from earlier in the session** (it may be stale; acting on the wrong one, or claiming you did, is a false report). Run `gh pr view --json number,state,url,headRefName` (no argument = the current branch's PR), or `gh pr view <pr> --json number,state,url` when the user named one, and read `state`:
+
+- **OPEN** → proceed.
+- **CLOSED / MERGED** → **stop. Do not push commits, comment, resolve threads, or "post" anything to it** — a closed or merged PR won't take the work. Tell the user the PR is closed/merged and offer the real options: reopen it (if that's the intent), open a fresh PR from the current branch (`create-pr`), or point you at the correct open PR. Never claim you posted changes to it.
+- **No PR for the branch** → there's nothing to fix; that's `create-pr`, not `fix-pr`.
+
+For **bitbucket**/**gitlab**, do the equivalent state check (`/pullrequests/{id}` → `state`; `glab mr view <id>`). Never report having pushed to, commented on, or updated a PR you didn't first confirm is open.
+
 ## 1. Establish the PR intent (the scope ruler)
 Write one or two sentences: **what this PR is for, and what it deliberately does not change** — derived from the title, body, linked issue, and the diff. Every scope call below is measured against it. If the intent is genuinely ambiguous, ask the author before triaging.
 

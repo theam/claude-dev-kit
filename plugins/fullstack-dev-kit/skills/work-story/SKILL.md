@@ -61,7 +61,10 @@ Run **`pr-review`** on the full diff. Fix blocking findings (its counterpart pla
 **`fix-pr`**) and re-verify; note the non-blocking ones.
 
 ## 6. Ship
-Run **`create-pr`**. Report the PR URL, the verification evidence, and any follow-up risks.
+Run **`create-pr`**. Report **the PR URL `create-pr` actually returned** — never a PR number
+remembered from earlier in the session (it may be closed/merged; claiming you posted to it is a
+false report). `create-pr` updates an existing open PR for the branch rather than duplicating.
+Report the verification evidence and any follow-up risks.
 
 ## 7. Update the ticket
 Run **`issue-update`**: comment a product-facing summary (plain language) plus the PR link,
