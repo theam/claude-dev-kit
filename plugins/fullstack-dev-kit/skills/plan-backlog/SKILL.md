@@ -30,6 +30,7 @@ Read `.claude/dev-kit.json` at the consuming repo root. The `tracker` block name
 - **Word (`.docx`)** → not natively readable; convert first (`textutil -convert txt file.docx -output -` on macOS, or `pandoc file.docx -t markdown`), then read. If neither tool is available, ask the user to paste the text or export a PDF.
 - **Artifact / Confluence page / URL** → fetch it.
 - **Figma link** (`figma.com/(design|file)/…`) → run `figma-fetch` for design context.
+- **A `plan-definition` product definition** — passed in chat, or a `docs/definitions/<slug>.md` file → read it as the source. It carries the framing already (problem, users, goals/non-goals, metrics, chosen direction), which is what triggers the **lighter framing** in §4a. Check its provenance markers / "not established" / `[unverified]` notes: a definition that flags core gaps is **not** ready for the light path (see §4a).
 
 Work only from what the source says plus what the user confirms — **never invent scope or acceptance criteria.**
 
@@ -63,6 +64,8 @@ Even on a mature project, still do a **light framing check** (§4a) — don't sk
 Move through **three levels**; at each, present **2–4 alternatives** (as many as the situation needs, no padding), recommend one with a reason, and **wait for the PO's decision** before going deeper. Ground every option in the intake + discovery — never fabricate.
 
 **4a. Framing (zoom-out) — help *define*, not just structure.** Restate the goal and map the problem space (users, outcomes, constraints, unknowns). Offer 2–4 **framing alternatives** — e.g. MVP vs. full, different ways to slice the initiative, different sequencing — with the trade-offs of each. → PO chooses the framing.
+
+> **If a `plan-definition` product definition was handed in** (problem statement, users, goals/non-goals, metrics, chosen direction), the problem is already framed — *if it's grounded.* Before taking the light path, **check the definition, not just its headings**: a doc whose core must-haves are "not established", or whose thesis rests on `[unverified]` claims, is a spark with a template around it — treat it as an ordinary idea and frame from scratch (§4a). Only when the definition is genuinely grounded, run a **lighter framing**: *confirm* its direction and slice from it rather than re-deriving. Also re-open framing if the definition leaves the backlog-relevant slicing undecided. The presence of the five sections is not the signal; their groundedness is.
 
 **4b. Epics / themes.** For the chosen framing, propose the epics/themes with **alternatives** where the breakdown could reasonably differ. → PO adjusts.
 
