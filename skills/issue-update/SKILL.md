@@ -45,8 +45,10 @@ Move the item to the team's review status. **Never hardcode transition/state IDs
 ## Adapters
 
 ### Jira (`type: "jira"`)
-- Comment and assign via the **Atlassian MCP**.
-- Transition: fetch available transitions via the MCP (IDs vary per tenant), pick/persist the review transition under `tracker.reviewState`.
+Honors the same `authMode` as `issue-fetch` (`"mcp"` default, `"rest"` for clients without the Atlassian MCP — same env credentials and automatic-fallback rule).
+- **MCP:** comment and assign via the **Atlassian MCP**; transition by fetching available transitions via the MCP (IDs vary per tenant).
+- **REST:** comment with `POST <base>/rest/api/3/issue/<KEY>/comment`; list transitions with `GET <base>/rest/api/3/issue/<KEY>/transitions` and apply the review one with `POST` to the same path; assign with `PUT <base>/rest/api/3/issue/<KEY>/assignee`. Auth headers as in `issue-fetch` (Basic for Cloud, Bearer PAT for Server); credentials from the environment, never the config.
+- Either way, pick/persist the review transition ID under `tracker.reviewState`.
 
 ### Linear (`type: "linear"`)
 - Comment and assign via the **Linear MCP**.

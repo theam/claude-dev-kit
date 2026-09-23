@@ -35,8 +35,18 @@ If the requested key's project/prefix does not match the configured one, confirm
 Use the adapter matching `tracker.type`. In every case request at minimum: **summary/title, type, status, priority, assignee, reporter, labels, description, acceptance criteria, and all comments** (plus story points and sprint/cycle when the tracker has them).
 
 ### Jira (`type: "jira"`)
-Config: `site`, `cloudId`, `projectKey`, `fields` (custom field IDs for acceptance criteria / sprint / story points).
-Use the **Atlassian MCP** tools against the configured site to get the issue and its comments, reading acceptance criteria via the configured field IDs.
+Config: `site`, `cloudId`, `projectKey`, `fields` (custom field IDs for acceptance criteria / sprint / story points). Optional `authMode`: `"mcp"` (default) or `"rest"`.
+
+**`authMode: "mcp"` (default).** Use the **Atlassian MCP** tools against the configured site to get the issue and its comments, reading acceptance criteria via the configured field IDs.
+
+**`authMode: "rest"` — for clients without the Atlassian MCP.** Call the Jira REST API directly with credentials from the **environment** (never from `.claude/dev-kit.json`, which stays secret-free):
+- **Jira Cloud:** base URL `https://<site>` (or `JIRA_BASE_URL`), header `Authorization: Basic <base64(JIRA_EMAIL:JIRA_API_TOKEN)>`.
+- **Jira Server / Data Center:** base URL `JIRA_BASE_URL`, header `Authorization: Bearer <JIRA_PAT>`.
+- Fetch: `GET <base>/rest/api/3/issue/<KEY>?fields=summary,description,status,comment,<ACfieldId>,<sprintFieldId>,<pointsFieldId>` (use `/rest/api/2/` on older Server). Read acceptance criteria from the configured `fields` IDs and comments from `fields.comment.comments`.
+- If a required env var is missing, **stop** and tell the user exactly which to set, and to add `.env` to `.gitignore` — never invent credentials or fetch without them.
+
+**Automatic fallback.** If `authMode` is unset or `"mcp"` but the Atlassian MCP is unavailable/unauthorized and the `JIRA_*` env vars are present, use REST and say so. If neither the MCP nor the env credentials are available, stop and offer both paths (authorize the MCP, or set `authMode: "rest"` + the env vars).
+
 - If a configured field ID turns out to be invalid, re-run `dev-kit-setup` discovery for that field and update the config.
 
 ### Linear (`type: "linear"`)

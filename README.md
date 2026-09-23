@@ -313,4 +313,4 @@ The kit can share **anonymous token counts** so the maintainers can show aggrega
 
 [Apache 2.0](./LICENSE) © The Agile Monkeys. See [NOTICE](./NOTICE).
 
-> Headless/CI runs can't do MCP OAuth. If automated pipeline runs become a requirement, a REST + token fallback can be added to the tracker adapters.
+> Headless/CI runs can't do MCP OAuth. **Jira** already has a REST + token fallback for clients without the Atlassian MCP — set `"authMode": "rest"` in the tracker config and supply credentials via the environment (`JIRA_EMAIL` + `JIRA_API_TOKEN` for Cloud, or `JIRA_PAT` for Server/DC, plus `JIRA_BASE_URL`; keep them in a git-ignored `.env`, never in `.claude/dev-kit.json`). The other trackers' token fallbacks can be added the same way.

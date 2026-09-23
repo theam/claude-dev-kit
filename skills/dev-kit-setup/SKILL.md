@@ -31,9 +31,10 @@ Run the command for them when you can; the OAuth/browser sign-in is always the u
 ## 2. Discover per tracker
 
 ### Jira
-- **Site**: list accessible sites via the Atlassian MCP — one → use it; several → ask which.
+- **Auth mode**: default is the **Atlassian MCP**. **If the client has no Atlassian MCP**, offer `authMode: "rest"` — the kit calls the Jira REST API with credentials from the **environment**: `JIRA_EMAIL` + `JIRA_API_TOKEN` (Cloud, Basic auth) or `JIRA_PAT` (Server/DC, Bearer), plus `JIRA_BASE_URL`. Store `authMode` in the config and tell the user to put the credentials in `.env` and add `.env` to `.gitignore` — they never go in `.claude/dev-kit.json`.
+- **Site**: list accessible sites via the Atlassian MCP — one → use it; several → ask which. (In `rest` mode, use `JIRA_BASE_URL` / the site the user gives.)
 - **Project key**: derive from the triggering ticket prefix and verify it exists; otherwise list projects and ask.
-- **Custom fields (auto-detect, no questions)**: resolve field IDs by matching names case-insensitively — Acceptance Criteria ("Acceptance Criteria"/"AC"), Sprint ("Sprint"), Story Points ("Story Points"/"Story point estimate"). If a name matches nothing, inspect a recent issue's custom fields; if still ambiguous, ask once showing the candidates.
+- **Custom fields (auto-detect, no questions)**: resolve field IDs by matching names case-insensitively — Acceptance Criteria ("Acceptance Criteria"/"AC"), Sprint ("Sprint"), Story Points ("Story Points"/"Story point estimate"). If a name matches nothing, inspect a recent issue's custom fields; if still ambiguous, ask once showing the candidates. (In `rest` mode, resolve field IDs via `GET <base>/rest/api/3/field`.)
 
 ### Linear
 - **Team**: list teams via the Linear MCP — one → use it; several → ask which. Store its `teamKey`.
@@ -76,6 +77,7 @@ Write `.claude/dev-kit.json` at the consuming repo root. Only the active tracker
     "type": "jira",
     "site": "https://<org>.atlassian.net",
     "cloudId": "<discovered-cloud-id>",
+    "authMode": "mcp",
     "projectKey": "PROJ",
     "fields": {
       "acceptanceCriteria": "customfield_XXXXX",
@@ -96,7 +98,7 @@ Write `.claude/dev-kit.json` at the consuming repo root. Only the active tracker
 }
 ```
 
-Shape of `tracker` per type: **jira** → `site`, `cloudId`, `projectKey`, `fields`; **linear** → `teamKey`, optional `workspace`; **github** → `repo` (`owner/name`, optional if same as origin); **azure** → `org`, `project`. `stacks` is the detected stack id(s) — skills load `instructions/stacks/<id>.md` as their baseline. `prHost` is where PRs live — **detect it from the `origin` remote** (`github.com` → `github`, `bitbucket.org` → `bitbucket`, `gitlab.com` → `gitlab`; otherwise ask); `create-pr`/`pr-review`/`fix-pr` use it. For `bitbucket`/`gitlab`, remind the user that PR actions need a token/CLI authenticated (e.g. `BITBUCKET_TOKEN`, or `glab auth login`). `reviewState` is filled the first time `issue-update` transitions an item, then reused. `test.coverageCommands` is optional — `coverage-check` fills it in when it detects the repo's coverage command.
+Shape of `tracker` per type: **jira** → `site`, `cloudId`, `projectKey`, `fields`, optional `authMode` (`"mcp"` default | `"rest"` — REST uses `JIRA_*` env credentials, never stored here); **linear** → `teamKey`, optional `workspace`; **github** → `repo` (`owner/name`, optional if same as origin); **azure** → `org`, `project`. `stacks` is the detected stack id(s) — skills load `instructions/stacks/<id>.md` as their baseline. `prHost` is where PRs live — **detect it from the `origin` remote** (`github.com` → `github`, `bitbucket.org` → `bitbucket`, `gitlab.com` → `gitlab`; otherwise ask); `create-pr`/`pr-review`/`fix-pr` use it. For `bitbucket`/`gitlab`, remind the user that PR actions need a token/CLI authenticated (e.g. `BITBUCKET_TOKEN`, or `glab auth login`). `reviewState` is filled the first time `issue-update` transitions an item, then reused. `test.coverageCommands` is optional — `coverage-check` fills it in when it detects the repo's coverage command.
 
 **Quality gates — mostly auto-detected, one preference optionally asked.** The full optional shape:
 
