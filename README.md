@@ -240,6 +240,7 @@ The kit runs `dev-kit-setup`: it detects your tracker, discovers what it can (si
 | Work a story end to end (current window) | `/fullstack-dev-kit:work-story PROJ-1234` |
 | Define a problem before there's a backlog | `/fullstack-dev-kit:plan-definition <idea \| brief>` |
 | Draft & create a backlog from an idea/brief | `/fullstack-dev-kit:plan-backlog <idea \| brief.pdf>` |
+| Fan an approved backlog out to Copilot (async) | `/fullstack-dev-kit:delegate-backlog <issues>` |
 | Prepare a story worktree + new VS Code window | `/fullstack-dev-kit:launch-story PROJ-1234` |
 | Unattended run (no plan gate — pipelines only) | append `--auto-approve` |
 | Review a PR or your current diff | `/fullstack-dev-kit:pr-review #42` |
@@ -268,6 +269,8 @@ Full **`/work-story <TICKET>`** flow is ticket-first (it fetches the story and m
 
 > Caveat: stories whose e2e gates boot dev servers on fixed ports can collide if run at the exact same time — stagger them, or parameterize ports in the consuming repo.
 
+**Fully async (experimental): `/delegate-backlog`.** For maximum throughput on GitHub, `/delegate-backlog` fans an **approved** backlog out to **GitHub Copilot coding agent** — one branch/PR per issue, worked in the cloud — then re-applies the kit's quality with `pr-review`/`fix-pr` on each PR that comes back. It's the async alternative to running `work-story` per story, and it's honest about the trade-off: the kit's **in-session gates don't run** on the delegated path (they're re-applied on review), and it **never auto-merges**. Requires Copilot coding agent enabled on the repo; other async targets are a later step.
+
 ---
 
 # Reference
@@ -279,6 +282,7 @@ Full **`/work-story <TICKET>`** flow is ticket-first (it fetches the story and m
 | `coding-agent` | agent | Orchestrator: story ID → PR → updated ticket, with plan-approval gate |
 | `plan-definer` | agent | Product-owner discovery orchestrator: spark → approved product definition (no tickets) |
 | `backlog-planner` | agent | Product-owner orchestrator: idea/brief → approved backlog created in the tracker |
+| `backlog-delegator` | agent | Fans an approved backlog out to GitHub Copilot coding agent (async), then reviews the PRs with the kit |
 | `pr-reviewer` | agent | High-signal diff review: correctness, contract drift, security, tests |
 | `pr-fixer` | agent | Resolves review/CI findings, re-verifies gates, pushes |
 | `security-reviewer` | agent | Focused security pass: auth, secrets, input, exposure (gate) |
@@ -289,6 +293,7 @@ Full **`/work-story <TICKET>`** flow is ticket-first (it fetches the story and m
 | `issue-update` | skill | Comment PR + evidence on the ticket, transition to review |
 | `plan-definition` | skill | Spark → guided discovery → approved product definition (feeds `plan-backlog`) |
 | `plan-backlog` | skill | Idea/brief → well-formed backlog, created in the tracker after approval |
+| `delegate-backlog` | skill | Fan an approved backlog out to an async agent (Copilot), then re-apply quality via `pr-review`/`fix-pr` |
 | `follow-ups` | skill | Track a story's loose ends as linked tickets, after approval |
 | `figma-fetch` | skill | Frame hierarchy + text content from a Figma URL |
 | `coverage-check` | skill | Runs the repo's coverage command, enforces the project's coverage bar (default 95%) when it has one |
@@ -300,6 +305,7 @@ Full **`/work-story <TICKET>`** flow is ticket-first (it fetches the story and m
 | `/work-story` | command | Entry point: `/work-story PROJ-1234` |
 | `/plan-definition` | command | Entry point: `/plan-definition <idea \| brief>` (define before backlog) |
 | `/plan-backlog` | command | Entry point: `/plan-backlog <idea \| brief.pdf>` |
+| `/delegate-backlog` | command | Entry point: `/delegate-backlog <issues>` (async fan-out to Copilot + review) |
 | `/launch-story` | command | Creates a story worktree and opens a new VS Code window on it |
 
 ## Relationship to project repos
