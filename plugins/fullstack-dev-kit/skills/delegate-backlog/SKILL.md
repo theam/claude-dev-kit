@@ -7,6 +7,8 @@ description: Delegate an approved backlog to a real async coding agent (GitHub C
 
 Fan an **already-approved** backlog out to a **real async coding agent** so several stories are built in parallel — one branch, one PR per issue — and then re-apply the kit's quality on the PRs that come back. This is the **async, throughput-first alternative** to `work-story` (which works one story at a time, interactively, in your session).
 
+> **Experimental (v1).** GitHub + Copilot coding agent only, and it leans on a young GitHub surface (§3–§4) — verify the mechanism is current and expect it to change.
+
 **Be honest about the trade-off.** On the delegated path the kit's **in-session gates do not run** — the plan-approval gate, coverage/security/e2e, and stack conventions are *your* session's guarantees; an external agent runs its own loop. What the kit re-adds is at the **end**: `pr-review` / `fix-pr` on each resulting PR. So `delegate-backlog` **trades the kit's gates for throughput, and buys the quality back on review.** Say this to the user; never present a delegated PR as if the kit's gates produced it.
 
 ## When to use vs. `work-story`
@@ -44,7 +46,7 @@ Copilot coding agent is triggered by **assigning the issue to Copilot**, but it 
 
 ## 4. Delegate each issue
 
-For each approved issue (independent ones in parallel; for a dependency chain, delegate in dependency order or hold a dependent until its prerequisite PR merges):
+For each approved issue (independent ones in parallel; for a dependency chain, delegate in dependency order, or hold a dependent until the user **merges** its prerequisite PR — since the kit never auto-merges, a held dependent waits on that human merge, so tell the user it's waiting rather than letting it stall silently):
 
 - **Assign the issue to Copilot.** The current supported path is the GraphQL `replaceActorsForAssignable` mutation with the Copilot bot's actor id (or `gh` if your version supports assigning Copilot) — **verify it's current** before relying on it. On assignment, Copilot starts a session and opens a **draft PR**.
 - **Confirm by read-back** (`gh issue view <n> --json assignees`) — never report an issue as delegated on the exit code alone.

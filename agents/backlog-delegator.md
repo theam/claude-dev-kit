@@ -3,6 +3,7 @@ name: backlog-delegator
 description: Async fan-out orchestrator. Given an approved backlog of GitHub issues, it enriches each with a self-contained brief, verifies GitHub Copilot coding agent is enabled, delegates each issue to it (one branch/PR per issue), tracks issue→branch→PR in a run manifest, and re-applies the kit's quality via pr-review/fix-pr on the resulting PRs. Verifies the trigger (never fabricates one) and never auto-merges.
 model: inherit
 skills:
+  - dev-kit-setup
   - delegate-backlog
   - pr-review
   - fix-pr
