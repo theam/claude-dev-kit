@@ -33,14 +33,16 @@ function repoWithVersionFile() {
   writeFileSync(join(dir, 'scripts', 'build-codex-plugin.mjs'), source);
   writeFileSync(join(dir, file), '{"version":"0.0.1"}\n');
   writeFileSync(join(dir, 'README.md'), 'base\n');
-  git(dir, ['init', '-b', 'main']);
+  git(dir, ['init', '-b', 'main', '--template=']);
   git(dir, ['add', '.']);
   git(dir, ['commit', '-m', 'base']);
   return { dir, file };
 }
 
 function run(dir) {
-  return spawnSync(process.execPath, [SCRIPT, 'main'], { cwd: dir, encoding: 'utf8' });
+  const env = { ...process.env };
+  delete env.GITHUB_HEAD_REF;
+  return spawnSync(process.execPath, [SCRIPT, 'main'], { cwd: dir, encoding: 'utf8', env });
 }
 
 test('fails when the version file changed', () => {
@@ -53,6 +55,35 @@ test('fails when the version file changed', () => {
     const result = run(dir);
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /does not set the version/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('passes when a release branch changes the version file', () => {
+  const { dir, file } = repoWithVersionFile();
+  try {
+    git(dir, ['checkout', '-b', 'chore/release-0.0.2']);
+    writeFileSync(join(dir, file), '{"version":"0.0.2"}\n');
+    git(dir, ['add', '.']);
+    git(dir, ['commit', '-m', 'chore(release): cut 0.0.2']);
+    const result = run(dir);
+    assert.equal(result.status, 0, result.stderr);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('fails when the release commit subject is missing', () => {
+  const { dir, file } = repoWithVersionFile();
+  try {
+    git(dir, ['checkout', '-b', 'chore/release-0.0.2']);
+    writeFileSync(join(dir, file), '{"version":"0.0.2"}\n');
+    git(dir, ['add', '.']);
+    git(dir, ['commit', '-m', 'bump']);
+    const result = run(dir);
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /chore\(release\):/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

@@ -41,5 +41,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      # chore/release-* with a chore(release): commit is the release exemption.
+      # Feature branches fail. GITHUB_HEAD_REF supplies the branch name.
       - name: Fail when the version file is in the diff
         run: node scripts/check-version-file.mjs "${{ github.event.pull_request.base.sha }}"
