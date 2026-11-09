@@ -44,8 +44,14 @@ const TRIOS = [
       'agents/backlog-planner.md',
     ],
     // The definition-only phrases (facilitate / never decide, no tickets, FigJam)
-    // are not in this trio. Pinning them here would fail on the current wording.
-    phrases: ['approval gate', 'navigable artifact'],
+    // are not in this trio. The trigger phrases are the ones a dropped rule
+    // would lose: the kit ships no workflow runner, and it does not scaffold one.
+    phrases: [
+      'approval gate',
+      'navigable artifact',
+      'ships no workflow runner',
+      'no `/builder` comments, no `codex-builder.yml`',
+    ],
   },
 ];
 

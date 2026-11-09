@@ -8,6 +8,9 @@ a release is only "live" for users once that is bumped and published.
 
 ## [Unreleased]
 
+### Changed
+- **Plan commands and agents no longer restate the skill playbook.** The command keeps argument handling and the don't-delegate rule, the agent keeps the subagent contract, and the doctrine stays in the skill. A CI check pins the shared guardrail phrases across each plan trio, including the rule that the kit ships no workflow runner and must not scaffold a trigger.
+
 ## [0.19.18] - 2026-09-28
 ### Added
 - **`delegate-backlog` — async fan-out to GitHub Copilot coding agent (#84, v1, experimental).** The async, throughput-first alternative to running `work-story` per story: hand an **approved** backlog to a real async agent so several stories are built in parallel (one branch/PR per issue), then **re-apply the kit's quality via `pr-review`/`fix-pr`** on each PR that comes back. Honest about the trade-off — the kit's **in-session gates don't run** on the delegated path (they're re-applied on review), it **verifies Copilot coding agent is actually enabled** before delegating (never fabricates a trigger — same doctrine as #82/#83), reads back the assignment and captures the real PR (never invents a number — #85), tracks issue→branch→PR in a run manifest, and **never auto-merges**. Ships as the portable `delegate-backlog` skill plus a Claude `/delegate-backlog` command and `backlog-delegator` agent. v1 is GitHub + Copilot only (other async targets later). From @hmamonk17's demand and the RFC in #84. Kit → **0.19.18**.

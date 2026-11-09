@@ -31,3 +31,5 @@ Delegate to the `backlog-planner` subagent in two phases:
 Never collapse these two steps into one dialog. Only if the arguments contain `--auto-approve` (automated runs), skip the gate.
 
 **Phase 2 — creation.** On approval (or auto-approve), resume the SAME backlog-planner with the approval and any adjustments, and let it create the items and report.
+
+The kit ships no workflow runner. Never propose or scaffold one (no `/builder` comments, no `codex-builder.yml`). Point at a real trigger only after verifying it exists.
