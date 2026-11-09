@@ -39,10 +39,10 @@ function repoWithVersionFile() {
   return { dir, file };
 }
 
-function run(dir) {
+function run(dir, base = 'main') {
   const env = { ...process.env };
   delete env.GITHUB_HEAD_REF;
-  return spawnSync(process.execPath, [SCRIPT, 'main'], { cwd: dir, encoding: 'utf8', env });
+  return spawnSync(process.execPath, [SCRIPT, base], { cwd: dir, encoding: 'utf8', env });
 }
 
 test('fails when the version file changed', () => {
@@ -69,6 +69,26 @@ test('passes when a release branch changes the version file', () => {
     git(dir, ['commit', '-m', 'chore(release): cut 0.0.2']);
     const result = run(dir);
     assert.equal(result.status, 0, result.stderr);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('ignores a release subject that exists only on the base', () => {
+  const { dir, file } = repoWithVersionFile();
+  try {
+    git(dir, ['checkout', '-b', 'history']);
+    writeFileSync(join(dir, 'README.md'), 'released\n');
+    git(dir, ['add', '.']);
+    git(dir, ['commit', '-m', 'chore(release): cut 0.0.1']);
+    git(dir, ['checkout', 'main']);
+    git(dir, ['checkout', '-b', 'chore/release-spoof']);
+    writeFileSync(join(dir, file), '{"version":"0.0.2"}\n');
+    git(dir, ['add', '.']);
+    git(dir, ['commit', '-m', 'bump']);
+    const result = run(dir, 'history');
+    assert.notEqual(result.status, 0, result.stderr);
+    assert.match(result.stderr, /does not set the version/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

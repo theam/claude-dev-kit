@@ -40,7 +40,9 @@ export function changedPaths(repo, base) {
 }
 
 export function commitSubjects(repo, base) {
-  const result = spawnSync('git', ['log', '--format=%s', `${base}...HEAD`], {
+  // Two dots: commits reachable from HEAD and not from base. Three dots is
+  // symmetric, so a release subject already on the base would count here.
+  const result = spawnSync('git', ['log', '--format=%s', `${base}..HEAD`], {
     cwd: repo,
     encoding: 'utf8',
   });
@@ -65,6 +67,10 @@ export function headBranch(repo) {
 // A release PR may change the version file until the release job exists.
 // The branch must be chore/release-* and a commit subject must start
 // with chore(release):. Both are required.
+//
+// The branch name comes from the pull request, and the person opening it
+// chooses that name and the commit subject. This guard stops accidental
+// version collisions. It assumes good faith. Merging stays a human decision.
 export function isReleaseExemption({ branch, subjects }) {
   const releaseBranch = /^chore\/release-/.test(branch);
   const releaseCommit = subjects.some((subject) => subject.startsWith('chore(release):'));
