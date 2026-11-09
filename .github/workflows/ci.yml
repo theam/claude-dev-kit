@@ -28,3 +28,18 @@ jobs:
         run: |
           node scripts/build-codex-plugin.mjs
           git diff --exit-code
+
+  # Not marked required. This file does not list required checks.
+  # Branch protection is a maintainer action, separate from this job.
+  forbid-version-file:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fail when the version file is in the diff
+        run: node scripts/check-version-file.mjs "${{ github.event.pull_request.base.sha }}"
