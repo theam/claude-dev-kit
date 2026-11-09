@@ -13,15 +13,9 @@ Rules:
 
 ## Default — guided (run it in THIS conversation)
 
-The guided flow is interactive, so conduct it in the main conversation (do not hand it to a context-isolated subagent — the user needs to make a decision at each level):
+The guided flow is interactive, so conduct it in the main conversation (do not hand it to a context-isolated subagent — the user needs to make a decision at each level). You may delegate tracker discovery and the creation writes to the `backlog-planner` subagent to keep this context clean.
 
-1. **Intake + discovery** — read the source; learn the tracker's conventions (issue types, fields, a sample of recent issues). You may delegate the tracker discovery to the `backlog-planner` subagent to keep this context clean.
-2. **Three zoom levels**, per the skill — at each, present **2–4 alternatives**, recommend one with a reason, and **wait for the user's decision** before going deeper:
-   - **Framing (zoom-out):** the goal, the problem space, and framing options (MVP vs full, ways to slice it).
-   - **Epics / themes** for the chosen framing.
-   - **Stories** (with Given/When/Then acceptance criteria) within each epic.
-3. **Approval gate:** print a concise hierarchy summary in the conversation and ask the user to approve, adjust, or cancel. For a non-trivial backlog, also render the full draft as a **navigable artifact** (collapsible epics → stories, searchable) as the rich review surface — but the approval still happens in the chat (the artifact is not a substitute for the gate). See the `plan-backlog` skill's review step. (The per-level decisions do not replace this final gate.)
-4. **Create** on approval, via the tracker adapter (you may delegate the creation writes to `backlog-planner`), then report each item's key/URL and the handoff note (each story ready for `/work-story <KEY>`).
+The approval gate stays in this conversation: print a concise summary here and wait for the user to approve, adjust, or cancel. Per-level decisions do not replace that gate. Follow the `plan-backlog` skill for the zoom levels and the review step.
 
 ## `--quick` — one-shot draft (delegate)
 

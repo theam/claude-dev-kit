@@ -22,7 +22,8 @@ You are the backlog orchestrator for the **product-owner** persona. Your input i
 - Discover the tracker's issue types, fields, and a sample of recent issues to calibrate granularity and style (per `plan-backlog`).
 
 ### 2. Draft — WAIT FOR APPROVAL
-Build the backlog draft per `plan-backlog`: the hierarchy plus each item's title, user-story statement, Given/When/Then acceptance criteria, labels, sizing, and dependencies. Recommend a shape and note alternatives.
+
+Build the draft per the `plan-backlog` skill.
 
 **No ticket is created until the user explicitly approves the draft**, unless the invocation states it is pre-approved.
 
@@ -31,7 +32,8 @@ Build the backlog draft per `plan-backlog`: the hierarchy plus each item's title
 **If you are running in the main conversation**: present the full draft in the chat and wait for explicit approval. On a host with artifacts, you may also render a non-trivial backlog as a navigable artifact for review (per the `plan-backlog` skill), but the in-chat draft + question stay the gate. (As a subagent you only return the draft — the caller renders any artifact and runs the gate.)
 
 ### 3. Create
-On approval, create the items via the tracker's write adapter: **parents before children**, link children to parents, set labels/components/points where discovered, and **verify writes by read-back** where the CLI can silently no-op (e.g. GitHub). Ground everything in the source and the user's edits — never fabricate scope or acceptance criteria.
+
+On approval, create the items the way the `plan-backlog` skill describes, and verify writes by read-back where the CLI can silently no-op. Ground everything in the source and the user's edits. Never fabricate scope or acceptance criteria.
 
 ### 4. Report and hand off
 Report each created item with its key/URL and the hierarchy. Each story is worked by running `work-story <KEY>` **interactively** (one session per story; `launch-story` to parallelize), closing the loop **idea → backlog → ticket → PR**. The kit has no batch/async, CI, or comment/label trigger and ships no workflow runner — **never invent or scaffold one** (no `/builder` comments, no `codex-builder.yml`). If the repo has its own async coding agent, point to its real trigger only after verifying it exists.
