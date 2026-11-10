@@ -120,6 +120,18 @@ Shape of `tracker` per type: **jira** → `site`, `cloudId`, `projectKey`, `fiel
 
 `auto` (default, and the value when the key is **absent** — run the a11y basics only on user-facing frontend diffs) · `required` (make it a blocking gate) · `off` (never run). **Do not ask this in setup and do not write it by default** — leave it absent so the default `auto` applies. Only write it when the user explicitly asks (e.g. *"make accessibility a required gate"* / *"turn off the a11y checks"*): set the key to the requested value, preserving the rest of the file.
 
+**Optional top-level `delegation` key** (async fan-out, honored by `delegate-backlog`). Do not ask this in setup. Do not write it by default. Only write the block when the user asks to configure delegation, and only after they pick the provider. If they have not picked one, detect what is available (the Copilot coding-agent bot in the repo's assignable actors, and any workflow file that declares `workflow_dispatch` and an input named `issue`) and ask. Do not pick one for them.
+
+```json
+{ "delegation": { "provider": "github-copilot" } }
+```
+
+```json
+{ "delegation": { "provider": "self-hosted-action", "action": { "workflow": "<file under .github/workflows>" } } }
+```
+
+`delegation.provider` is the shape, not a vendor. `github-copilot` assigns the issue to GitHub Copilot coding agent. `self-hosted-action` dispatches a workflow the repo already has, via `workflow_dispatch`, from a maintainer. Codex and Claude are examples of that second shape, not extra values. Tokens stay in a git-ignored `.env` or in the repo's Actions secrets — never in this file. **Do not write a workflow file** from setup. The playbook is the `delegate-backlog` skill.
+
 **If the repo has no `CLAUDE.md`:** say so, proceed using the stack profile(s) + detected commands as the baseline, and suggest the user run `/init` (or let the kit propose a minimal `CLAUDE.md`) so future runs are grounded in the repo's own conventions. Never silently assume conventions the repo hasn't stated.
 
 - This file contains **no secrets** (auth lives in each developer's MCP OAuth grant or CLI login) — it is safe and intended to be committed, so one setup serves the whole team.
