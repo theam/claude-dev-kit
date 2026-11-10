@@ -120,7 +120,7 @@ Shape of `tracker` per type: **jira** → `site`, `cloudId`, `projectKey`, `fiel
 
 `auto` (default, and the value when the key is **absent** — run the a11y basics only on user-facing frontend diffs) · `required` (make it a blocking gate) · `off` (never run). **Do not ask this in setup and do not write it by default** — leave it absent so the default `auto` applies. Only write it when the user explicitly asks (e.g. *"make accessibility a required gate"* / *"turn off the a11y checks"*): set the key to the requested value, preserving the rest of the file.
 
-**Optional top-level `delegation` key** (async fan-out, honored by `delegate-backlog`). Do not ask this in setup. Do not write it by default. Only write the block when the user asks to configure delegation, and only after they pick the provider. If they have not picked one, detect what is available (the Copilot coding-agent bot in the repo's assignable actors, and any workflow file that already declares `workflow_dispatch`) and ask. Do not pick one for them.
+**Optional top-level `delegation` key** (async fan-out, honored by `delegate-backlog`). Do not ask this in setup. Do not write it by default. Only write the block when the user asks to configure delegation, and only after they pick the provider. If they have not picked one, detect what is available (the Copilot coding-agent bot in the repo's assignable actors, and any workflow file that declares `workflow_dispatch` and an input named `issue`) and ask. Do not pick one for them.
 
 ```json
 { "delegation": { "provider": "github-copilot" } }

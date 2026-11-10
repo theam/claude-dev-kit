@@ -9,7 +9,7 @@ a release is only "live" for users once that is bumped and published.
 ## [Unreleased]
 
 ### Added
-- **`delegate-backlog` takes its provider from the kit config (#95).** `delegation.provider` is `github-copilot` (the current assignment path) or `self-hosted-action` (a workflow the consuming repo already owns). The kit's contract is verify, enrich, trigger, and read-back: issue text is untrusted, a self-hosted trigger is `workflow_dispatch` from a maintainer and receives the issue number, and a missing provider stops instead of falling through to the other one. The kit ships no workflow, runner, or prompts. Codex and Claude are examples of the self-hosted shape, not separate providers.
+- **`delegate-backlog` takes its provider from the kit config (#95).** `delegation.provider` is `github-copilot` (the current assignment path) or `self-hosted-action` (a workflow the consuming repo already owns). The kit's contract is verify, enrich, trigger, and read-back: issue text is untrusted, a self-hosted trigger is `workflow_dispatch` from a maintainer and receives the issue number, and a missing provider stops instead of falling through to the other one. The kit ships no workflow, runner, or prompts. A self-hosted run is named `delegate #<issue>` and matched on `displayTitle`, and the PR number comes only from the issue's linked PRs. The workflow contract names `contents: write`, `pull-requests: write`, and `issues: read`, and keeps the agent secret in an environment with required reviewers. Codex and Claude are examples of the self-hosted shape, not separate providers.
 
 ### Fixed
 - The telemetry relay accepts `install_id` only when it is a UUID. An email, a path, or any other string is rejected and is not forwarded.

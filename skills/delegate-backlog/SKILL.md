@@ -50,7 +50,7 @@ Read `.claude/dev-kit.json`. The block sits next to `tracker` and `prHost`:
 **If `delegation.provider` is absent,** detect, then ask. Do not pick one.
 
 - Query the repo's assignable actors for the Copilot coding-agent bot (the same check as `github-copilot` below). If it is there, that provider is available.
-- List files under `.github/workflows` whose text contains `workflow_dispatch`. Those are candidates for `self-hosted-action`. Do not choose among them.
+- List files under `.github/workflows` that declare `workflow_dispatch` and an input named `issue`. Those are candidates for `self-hosted-action`. A file that only has `workflow_dispatch` (a deploy or a release) is not a candidate. Do not choose among the ones that qualify.
 - Tell the user what you found and ask which provider to persist. Wait for the answer. Then offer to write the `delegation` block. Do not write a workflow file, and do not write a secret.
 
 **If `delegation.provider` is anything else,** stop. The allowed values are `github-copilot` and `self-hosted-action`.
@@ -68,19 +68,20 @@ Read `.claude/dev-kit.json`. The block sits next to `tracker` and `prHost`:
 **Verify.** Stop at the first miss, name it, and do not fall through to `github-copilot`.
 
 1. `delegation.action.workflow` is set, and that file exists under `.github/workflows/`.
-2. The file declares `workflow_dispatch` and an input named `issue` (the issue number). No other event is this contract.
-3. The authenticated user is a maintainer. `gh api repos/{owner}/{repo} --jq '{admin: .permissions.admin, maintain: .permissions.maintain}'`. Proceed only when `admin` or `maintain` is true. A failed call is a stop, not a pass.
+2. The file declares `workflow_dispatch`, an input named `issue` (the issue number), and `run-name: delegate #${{ inputs.issue }}`. No other event is this contract. Without that run name, two issues dispatched together cannot be told apart.
+3. The authenticated user is a maintainer. `gh api repos/{owner}/{repo} --jq '{admin: .permissions.admin, maintain: .permissions.maintain}'`. Proceed only when `admin` or `maintain` is true. A failed call is a stop, not a pass. This check is the kit's. It does not stop someone with write access from dispatching the workflow in the GitHub UI, so the workflow has to enforce the same limit itself (below).
 
 Do not create the file. If it is missing, the repo has to add its own workflow. You may describe the contract; you must not write it:
 
-- Trigger: `workflow_dispatch` only, from a maintainer.
-- One input, `issue`, the issue number. The workflow reads the issue itself.
+- Trigger: `workflow_dispatch` only. One input, `issue`, the issue number. The workflow reads the issue itself.
+- `run-name: delegate #${{ inputs.issue }}`, so each run is named for one issue.
+- Permissions: `contents: write`, `pull-requests: write`, `issues: read`.
 - It opens one branch and one PR linked to that issue.
-- Its secrets stay in the repo's Actions secrets. The kit never sees them.
+- The agent secret lives in a GitHub Environment with required reviewers, and the job that uses the secret names that environment. A dispatch that has no approval stops before the secret is available. The kit never sees the secret.
 
 **Trigger.** `gh workflow run <file> -f issue=<number>`. The exit code of that command is not confirmation.
 
-**Read-back.** List runs with `gh run list --workflow=<file> --event=workflow_dispatch --json databaseId,event,status,headBranch,url,createdAt`. A run created after this dispatch has to be in that list. If it isn't, the trigger did not stick. The PR number comes from the issue's linked PRs or timeline, or from `gh pr list --head <branch> --json number,url` when the run payload includes `headBranch`. Report only a number one of those calls returned. If the run is back and the PR is not, record the run and say the PR is not back yet.
+**Read-back.** List runs with `gh run list --workflow=<file> --event=workflow_dispatch --json databaseId,event,status,displayTitle,url,createdAt`. Take the run whose `displayTitle` is `delegate #<n>` for this issue. If that title is not in the list, the trigger did not stick. Do not accept "a run created after the dispatch": two issues fanned out together both satisfy that. Do not look up a PR by the run's branch. On `workflow_dispatch` that ref is the branch you dispatched on, usually `main`, not the branch the agent opens. The PR number comes only from the issue's linked PRs on its timeline. Report only a number that call returned. If the matching run is back and the PR is not, record the run and say the PR is not back yet.
 
 ## 1. Approval gate (mandatory — delegate nothing yet)
 

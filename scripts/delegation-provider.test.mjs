@@ -65,7 +65,18 @@ test('delegate-backlog: the kit does not ship a workflow for the provider', () =
       `${name} is a shipped workflow tied to the delegation provider`,
     );
   }
-  const skill = readFileSync(join(ROOT, 'skills/delegate-backlog/SKILL.md'), 'utf8').toLowerCase();
-  assert.match(skill, /you must not write it/);
-  assert.match(skill, /issue number/);
+  const skill = readFileSync(join(ROOT, 'skills/delegate-backlog/SKILL.md'), 'utf8');
+  const lower = skill.toLowerCase();
+  assert.match(lower, /you must not write it/);
+  assert.match(lower, /issue number/);
+  assert.match(skill, /run-name: delegate #\$\{\{ inputs\.issue \}\}/);
+  assert.match(skill, /displayTitle/);
+  assert.equal(skill.includes('headBranch'), false);
+  assert.match(skill, /contents: write/);
+  assert.match(skill, /pull-requests: write/);
+  assert.match(skill, /issues: read/);
+  assert.match(lower, /required reviewers/);
+  const setup = readFileSync(join(ROOT, 'skills/dev-kit-setup/SKILL.md'), 'utf8');
+  const delegation = setup.slice(setup.indexOf('Optional top-level `delegation`'));
+  assert.match(delegation, /input named `issue`/);
 });
