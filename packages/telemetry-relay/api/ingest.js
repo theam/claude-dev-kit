@@ -30,6 +30,7 @@ for (const p of [
 
 const POSTHOG_HOST = (process.env.POSTHOG_HOST || 'https://eu.i.posthog.com').replace(/\/+$/, '');
 const POSTHOG_API_KEY = process.env.POSTHOG_API_KEY || '';
+const INSTALL_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function sanitize(properties = {}) {
   const spec = contract.allowed_properties;
@@ -68,7 +69,9 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'bad_event' });
   }
 
-  const installId = typeof body.install_id === 'string' ? body.install_id.slice(0, 64) : null;
+  const installId = typeof body.install_id === 'string' && INSTALL_ID.test(body.install_id)
+    ? body.install_id
+    : null;
   if (!installId) return res.status(400).json({ error: 'missing_install_id' });
 
   const properties = sanitize(body.properties);

@@ -8,6 +8,9 @@ a release is only "live" for users once that is bumped and published.
 
 ## [Unreleased]
 
+### Fixed
+- The telemetry relay accepts `install_id` only when it is a UUID. An email, a path, or any other string is rejected and is not forwarded.
+
 ### Changed
 - **Plan commands and agents no longer restate the skill playbook.** The command keeps argument handling and the don't-delegate rule, the agent keeps the subagent contract, and the doctrine stays in the skill. A CI check pins the shared guardrail phrases across each plan trio, including the rule that the kit ships no workflow runner and must not scaffold a trigger.
 
