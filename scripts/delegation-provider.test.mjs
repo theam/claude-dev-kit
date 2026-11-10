@@ -71,6 +71,9 @@ test('delegate-backlog: the kit does not ship a workflow for the provider', () =
   assert.match(lower, /issue number/);
   assert.match(skill, /run-name: delegate #\$\{\{ inputs\.issue \}\}/);
   assert.match(skill, /displayTitle/);
+  assert.match(skill, /whose `createdAt` is after this dispatch/);
+  assert.match(skill, /Both are required/);
+  assert.equal(skill.includes('Do not accept "a run created after the dispatch"'), false);
   assert.equal(skill.includes('headBranch'), false);
   assert.match(skill, /contents: write/);
   assert.match(skill, /pull-requests: write/);
