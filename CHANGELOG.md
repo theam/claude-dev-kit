@@ -13,6 +13,7 @@ a release is only "live" for users once that is bumped and published.
 
 ### Changed
 - Pinned GitHub Actions are updated weekly. The setup-php pin comment names release 2.40.0, the commit it resolves to.
+- Dependabot groups all GitHub Actions updates into one weekly PR, so the bumps no longer conflict with each other.
 - **Plan commands and agents no longer restate the skill playbook.** The command keeps argument handling and the don't-delegate rule, the agent keeps the subagent contract, and the doctrine stays in the skill. A CI check pins the shared guardrail phrases across each plan trio, including the rule that the kit ships no workflow runner and must not scaffold a trigger.
 
 ## [0.19.18] - 2026-09-28
