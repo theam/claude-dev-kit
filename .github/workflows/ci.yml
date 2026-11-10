@@ -21,7 +21,7 @@ jobs:
       - name: Validate the plugin bundle
         run: node scripts/validate-codex-plugin.mjs
 
-      # 2. Zero-dep test suite (node:test): drift guard + PR-create detector + contract parity + plan-trio phrases.
+      # 2. Zero-dep test suite (node:test): drift guard + PR-create detector + contract parity + plan-trio phrases + delegation provider.
       - name: Run tests
         run: node --test scripts/*.test.mjs
 
