@@ -39,7 +39,7 @@ Then point the kit at it: set `default_relay_url` in `telemetry/contract.v1.json
 
 - IP is never forwarded or logged (disable Vercel access logs / PostHog IP capture too).
 - Only the contract's allowlisted properties survive; unknown fields are silently dropped.
-- `distinct_id` is the client's random `install_id`; `org` is included only if the organisation self-declared it.
+- `distinct_id` is the client's random `install_id`; `org` is included only if the organisation self-declared it. An `install_id` that is not a UUID is rejected with 400 and is not forwarded.
 
 ## Local check
 
