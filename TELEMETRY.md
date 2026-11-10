@@ -68,6 +68,7 @@ One POST (to the relay), only for sessions where the kit ran, matching the contr
 ```
 
 - `install_id` — random UUID stored at `~/.claude/dev-kit-telemetry/config.json`. Not derived from your machine, user, or repo. Delete the file to reset.
+  The relay accepts this field only when it is a UUID. Anything else, including an email or a path, is answered with 400 and is not forwarded.
 - `agent` — which agent host ran the kit: `claude-code` or `codex`. Lets aggregate usage be split by tool.
 - `entrypoint` — which surface ran the pipeline. On Claude Code (`cli`, `claude-vscode`, `claude-desktop`, `intellij`, `sdk`, …) from `CLAUDE_CODE_ENTRYPOINT`; on Codex (`cli`, `vscode`) from the Codex originator. A short non-personal slug.
 - `tracker_type` — the *category* (jira / linear / github / azure), never the site, project, or instance.
