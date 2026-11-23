@@ -1,0 +1,190 @@
+name: Release
+
+# Feature PRs never set the version (forbid-version-file in ci.yml fails them).
+# This workflow owns it, with scripts/release.mjs doing the work:
+#
+# - publish: when the version file on main names a version with no tag yet
+#   (a release PR just merged), check Guard #2, tag it, publish the GitHub
+#   Release from its CHANGELOG section, then check Guard #3.
+# - release-pr: recompute the next version from the commits since the latest
+#   tag and keep one `chore(release): X.Y.Z` PR open from chore/release-next.
+#
+# release-pr opens the PR with a GitHub App token, not GITHUB_TOKEN: a PR that
+# GITHUB_TOKEN opens or pushes to does not run pull_request workflows, so the
+# required verify and forbid-version-file checks would never report on it.
+# Without the App, release-pr still pushes chore/release-next with GITHUB_TOKEN
+# and a maintainer opens the PR by hand. Setup: CONTRIBUTING.md -> Releases.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Bump for the release PR (auto derives it from the commit titles)
+        type: choice
+        options: [auto, patch, minor, major]
+        default: auto
+
+permissions:
+  contents: read
+
+# One release run at a time, in order. A run is never cancelled halfway through tagging.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the tag and the GitHub Release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+
+      - name: Is the version on this commit released?
+        id: state
+        run: |
+          node scripts/release.mjs plan > "$RUNNER_TEMP/plan.json"
+          {
+            echo "version=$(jq -r .current "$RUNNER_TEMP/plan.json")"
+            echo "tagged=$(jq -r .currentTagged "$RUNNER_TEMP/plan.json")"
+            echo "target=$(jq -r .versionCommit "$RUNNER_TEMP/plan.json")"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Guard 2 - the version is new and every manifest carries it
+        if: steps.state.outputs.tagged == 'false'
+        env:
+          VERSION: ${{ steps.state.outputs.version }}
+          TARGET: ${{ steps.state.outputs.target }}
+        run: node scripts/release.mjs verify "$VERSION" --at "$TARGET"
+
+      # The tag goes on the commit that set the version (the merged release PR), not on
+      # GITHUB_SHA: if that run was dropped from the queue, a later push must not widen the release.
+      - name: Tag and publish the GitHub Release
+        if: steps.state.outputs.tagged == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.state.outputs.version }}
+          TARGET: ${{ steps.state.outputs.target }}
+        run: |
+          node scripts/release.mjs notes "$VERSION" > "$RUNNER_TEMP/notes.md"
+          gh release create "v$VERSION" --target "$TARGET" --title "v$VERSION" \
+            --notes-file "$RUNNER_TEMP/notes.md" --latest
+
+      - name: Guard 3 - the published tag carries the version
+        if: steps.state.outputs.tagged == 'false'
+        env:
+          VERSION: ${{ steps.state.outputs.version }}
+        run: |
+          git fetch --force origin "refs/tags/v$VERSION:refs/tags/v$VERSION"
+          node scripts/release.mjs verify-tag "$VERSION"
+
+  release-pr:
+    needs: publish
+    if: ${{ !cancelled() && needs.publish.result == 'success' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # only the fallback push uses it; with the App, the App token writes
+      pull-requests: read # the fallback looks up an open release PR
+    steps:
+      # Optional: when the App is missing or not installed, the push step falls back to
+      # GITHUB_TOKEN and a maintainer opens the PR by hand, so the required checks run.
+      - uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
+        id: app
+        if: vars.RELEASE_APP_CLIENT_ID != ''
+        continue-on-error: true
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      # The tip of main, not the triggering commit: a queued run must not push a stale PR.
+      # No stored credentials: only the push step below sees the App token.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+
+      - name: Plan
+        id: plan
+        env:
+          BUMP: ${{ inputs.bump || 'auto' }}
+        run: |
+          node scripts/release.mjs plan --bump "$BUMP" > "$RUNNER_TEMP/plan.json"
+          {
+            echo "release=$(jq -r .release "$RUNNER_TEMP/plan.json")"
+            echo "entries=$(jq -r .unreleasedEntries "$RUNNER_TEMP/plan.json")"
+            echo "next=$(jq -r '.next // empty' "$RUNNER_TEMP/plan.json")"
+          } >> "$GITHUB_OUTPUT"
+          jq -r '.reason // "Next: \(.next) (\(.bump))"' "$RUNNER_TEMP/plan.json"
+
+      - name: Commits but no notes
+        if: steps.plan.outputs.release == 'true' && steps.plan.outputs.entries == '0'
+        run: echo "::warning::Commits landed since the latest tag but CHANGELOG.md [Unreleased] is empty, so no release PR. Add the user-facing entries under [Unreleased] to release them."
+
+      - name: Prepare the release commit
+        if: steps.plan.outputs.release == 'true' && steps.plan.outputs.entries != '0'
+        env:
+          BUMP: ${{ inputs.bump || 'auto' }}
+        run: node scripts/release.mjs prepare --bump "$BUMP" > "$RUNNER_TEMP/body.md"
+
+      - name: Push chore/release-next and open or update the PR
+        if: steps.plan.outputs.release == 'true' && steps.plan.outputs.entries != '0'
+        env:
+          APP_TOKEN: ${{ steps.app.outputs.token }}
+          FALLBACK_TOKEN: ${{ github.token }}
+          SLUG: ${{ steps.app.outputs.app-slug }}
+          NEXT: ${{ steps.plan.outputs.next }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ -n "$APP_TOKEN" ]; then
+            export GH_TOKEN="$APP_TOKEN"
+            user_id=$(gh api "/users/${SLUG}%5Bbot%5D" --jq .id)
+            git config user.name "${SLUG}[bot]"
+            git config user.email "${user_id}+${SLUG}[bot]@users.noreply.github.com"
+          else
+            export GH_TOKEN="$FALLBACK_TOKEN"
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          fi
+          git checkout -B chore/release-next
+          git add -A
+          git commit -m "chore(release): $NEXT"
+          auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+          echo "::add-mask::$auth"
+          # The header goes through the environment, not argv, so no process listing shows it.
+          GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.https://github.com/.extraheader \
+            GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $auth" \
+            git push --force origin chore/release-next
+          # --head matches a branch name in any fork. Only a PR from this repository's own
+          # branch is the release PR; a fork's chore/release-next must never be rewritten.
+          pr=$(gh pr list --head chore/release-next --base main --state open --json number,isCrossRepository \
+            --jq '[.[] | select(.isCrossRepository | not)][0].number // empty')
+          if [ -z "$APP_TOKEN" ]; then
+            # A push or PR from GITHUB_TOKEN runs no pull_request workflows: a human has to.
+            cat "$RUNNER_TEMP/body.md" >> "$GITHUB_STEP_SUMMARY"
+            if [ -n "$pr" ]; then
+              echo "::warning::No release App token, so release PR #$pr has no checks on the new commit. Set its title to 'chore(release): $NEXT' and its body from this run's summary, then close and reopen it to run the required checks."
+            else
+              echo "::warning::No release App token, so no PR was opened. Open it by hand (title 'chore(release): $NEXT', body from this run's summary) so the required checks run: https://github.com/$REPO/compare/main...chore/release-next?expand=1"
+            fi
+            exit 0
+          fi
+          if [ -n "$pr" ]; then
+            gh pr edit "$pr" --title "chore(release): $NEXT" --body-file "$RUNNER_TEMP/body.md"
+          else
+            gh pr create --base main --head chore/release-next --title "chore(release): $NEXT" --body-file "$RUNNER_TEMP/body.md"
+          fi
