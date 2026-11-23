@@ -149,6 +149,7 @@ test('the diff shows only the inserted heading', () => {
   assert.deepEqual(changed.filter((l) => l.startsWith('-')), []);
   assert.ok(changed.includes('+## [0.20.0] - 2026-11-23'));
   assert.equal(lineDiff('same\n', 'same\n', 'x'), '');
+  assert.match(lineDiff('a\nb\n', 'a\nc\n', 'x'), /^@@ -1,2 \+1,2 @@$/m);
 });
 
 // ---------------------------------------------------------------- against a repo copy
@@ -235,6 +236,12 @@ test('a prepared release commit keeps CI green: clean rebuild, version-file exem
     git(dir, ['add', '-A']);
     git(dir, ['commit', '-q', '-m', `chore(release): ${next}`]);
 
+    // The publish job tags the commit that set the version, not a later tip of main.
+    const releaseSha = git(dir, ['rev-parse', 'HEAD']).trim();
+    git(dir, ['commit', '-q', '--allow-empty', '-m', 'fix: landed after the release commit']);
+    assert.equal(JSON.parse(node(dir, 'release.mjs', ['plan']).stdout).versionCommit, releaseSha);
+    git(dir, ['reset', '-q', '--hard', releaseSha]);
+
     // CI's verify job: rebuild, then the tree must not move.
     const rebuild = node(dir, 'build-codex-plugin.mjs');
     assert.equal(rebuild.status, 0, rebuild.stderr);
@@ -262,6 +269,16 @@ test('a prepared release commit keeps CI green: clean rebuild, version-file exem
     const again = node(dir, 'release.mjs', ['prepare', '--dry-run']);
     assert.equal(again.status, 0, again.stderr);
     assert.match(again.stdout, /Nothing to release/);
+  });
+});
+
+test('a BREAKING CHANGE footer in a real commit body is read and flagged', () => {
+  inSandbox({}, ({ dir }) => {
+    git(dir, ['commit', '-q', '--allow-empty', '-m', 'fix: rename the key', '-m', 'BREAKING CHANGE: the key is now `x`.']);
+    const p = JSON.parse(node(dir, 'release.mjs', ['plan']).stdout);
+    assert.deepEqual(p.breaking.map((c) => c.subject), ['fix: rename the key']);
+    const report = node(dir, 'release.mjs', ['prepare', '--dry-run']).stdout;
+    assert.match(report, /fix: rename the key \*\*\(breaking\)\*\*/);
   });
 });
 
@@ -297,6 +314,12 @@ test('prepare refuses a dirty tree and a version file that does not match the la
     const mismatch = node(dir, 'release.mjs', ['prepare', '--dry-run']);
     assert.notEqual(mismatch.status, 0);
     assert.match(mismatch.stderr, /release job owns the version/);
+
+    // A malformed version never reaches the workflow's step outputs.
+    writeFileSync(file, readFileSync(file, 'utf8').replace(/"version": "[^"]+"/, '"version": "1.0.0\\nx=1"'));
+    const malformed = node(dir, 'release.mjs', ['plan']);
+    assert.notEqual(malformed.status, 0);
+    assert.match(malformed.stderr, /not a release version/);
   });
 });
 

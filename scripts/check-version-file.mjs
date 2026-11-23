@@ -103,7 +103,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     if (touched && !exempt) {
       console.error(`${file} is in this pull request diff.`);
       console.error('Feature work does not set the version. Drop that file from the branch.');
-      console.error('Instead: use a conventional PR title (fix:, feat:, feat!:) and add your entry under CHANGELOG.md [Unreleased].');
+      console.error('Instead: use a conventional PR title and commit subjects (fix:, feat:, feat!:) and add your entry under CHANGELOG.md [Unreleased].');
       console.error('The release job derives the version and opens the release PR (chore/release-* branch with a chore(release): commit).');
       process.exit(1);
     }

@@ -32,7 +32,7 @@ jobs:
           node scripts/build-codex-plugin.mjs
           git diff --exit-code
 
-  # Not marked required. This file does not list required checks.
+  # Required on main through branch protection (set there, not in this file).
   # Branch protection is a maintainer action, separate from this job.
   forbid-version-file:
     if: github.event_name == 'pull_request'

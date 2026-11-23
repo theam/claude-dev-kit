@@ -39,7 +39,7 @@ CI (`.github/workflows/ci.yml`, the `verify` job) runs exactly this. A gate that
 `version` in `.claude-plugin/plugin.json` is what reaches installed clients. **The release job owns it, not your PR** (#87):
 
 - **Never edit** `.claude-plugin/plugin.json`'s version, a `## [X.Y.Z]` CHANGELOG heading, or a tag. `forbid-version-file` (a required check) fails a feature PR that touches the version file.
-- **Instead:** give the PR a conventional title (`fix:` → patch, `feat:` → minor, `feat!:` or a `BREAKING CHANGE` footer → flagged breaking) and add the user-facing entry under `CHANGELOG.md` `[Unreleased]`. That title and entry are the release's input.
+- **Instead:** give the PR a conventional title **and** conventional commit subjects (`fix:` → patch, `feat:` → minor, `feat!:` or a `BREAKING CHANGE` footer → flagged breaking): the squash subject the release reads is the PR title, or the commit's subject when the PR has one commit. Add the user-facing entry under `CHANGELOG.md` `[Unreleased]`. That subject and entry are the release's input.
 - **Asked to "release" or "bump"?** Stop and say so: `.github/workflows/release.yml` keeps a `chore(release): X.Y.Z` PR open from `chore/release-next`, and merging it tags and publishes. `node scripts/release.mjs prepare --dry-run` previews the next release without writing anything.
 
 See CONTRIBUTING.md → *Releases*. A change with no `[Unreleased]` entry (tooling, docs, this file) rides the next release.

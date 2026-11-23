@@ -77,7 +77,7 @@ Users only receive a change once it ships in a release: a new `version` in `.cla
 
 **Feature PRs never set the version** (#87). Two branches can both claim the same number and both merge cleanly, so the number is derived on `main` instead. The required `forbid-version-file` check fails a PR that touches the version file. In your PR:
 
-- Use a conventional title. Squash-merge makes it the commit subject the release reads. `feat:` bumps the minor, anything else the patch. `feat!:` or a `BREAKING CHANGE` footer also bumps the minor before 1.0 and is flagged as breaking in the release PR. 1.0.0 only happens by hand (`--bump major`).
+- Use a conventional title, and conventional commit subjects. The release reads the squash commit's subject on `main`. GitHub takes it from the PR title, except for a single-commit PR, where it takes that commit's subject. `feat:` bumps the minor, anything else the patch. `feat!:` or a `BREAKING CHANGE` footer also bumps the minor before 1.0 and is flagged as breaking in the release PR. 1.0.0 only happens by hand (`--bump major`).
 - Add the user-facing entry under `CHANGELOG.md` `[Unreleased]`. That section becomes the release notes.
 
 **How a release is cut** (`.github/workflows/release.yml`, running `scripts/release.mjs`):
@@ -85,6 +85,8 @@ Users only receive a change once it ships in a release: a new `version` in `.cla
 1. On every push to `main` (and on manual dispatch, which can override the bump), the job computes the next version from the commits since the latest `v*` tag, writes it to `.claude-plugin/plugin.json`, moves `[Unreleased]` under `## [X.Y.Z] - <date>`, and rebuilds the bundle so every generated manifest matches.
 2. It keeps one PR open: `chore(release): X.Y.Z` from `chore/release-next`. The commit subject and the branch are what let it through `forbid-version-file`. The PR body lists the commits that drove the bump and flags breaking ones.
 3. **Merging that PR is the release decision.** The publish job checks the version is newer than every tag (Guard #2), tags `vX.Y.Z`, publishes the GitHub Release as Latest with that CHANGELOG section as notes, then checks the tag carries the version in every manifest (Guard #3).
+
+Every push to `main` recomputes the release PR, so a bump overridden by dispatch lasts only until the next push: merge it before anything else lands, or dispatch again. Merge the release PR only when its last update came after the latest push to `main`.
 
 Preview locally, without writing anything: `node scripts/release.mjs prepare --dry-run`. If commits landed but `[Unreleased]` is empty, the job opens no PR and leaves a warning on the run.
 
@@ -94,7 +96,7 @@ Preview locally, without writing anything: `node scripts/release.mjs prepare --d
 2. Install it on `theam/claude-dev-kit` only.
 3. Generate a private key. In this repo's Settings → Secrets and variables → Actions, add the variable `RELEASE_APP_CLIENT_ID` (the App's Client ID) and the secret `RELEASE_APP_PRIVATE_KEY` (the `.pem` contents).
 
-Until both exist, the `release-pr` job fails and says what is missing. `publish` needs no App.
+Do not add the App to any bypass list for `main` (branch protection or rulesets): the release PR must pass the same required checks and review as every other PR. Until the variable and secret exist, the `release-pr` job fails and says what is missing. `publish` needs no App.
 
 **Still manual:**
 

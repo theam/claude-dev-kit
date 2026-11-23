@@ -4,7 +4,7 @@
  * version (scripts/check-version-file.mjs fails them). This script derives it
  * on main from what landed since the latest v* tag.
  *
- *   node scripts/release.mjs plan [--bump patch|minor|major]
+ *   node scripts/release.mjs plan [--bump auto|patch|minor|major]
  *       JSON: the current version, whether it is tagged, and the next release.
  *   node scripts/release.mjs prepare [--dry-run] [--bump auto|patch|minor|major] [--date YYYY-MM-DD]
  *       Write the version file, move CHANGELOG [Unreleased] under the new
@@ -169,8 +169,10 @@ export function changelogSection(text, version) {
 
 /* One-hunk unified diff. Enough for the release edit, which is a single insert. */
 export function lineDiff(before, after, label, context = 2) {
-  const a = before.split('\n');
-  const b = after.split('\n');
+  // A final newline is not a line of its own; counting it would skew the hunk header.
+  const lines = (text) => (text.endsWith('\n') ? text.slice(0, -1) : text).split('\n');
+  const a = lines(before);
+  const b = lines(after);
   let prefix = 0;
   while (prefix < a.length && prefix < b.length && a[prefix] === b[prefix]) prefix++;
   let suffix = 0;
@@ -244,6 +246,7 @@ const readVersion = (repo, file) => JSON.parse(readFileSync(join(repo, file), 'u
 export function repoPlan(repo, { override = null } = {}) {
   const file = versionFile(repo);
   const current = readVersion(repo, file);
+  parseVersion(current); // a malformed version stops here, before it reaches the workflow's outputs
   const tag = latestTag(repo);
   const plan = planRelease({ current, latestTag: tag, commits: commitsSince(repo, tag), override });
   const changelog = readFileSync(join(repo, 'CHANGELOG.md'), 'utf8');
@@ -252,6 +255,8 @@ export function repoPlan(repo, { override = null } = {}) {
     versionFile: file,
     current,
     currentTagged: tagExists(repo, `v${current}`),
+    // The commit that set this version: the publish job tags it, not whatever is newest on main.
+    versionCommit: git(repo, ['log', '-1', '--format=%H', '--', file]).trim() || null,
     unreleasedEntries: unreleasedEntries(changelog).length,
   };
 }
@@ -414,7 +419,7 @@ function main(argv) {
     if (errors.length) fail(errors);
     console.log(`v${version} carries ${version} in every manifest.`);
   } else {
-    fail(['Usage: release.mjs plan | prepare [--dry-run] [--bump patch|minor|major] [--date YYYY-MM-DD] | notes <X.Y.Z> | verify <X.Y.Z> | verify-tag <X.Y.Z>']);
+    fail(['Usage: release.mjs plan | prepare [--dry-run] [--bump auto|patch|minor|major] [--date YYYY-MM-DD] | notes <X.Y.Z> | verify <X.Y.Z> | verify-tag <X.Y.Z>']);
   }
 }
 
