@@ -12,7 +12,8 @@ name: Release
 # release-pr opens the PR with a GitHub App token, not GITHUB_TOKEN: a PR that
 # GITHUB_TOKEN opens or pushes to does not run pull_request workflows, so the
 # required verify and forbid-version-file checks would never report on it.
-# Setup: CONTRIBUTING.md -> Releases.
+# Without the App, release-pr still pushes chore/release-next with GITHUB_TOKEN
+# and a maintainer opens the PR by hand. Setup: CONTRIBUTING.md -> Releases.
 
 on:
   push:
@@ -91,20 +92,15 @@ jobs:
     if: ${{ !cancelled() && needs.publish.result == 'success' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     permissions:
-      contents: read # the App token below does the writing
+      contents: write # only the fallback push uses it; with the App, the App token writes
+      pull-requests: read # the fallback looks up an open release PR
     steps:
-      - name: The release App is configured
-        env:
-          CLIENT_ID: ${{ vars.RELEASE_APP_CLIENT_ID }}
-          HAS_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY != '' }}
-        run: |
-          if [ -z "$CLIENT_ID" ] || [ "$HAS_KEY" != "true" ]; then
-            echo "::error::The release PR needs the release GitHub App: set the RELEASE_APP_CLIENT_ID variable and the RELEASE_APP_PRIVATE_KEY secret (CONTRIBUTING.md -> Releases)."
-            exit 1
-          fi
-
+      # Optional: when the App is missing or not installed, the push step falls back to
+      # GITHUB_TOKEN and a maintainer opens the PR by hand, so the required checks run.
       - uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
         id: app
+        if: vars.RELEASE_APP_CLIENT_ID != ''
+        continue-on-error: true
         with:
           client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
@@ -148,13 +144,22 @@ jobs:
       - name: Push chore/release-next and open or update the PR
         if: steps.plan.outputs.release == 'true' && steps.plan.outputs.entries != '0'
         env:
-          GH_TOKEN: ${{ steps.app.outputs.token }}
+          APP_TOKEN: ${{ steps.app.outputs.token }}
+          FALLBACK_TOKEN: ${{ github.token }}
           SLUG: ${{ steps.app.outputs.app-slug }}
           NEXT: ${{ steps.plan.outputs.next }}
+          REPO: ${{ github.repository }}
         run: |
-          user_id=$(gh api "/users/${SLUG}%5Bbot%5D" --jq .id)
-          git config user.name "${SLUG}[bot]"
-          git config user.email "${user_id}+${SLUG}[bot]@users.noreply.github.com"
+          if [ -n "$APP_TOKEN" ]; then
+            export GH_TOKEN="$APP_TOKEN"
+            user_id=$(gh api "/users/${SLUG}%5Bbot%5D" --jq .id)
+            git config user.name "${SLUG}[bot]"
+            git config user.email "${user_id}+${SLUG}[bot]@users.noreply.github.com"
+          else
+            export GH_TOKEN="$FALLBACK_TOKEN"
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          fi
           git checkout -B chore/release-next
           git add -A
           git commit -m "chore(release): $NEXT"
@@ -168,6 +173,16 @@ jobs:
           # branch is the release PR; a fork's chore/release-next must never be rewritten.
           pr=$(gh pr list --head chore/release-next --base main --state open --json number,isCrossRepository \
             --jq '[.[] | select(.isCrossRepository | not)][0].number // empty')
+          if [ -z "$APP_TOKEN" ]; then
+            # A push or PR from GITHUB_TOKEN runs no pull_request workflows: a human has to.
+            cat "$RUNNER_TEMP/body.md" >> "$GITHUB_STEP_SUMMARY"
+            if [ -n "$pr" ]; then
+              echo "::warning::No release App token, so release PR #$pr has no checks on the new commit. Set its title to 'chore(release): $NEXT' and its body from this run's summary, then close and reopen it to run the required checks."
+            else
+              echo "::warning::No release App token, so no PR was opened. Open it by hand (title 'chore(release): $NEXT', body from this run's summary) so the required checks run: https://github.com/$REPO/compare/main...chore/release-next?expand=1"
+            fi
+            exit 0
+          fi
           if [ -n "$pr" ]; then
             gh pr edit "$pr" --title "chore(release): $NEXT" --body-file "$RUNNER_TEMP/body.md"
           else

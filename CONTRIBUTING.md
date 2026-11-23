@@ -96,7 +96,9 @@ Preview locally, without writing anything: `node scripts/release.mjs prepare --d
 2. Install it on `theam/claude-dev-kit` only.
 3. Generate a private key. In this repo's Settings → Secrets and variables → Actions, add the variable `RELEASE_APP_CLIENT_ID` (the App's Client ID) and the secret `RELEASE_APP_PRIVATE_KEY` (the `.pem` contents).
 
-Do not add the App to any bypass list for `main` (branch protection or rulesets): the release PR must pass the same required checks and review as every other PR. Until the variable and secret exist, the `release-pr` job fails and says what is missing. `publish` needs no App.
+Do not add the App to any bypass list for `main` (branch protection or rulesets): the release PR must pass the same required checks and review as every other PR. `publish` needs no App.
+
+**Without the App** (not set up yet, or not installed), `release-pr` still pushes `chore/release-next` with `GITHUB_TOKEN` and leaves a warning on the run instead of opening the PR. Open it by hand from the compare link in that warning, titled `chore(release): X.Y.Z` with the run summary as the body: a PR a person opens runs the required checks. If the release PR is already open, the new commit has no checks: update its title and body, then close and reopen it.
 
 **Still manual:**
 
