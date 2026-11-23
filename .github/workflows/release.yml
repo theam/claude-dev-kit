@@ -1,0 +1,157 @@
+name: Release
+
+# Feature PRs never set the version (forbid-version-file in ci.yml fails them).
+# This workflow owns it, with scripts/release.mjs doing the work:
+#
+# - publish: when the version file on main names a version with no tag yet
+#   (a release PR just merged), check Guard #2, tag it, publish the GitHub
+#   Release from its CHANGELOG section, then check Guard #3.
+# - release-pr: recompute the next version from the commits since the latest
+#   tag and keep one `chore(release): X.Y.Z` PR open from chore/release-next.
+#
+# release-pr opens the PR with a GitHub App token, not GITHUB_TOKEN: a PR that
+# GITHUB_TOKEN opens or pushes to does not run pull_request workflows, so the
+# required verify and forbid-version-file checks would never report on it.
+# Setup: CONTRIBUTING.md -> Releases.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Bump for the release PR (auto derives it from the commit titles)
+        type: choice
+        options: [auto, patch, minor, major]
+        default: auto
+
+permissions:
+  contents: read
+
+# One release run at a time, in order. A run is never cancelled halfway through tagging.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the tag and the GitHub Release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+
+      - name: Is the version on this commit released?
+        id: state
+        run: |
+          node scripts/release.mjs plan > "$RUNNER_TEMP/plan.json"
+          echo "version=$(jq -r .current "$RUNNER_TEMP/plan.json")" >> "$GITHUB_OUTPUT"
+          echo "tagged=$(jq -r .currentTagged "$RUNNER_TEMP/plan.json")" >> "$GITHUB_OUTPUT"
+
+      - name: Guard 2 - the version is new and every manifest carries it
+        if: steps.state.outputs.tagged == 'false'
+        env:
+          VERSION: ${{ steps.state.outputs.version }}
+        run: node scripts/release.mjs verify "$VERSION"
+
+      - name: Tag and publish the GitHub Release
+        if: steps.state.outputs.tagged == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.state.outputs.version }}
+        run: |
+          node scripts/release.mjs notes "$VERSION" > "$RUNNER_TEMP/notes.md"
+          gh release create "v$VERSION" --target "$GITHUB_SHA" --title "v$VERSION" \
+            --notes-file "$RUNNER_TEMP/notes.md" --latest
+
+      - name: Guard 3 - the published tag carries the version
+        if: steps.state.outputs.tagged == 'false'
+        env:
+          VERSION: ${{ steps.state.outputs.version }}
+        run: |
+          git fetch --force origin "refs/tags/v$VERSION:refs/tags/v$VERSION"
+          node scripts/release.mjs verify-tag "$VERSION"
+
+  release-pr:
+    needs: publish
+    if: ${{ !cancelled() && needs.publish.result == 'success' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # the App token below does the writing
+    steps:
+      - name: The release App is configured
+        env:
+          CLIENT_ID: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          HAS_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY != '' }}
+        run: |
+          if [ -z "$CLIENT_ID" ] || [ "$HAS_KEY" != "true" ]; then
+            echo "::error::The release PR needs the release GitHub App: set the RELEASE_APP_CLIENT_ID variable and the RELEASE_APP_PRIVATE_KEY secret (CONTRIBUTING.md -> Releases)."
+            exit 1
+          fi
+
+      - uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
+        id: app
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      # The tip of main, not the triggering commit: a queued run must not push a stale PR.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ steps.app.outputs.token }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+
+      - name: Plan
+        id: plan
+        env:
+          BUMP: ${{ inputs.bump || 'auto' }}
+        run: |
+          node scripts/release.mjs plan --bump "$BUMP" > "$RUNNER_TEMP/plan.json"
+          echo "release=$(jq -r .release "$RUNNER_TEMP/plan.json")" >> "$GITHUB_OUTPUT"
+          echo "entries=$(jq -r .unreleasedEntries "$RUNNER_TEMP/plan.json")" >> "$GITHUB_OUTPUT"
+          echo "next=$(jq -r '.next // empty' "$RUNNER_TEMP/plan.json")" >> "$GITHUB_OUTPUT"
+          jq -r '.reason // "Next: \(.next) (\(.bump))"' "$RUNNER_TEMP/plan.json"
+
+      - name: Commits but no notes
+        if: steps.plan.outputs.release == 'true' && steps.plan.outputs.entries == '0'
+        run: echo "::warning::Commits landed since the latest tag but CHANGELOG.md [Unreleased] is empty, so no release PR. Add the user-facing entries under [Unreleased] to release them."
+
+      - name: Prepare the release commit
+        if: steps.plan.outputs.release == 'true' && steps.plan.outputs.entries != '0'
+        env:
+          BUMP: ${{ inputs.bump || 'auto' }}
+        run: node scripts/release.mjs prepare --bump "$BUMP" > "$RUNNER_TEMP/body.md"
+
+      - name: Push chore/release-next and open or update the PR
+        if: steps.plan.outputs.release == 'true' && steps.plan.outputs.entries != '0'
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          SLUG: ${{ steps.app.outputs.app-slug }}
+          NEXT: ${{ steps.plan.outputs.next }}
+        run: |
+          user_id=$(gh api "/users/${SLUG}%5Bbot%5D" --jq .id)
+          git config user.name "${SLUG}[bot]"
+          git config user.email "${user_id}+${SLUG}[bot]@users.noreply.github.com"
+          git checkout -B chore/release-next
+          git add -A
+          git commit -m "chore(release): $NEXT"
+          git push --force origin chore/release-next
+          pr=$(gh pr list --head chore/release-next --base main --state open --json number --jq '.[0].number // empty')
+          if [ -n "$pr" ]; then
+            gh pr edit "$pr" --title "chore(release): $NEXT" --body-file "$RUNNER_TEMP/body.md"
+          else
+            gh pr create --base main --head chore/release-next --title "chore(release): $NEXT" --body-file "$RUNNER_TEMP/body.md"
+          fi

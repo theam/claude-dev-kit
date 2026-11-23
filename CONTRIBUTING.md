@@ -73,21 +73,36 @@ Restart your Claude session and exercise the changed component — for workflow 
 
 ## Releases (maintainers)
 
-Users only receive changes when `version` in `.claude-plugin/plugin.json` is **bumped** — merging without a bump updates nobody. There is no loud "update available" notification in Claude Code: with **auto-update** enabled the new version arrives silently at session start, otherwise users run `claude plugin marketplace update claude-dev-kit`. So we drive awareness via **GitHub Releases + CHANGELOG**.
+Users only receive a change once it ships in a release: a new `version` in `.claude-plugin/plugin.json`, tagged and published. There is no loud "update available" notification in Claude Code: with **auto-update** enabled the new version arrives silently at session start, otherwise users run `claude plugin marketplace update claude-dev-kit`. So we drive awareness via **GitHub Releases + CHANGELOG**.
 
-Release checklist:
+**Feature PRs never set the version** (#87). Two branches can both claim the same number and both merge cleanly, so the number is derived on `main` instead. The required `forbid-version-file` check fails a PR that touches the version file. In your PR:
 
-1. Bump `version` in `.claude-plugin/plugin.json` (SemVer: patch = fix, minor = feature, major = breaking).
-2. Move the `CHANGELOG.md` `[Unreleased]` items under a new `## [X.Y.Z] - <date>` heading.
-3. Merge to `main` (PR).
-4. Tag + publish a GitHub Release (this is what notifies watchers and shows on the repo):
-   ```bash
-   gh release create vX.Y.Z --title "vX.Y.Z" --notes "<summary — mirror the CHANGELOG entry>"
-   ```
-5. For the npm package, if it changed: `cd packages/create-dev-kit && npm version <bump> && npm publish` (see [its notes](packages/create-dev-kit/README.md); the plugin and the wizard version independently).
-6. For internal teams, drop a note in your channel.
+- Use a conventional title. Squash-merge makes it the commit subject the release reads. `feat:` bumps the minor, anything else the patch. `feat!:` or a `BREAKING CHANGE` footer also bumps the minor before 1.0 and is flagged as breaking in the release PR. 1.0.0 only happens by hand (`--bump major`).
+- Add the user-facing entry under `CHANGELOG.md` `[Unreleased]`. That section becomes the release notes.
 
-Encourage users to enable auto-update (`/plugin` → Marketplaces → `claude-dev-kit`) so a bump + release reaches them automatically.
+**How a release is cut** (`.github/workflows/release.yml`, running `scripts/release.mjs`):
+
+1. On every push to `main` (and on manual dispatch, which can override the bump), the job computes the next version from the commits since the latest `v*` tag, writes it to `.claude-plugin/plugin.json`, moves `[Unreleased]` under `## [X.Y.Z] - <date>`, and rebuilds the bundle so every generated manifest matches.
+2. It keeps one PR open: `chore(release): X.Y.Z` from `chore/release-next`. The commit subject and the branch are what let it through `forbid-version-file`. The PR body lists the commits that drove the bump and flags breaking ones.
+3. **Merging that PR is the release decision.** The publish job checks the version is newer than every tag (Guard #2), tags `vX.Y.Z`, publishes the GitHub Release as Latest with that CHANGELOG section as notes, then checks the tag carries the version in every manifest (Guard #3).
+
+Preview locally, without writing anything: `node scripts/release.mjs prepare --dry-run`. If commits landed but `[Unreleased]` is empty, the job opens no PR and leaves a warning on the run.
+
+**One-time setup: the release GitHub App.** A PR opened with the workflow's `GITHUB_TOKEN` would not run the required checks, so the release PR is opened by a GitHub App:
+
+1. Create a GitHub App owned by the organization (Settings → Developer settings → GitHub Apps → New). Webhook off. Repository permissions: **Contents: Read and write**, **Pull requests: Read and write** (Metadata: Read is implied). Nothing else.
+2. Install it on `theam/claude-dev-kit` only.
+3. Generate a private key. In this repo's Settings → Secrets and variables → Actions, add the variable `RELEASE_APP_CLIENT_ID` (the App's Client ID) and the secret `RELEASE_APP_PRIVATE_KEY` (the `.pem` contents).
+
+Until both exist, the `release-pr` job fails and says what is missing. `publish` needs no App.
+
+**Still manual:**
+
+- The npm wizard, if it changed: `cd packages/create-dev-kit && npm version <bump> && npm publish` (see [its notes](packages/create-dev-kit/README.md); the plugin and the wizard version independently).
+- The OpenAI Plugins Directory upload and the Cursor marketplace listing (see [SUBMISSION.md](SUBMISSION.md)).
+- For internal teams, a note in your channel.
+
+Encourage users to enable auto-update (`/plugin` → Marketplaces → `claude-dev-kit`) so a release reaches them automatically.
 
 ## License
 

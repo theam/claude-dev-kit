@@ -36,8 +36,10 @@ CI (`.github/workflows/ci.yml`, the `verify` job) runs exactly this. A gate that
 
 ## Versioning (read before touching the version)
 
-`version` in `.claude-plugin/plugin.json` is what reaches installed clients — a change is only "live" once it's bumped, rebuilt, and released (see CONTRIBUTING.md → *Releases*). **A version bump reaches users only via a rebuild**, so bump and `build-codex-plugin.mjs` go together.
+`version` in `.claude-plugin/plugin.json` is what reaches installed clients. **The release job owns it, not your PR** (#87):
 
-> ⚠️ **Heads-up:** setting the version inside a feature PR has caused collisions (two PRs claiming the same number). We're moving version management to a release job on `main` — see **#87**. Until that lands, if a change should reach users, bump the patch/minor and rebuild; once #87 lands, **stop editing the version file in PRs** and add a changeset instead. This file is updated as part of that migration.
+- **Never edit** `.claude-plugin/plugin.json`'s version, a `## [X.Y.Z]` CHANGELOG heading, or a tag. `forbid-version-file` (a required check) fails a feature PR that touches the version file.
+- **Instead:** give the PR a conventional title (`fix:` → patch, `feat:` → minor, `feat!:` or a `BREAKING CHANGE` footer → flagged breaking) and add the user-facing entry under `CHANGELOG.md` `[Unreleased]`. That title and entry are the release's input.
+- **Asked to "release" or "bump"?** Stop and say so: `.github/workflows/release.yml` keeps a `chore(release): X.Y.Z` PR open from `chore/release-next`, and merging it tags and publishes. `node scripts/release.mjs prepare --dry-run` previews the next release without writing anything.
 
-Config that is **not** bundled into the plugin (this file, `.claude/dev-kit.json`, docs) needs **no** version bump.
+See CONTRIBUTING.md → *Releases*. A change with no `[Unreleased]` entry (tooling, docs, this file) rides the next release.

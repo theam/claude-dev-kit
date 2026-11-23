@@ -13,7 +13,9 @@
  * Exits 1 when that file is in the diff against the base revision.
  * A release is the exception: branch chore/release-* and a commit subject
  * that starts with chore(release):. Both are required. Feature branches
- * stay blocked.
+ * stay blocked. The release job (scripts/release.mjs, .github/workflows/
+ * release.yml) opens exactly that: chore/release-next with a
+ * chore(release): X.Y.Z commit.
  */
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -64,9 +66,9 @@ export function headBranch(repo) {
   return result.stdout.trim();
 }
 
-// A release PR may change the version file until the release job exists.
-// The branch must be chore/release-* and a commit subject must start
-// with chore(release):. Both are required.
+// The release PR is the one place the version file changes. The branch
+// must be chore/release-* and a commit subject must start with
+// chore(release):. Both are required.
 //
 // The branch name comes from the pull request, and the person opening it
 // chooses that name and the commit subject. This guard stops accidental
@@ -101,7 +103,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     if (touched && !exempt) {
       console.error(`${file} is in this pull request diff.`);
       console.error('Feature work does not set the version. Drop that file from the branch.');
-      console.error('A release may change it only on a chore/release-* branch that also has a chore(release): commit.');
+      console.error('Instead: use a conventional PR title (fix:, feat:, feat!:) and add your entry under CHANGELOG.md [Unreleased].');
+      console.error('The release job derives the version and opens the release PR (chore/release-* branch with a chore(release): commit).');
       process.exit(1);
     }
   } catch (err) {
