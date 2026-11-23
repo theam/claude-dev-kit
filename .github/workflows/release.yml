@@ -60,7 +60,8 @@ jobs:
         if: steps.state.outputs.tagged == 'false'
         env:
           VERSION: ${{ steps.state.outputs.version }}
-        run: node scripts/release.mjs verify "$VERSION"
+          TARGET: ${{ steps.state.outputs.target }}
+        run: node scripts/release.mjs verify "$VERSION" --at "$TARGET"
 
       # The tag goes on the commit that set the version (the merged release PR), not on
       # GITHUB_SHA: if that run was dropped from the queue, a later push must not widen the release.
@@ -154,7 +155,11 @@ jobs:
           git add -A
           git commit -m "chore(release): $NEXT"
           auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
-          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" push --force origin chore/release-next
+          echo "::add-mask::$auth"
+          # The header goes through the environment, not argv, so no process listing shows it.
+          GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.https://github.com/.extraheader \
+            GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $auth" \
+            git push --force origin chore/release-next
           # --head matches a branch name in any fork. Only a PR from this repository's own
           # branch is the release PR; a fork's chore/release-next must never be rewritten.
           pr=$(gh pr list --head chore/release-next --base main --state open --json number,isCrossRepository \

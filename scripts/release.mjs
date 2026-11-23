@@ -12,7 +12,7 @@
  *       its body. --dry-run prints the same report and writes nothing.
  *   node scripts/release.mjs notes <X.Y.Z>
  *       That version's CHANGELOG section, used as the GitHub Release notes.
- *   node scripts/release.mjs verify <X.Y.Z>
+ *   node scripts/release.mjs verify <X.Y.Z> [--at <commit>]
  *       Before tagging (Guard #2): newer than every tag, not tagged yet, and
  *       every manifest carries it.
  *   node scripts/release.mjs verify-tag <X.Y.Z>
@@ -352,13 +352,17 @@ export function prepare({ repo = ROOT, dryRun = false, override = null, date = t
   return { plan, written: true, report };
 }
 
-/* Guard #2, before tagging: the version is new, untagged, and every manifest carries it. */
-export function verifyBeforeTag({ repo = ROOT, version }) {
+/*
+ * Guard #2, before tagging: the version is new, untagged, and every manifest carries it.
+ * `at` names the commit about to be tagged; its tree is checked instead of the working tree.
+ */
+export function verifyBeforeTag({ repo = ROOT, version, at = null }) {
   parseVersion(version);
+  if (at !== null && !/^[0-9a-f]{7,40}$/.test(at)) throw new Error(`"${at}" is not a commit id.`);
   const errors = [];
   for (const file of [versionFile(repo), ...GENERATED_MANIFESTS]) {
-    const found = readVersion(repo, file);
-    if (found !== version) errors.push(`${file} carries ${found}, not ${version}.`);
+    const found = at ? JSON.parse(git(repo, ['show', `${at}:${file}`])).version : readVersion(repo, file);
+    if (found !== version) errors.push(`${at ? `${at}:` : ''}${file} carries ${found}, not ${version}.`);
   }
   if (tagExists(repo, `v${version}`)) errors.push(`v${version} is already tagged.`);
   const top = latestTag(repo, { merged: false });
@@ -382,7 +386,7 @@ export function verifyTag({ repo = ROOT, version }) {
 }
 
 function parseArgs(argv) {
-  const args = { _: [], dryRun: false, override: null, date: undefined };
+  const args = { _: [], dryRun: false, override: null, date: undefined, at: null };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--dry-run') args.dryRun = true;
@@ -391,6 +395,7 @@ function parseArgs(argv) {
       args.override = value === 'auto' ? null : value;
     }
     else if (arg === '--date') args.date = argv[++i] ?? '';
+    else if (arg === '--at') args.at = argv[++i] ?? '';
     else args._.push(arg);
   }
   return args;
@@ -411,7 +416,7 @@ function main(argv) {
   } else if (command === 'notes') {
     console.log(changelogSection(readFileSync(join(ROOT, 'CHANGELOG.md'), 'utf8'), version));
   } else if (command === 'verify') {
-    const errors = verifyBeforeTag({ version });
+    const errors = verifyBeforeTag({ version, at: args.at });
     if (errors.length) fail(errors);
     console.log(`${version} is ready to tag.`);
   } else if (command === 'verify-tag') {
@@ -419,7 +424,7 @@ function main(argv) {
     if (errors.length) fail(errors);
     console.log(`v${version} carries ${version} in every manifest.`);
   } else {
-    fail(['Usage: release.mjs plan | prepare [--dry-run] [--bump auto|patch|minor|major] [--date YYYY-MM-DD] | notes <X.Y.Z> | verify <X.Y.Z> | verify-tag <X.Y.Z>']);
+    fail(['Usage: release.mjs plan | prepare [--dry-run] [--bump auto|patch|minor|major] [--date YYYY-MM-DD] | notes <X.Y.Z> | verify <X.Y.Z> [--at <commit>] | verify-tag <X.Y.Z>']);
   }
 }
 

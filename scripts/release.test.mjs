@@ -258,8 +258,12 @@ test('a prepared release commit keeps CI green: clean rebuild, version-file exem
     git(dir, ['checkout', '-q', 'chore/release-next']);
 
     // Guard #2 before tagging, Guard #3 after.
-    const before = node(dir, 'release.mjs', ['verify', next]);
+    const before = node(dir, 'release.mjs', ['verify', next, '--at', releaseSha]);
     assert.equal(before.status, 0, before.stderr);
+    const base = git(dir, ['rev-list', '--max-parents=0', 'HEAD']).trim();
+    const wrongTarget = node(dir, 'release.mjs', ['verify', next, '--at', base]);
+    assert.notEqual(wrongTarget.status, 0, 'Guard #2 accepted a target commit without the version');
+    assert.match(wrongTarget.stderr, /carries/);
     git(dir, ['tag', `v${next}`]);
     const after = node(dir, 'release.mjs', ['verify-tag', next]);
     assert.equal(after.status, 0, after.stderr);
