@@ -52,8 +52,15 @@ test('video-evidence: the skill keeps its guardrails', () => {
   }
 });
 
-test('video-evidence: create-pr always carries a Video line', () => {
-  assert.match(read('skills/create-pr/SKILL.md'), /^- Video: /m);
+test('video-evidence: create-pr carries the Video line and commits the setting on its own', () => {
+  const createPr = read('skills/create-pr/SKILL.md');
+  assert.match(createPr, /^- Video: /m);
+  assert.match(createPr, /chore: <TICKET-KEY> set evidence\.video/);
+});
+
+test('video-evidence: the attached line is reachable after the hand-off', () => {
+  const skill = read('skills/video-evidence/SKILL.md');
+  assert.match(skill, /update the `Video:` line in the PR body to `attached`/);
 });
 
 test('video-evidence: setup documents the key and does not default it', () => {
@@ -62,7 +69,8 @@ test('video-evidence: setup documents the key and does not default it', () => {
   assert.ok(start >= 0, 'setup has no evidence section');
   const section = setup.slice(start);
   assert.match(section, /evidence\.video/);
-  assert.match(section, /Do not ask this in setup and do not write it by default/);
+  assert.match(section, /not ask this in setup/i);
+  assert.match(section, /not write it by default/i);
   const firstJson = setup.indexOf('```json');
   const example = setup.slice(firstJson, setup.indexOf('```', firstJson + 3));
   assert.equal(example.includes('"evidence"'), false);

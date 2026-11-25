@@ -46,7 +46,7 @@ The plan includes:
 - **Affected areas**: specific files, endpoints, components, services, modules, and routes to create or modify.
 - **Implementation steps**: numbered, in execution order, grouped by area (e.g. backend / frontend / cross-cutting) as the repo's architecture dictates.
 - **Test plan**: unit tests and e2e tests to add or update, and the edge cases each covers.
-- **Evidence**: the `video-evidence` detection line — whether a before/after video is offered, and why not when it isn't. As a subagent, don't ask the video question: your caller asks it at the gate. In the main conversation, ask it together with approval when the line says offered and `evidence.video` is `ask`.
+- **Evidence**: the `video-evidence` detection line — whether a before/after video is offered, and why not when it isn't. As a subagent, don't ask the video question: your caller asks it at the gate. In the main conversation, ask it together with approval when the line says offered and `evidence.video` is `ask`, and ask its ffmpeg follow-up when the video will be recorded and ffmpeg is missing.
 - **Open questions**: anything ambiguous. If a question blocks correctness, ask instead of guessing.
 
 ### 3. Implement
