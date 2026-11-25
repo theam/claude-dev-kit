@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# gh STUB for the hooks evals — records every call, captures the PR body
+# passed to `pr create`, fakes success, never touches the network.
+LOG="${GH_STUB_LOG:-./gh-calls.log}"
+BODY_OUT="${GH_STUB_BODY:-./pr-body.md}"
+STATE="${GH_STUB_STATE:-./gh-state}"
+URL="https://github.com/acme-sandbox/nonexistent-scratch/pull/77"
+
+printf '%s | gh %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(printf '%s' "$*" | tr '\n' ' ')" >> "$LOG"
+
+case "$1 $2" in
+  "pr create")
+    shift 2
+    while [ $# -gt 0 ]; do
+      case "$1" in
+        --body|-b) printf '%s\n' "$2" > "$BODY_OUT"; shift;;
+        --body=*) printf '%s\n' "${1#--body=}" > "$BODY_OUT";;
+        --body-file|-F) if [ "$2" = "-" ]; then cat > "$BODY_OUT"; else cat "$2" > "$BODY_OUT"; fi; shift;;
+        --body-file=*) cat "${1#--body-file=}" > "$BODY_OUT";;
+      esac
+      shift
+    done
+    touch "$STATE"
+    echo "$URL";;
+  "pr list") echo "[]";;
+  "pr view")
+    if [ -e "$STATE" ]; then
+      echo "{\"number\":77,\"state\":\"OPEN\",\"url\":\"$URL\",\"labels\":[{\"name\":\"ai-generated\"}]}"
+    else
+      echo "no pull requests found for branch" >&2; exit 1
+    fi;;
+  "repo view") echo '{"nameWithOwner":"acme-sandbox/nonexistent-scratch","defaultBranchRef":{"name":"main"}}';;
+  "auth status") echo "Logged in to github.com account stub-user (keyring)";;
+  *) echo "";;
+esac
+exit 0
