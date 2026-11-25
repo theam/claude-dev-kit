@@ -56,6 +56,7 @@ decisions taken, plain language — same content as the tracker comment>
 - E2E: <suites run + result>
 - Security pass: <verdict>
 - Lint: clean
+- Video: <the `video-evidence` line — attached, pending attachment, or why there is none>
 
 ### Notes for reviewers
 - <risks, follow-ups, technical decisions>
@@ -75,6 +76,8 @@ Issue: <link to the tracker item>
 fullstack-dev-kit plugin. Plan approved by a human before implementation;
 human review still required before merge.
 ```
+
+The `Video:` line is always present. Never claim an attachment that wasn't made: a clip stays "pending attachment" until it is really in the PR.
 
 Use the repo's PR template instead if one exists (`.github/PULL_REQUEST_TEMPLATE.md`), adding the badge, summary, verification evidence, and AI footer into it.
 

@@ -32,11 +32,19 @@ impose a stack. The always-on rules in `instructions/secure-coding.md` and
 ## 2. Plan — WAIT FOR APPROVAL
 Validate assumptions against the running product when feasible (boot the app / exercise the
 flow) before writing the plan. Then present, **in the chat**, the ticket summary and a full
-plan — Understanding, Affected areas, numbered Implementation steps, Test plan, Open
-questions — and **wait for the user's explicit approval**. Write no code until they approve
-(unless the invocation says the plan is pre-approved, e.g. an automated run).
+plan — Understanding, Affected areas, numbered Implementation steps, Test plan, Evidence (the
+**`video-evidence`** detection line), Open questions — and **wait for the user's explicit
+approval**. Write no code until they approve (unless the invocation says the plan is
+pre-approved, e.g. an automated run).
+- When the Evidence line says the video is offered and `evidence.video` is `ask`, ask the
+  `video-evidence` question together with approval (never as a separate pause); on an
+  always/never answer, save `evidence.video` as that skill says.
+- Pre-approved runs ask nothing: the stored `evidence.video` applies (`ask` means no
+  recording, and the PR says so).
 
 ## 3. Implement
+- When the approved plan records video, record the "before" per `video-evidence` first, on
+  the untouched tree.
 - Follow the repo's conventions and architecture. Keep the diff scoped to the story — no
   opportunistic refactors.
 - Update every side of any changed contract (payload/route/enum/schema/validation) together.
@@ -60,18 +68,24 @@ applicable** (reason + recommendation) — never silently skip. A `gates` policy
 Run **`pr-review`** on the full diff. Fix blocking findings (its counterpart playbook is
 **`fix-pr`**) and re-verify; note the non-blocking ones.
 
-## 6. Ship
+## 6. Evidence (optional — never a gate)
+When the approved plan records video, run **`video-evidence`**: record the "after", convert,
+check the key frames, and hand its `Video:` line to `create-pr`. Otherwise pass the reason
+line. A failed recording never blocks the PR.
+
+## 7. Ship
 Run **`create-pr`**. Report **the PR URL `create-pr` actually returned** — never a PR number
 remembered from earlier in the session (it may be closed/merged; claiming you posted to it is a
 false report). `create-pr` updates an existing open PR for the branch rather than duplicating.
-Report the verification evidence and any follow-up risks.
+Report the verification evidence and any follow-up risks. With a recorded video, run the
+`video-evidence` hand-off right after (upload on GitLab, otherwise the prepared hand-off).
 
-## 7. Update the ticket
+## 8. Update the ticket
 Run **`issue-update`**: comment a product-facing summary (plain language) plus the PR link,
 and transition the ticket to the team's review status. The story isn't done until the
 tracker reflects it.
 
-## 8. Track follow-ups (offer — never force)
+## 9. Track follow-ups (offer — never force)
 If the story left **loose ends** (out-of-scope notes in the PR, deferred `pr-review`/`fix-pr`
 findings, deliberate TODOs), run **`follow-ups`**: offer to create them as tracked work items
 linked to this story. Approval-gated — present the list, create nothing until approved; the
