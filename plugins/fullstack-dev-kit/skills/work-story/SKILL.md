@@ -39,7 +39,8 @@ pre-approved, e.g. an automated run).
 - When the Evidence line says the video is offered and `evidence.video` is `ask`, ask the
   `video-evidence` question together with approval (never as a separate pause); on an
   always/never answer, save `evidence.video` as that skill says. When the video will be
-  recorded and ffmpeg is missing, ask that skill's ffmpeg follow-up at the same gate.
+  recorded, ask that skill's follow-ups at the same gate (ffmpeg missing, public-repo upload
+  go-ahead).
 - Pre-approved runs ask nothing: the stored `evidence.video` applies, per `video-evidence`.
 
 ## 3. Implement

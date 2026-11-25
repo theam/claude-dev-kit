@@ -19,14 +19,14 @@ Offer the step only when all of these hold:
 4. **Unattended flow** — the spec runs on the suite's own auth (fixtures, stored state, test users). A flow behind interactive login or emailed codes is not offered.
 5. **Local or test target** — the e2e `baseURL` is the e2e gate's own server, localhost, or a dedicated test environment with seeded data. Never production or a shared environment with real data.
 
-Also probe ffmpeg: `ffmpeg -hide_banner -encoders | grep libx264`. A missing ffmpeg does not stop the offer (see §4).
+Also probe ffmpeg (`ffmpeg -hide_banner -encoders | grep libx264`) and the repo's visibility (`gh repo view --json visibility`, `glab repo view`). A missing ffmpeg does not stop the offer (see §4).
 
 Read `evidence.video` in `.claude/dev-kit.json`: `ask` (default, and the value when absent) · `always` · `never`. `always` still respects detection.
 
 Put exactly one **Evidence** line in the plan:
 
-- `Evidence: Video offered — before/after of <flow> (evidence.video: ask; ffmpeg: available|missing)`
-- `Evidence: Video will be recorded — before/after of <flow> (evidence.video: always; ffmpeg: available|missing)`
+- `Evidence: Video offered — before/after of <flow> (evidence.video: ask; ffmpeg: available|missing; repo: private|public)`
+- `Evidence: Video will be recorded — before/after of <flow> (evidence.video: always; ffmpeg: available|missing; repo: private|public)`
 - `Evidence: Video not recorded (evidence.video: never)`
 - `Evidence: Video not offered (<reason>)` — e.g. `no user-facing change`, `no browser e2e framework`, `Selenium has no built-in recording yet`, `flow needs interactive login`, `target is not a local/test environment`
 
@@ -46,6 +46,8 @@ On an always/never answer, set `evidence.video` to `always`/`never` in the worki
 - Install it now: show the platform command (`brew install ffmpeg` · `sudo apt-get install ffmpeg` · `winget install ffmpeg`) and run it only with the person's go-ahead.
 - Download a portable copy for this run only: `npm install --no-save --no-audit --no-fund --prefix <temp dir outside the repo> ffmpeg-static@5.3.0` (the default pin — an exact version, never `latest`). It runs the package's install script, which downloads a prebuilt third-party ffmpeg binary: say so and get explicit consent first. Verify `libx264` is in its encoders, use it only from that temp dir, never add it to the repo's manifests, and delete the temp dir after the run.
 - Continue with WebM (see §4).
+
+**Public repo and the video will be recorded** — at the same gate, ask for the go-ahead to upload a world-readable clip. Without it (or when the step later runs as a subagent that can't ask), treat the upload as non-interactive (§5).
 
 **Non-interactive** (`--auto-approve`, pre-approved runs): no question and no download. `always` records, `never` doesn't, `ask` doesn't — and the PR says so.
 
@@ -78,7 +80,7 @@ On an always/never answer, set `evidence.video` to `always`/`never` in the worki
 Extract about one frame per second into the temp directory (`ffmpeg -i <clip> -vf fps=1 <tmp>/frame-%03d.png`), plus the frame at each caption and the last frame before each navigation, and look at them.
 
 - Tokens, keys, real emails or names, or real customer data visible → **do not hand the clip off**; delete the clip and its frames now, report it, and use the `withheld` line.
-- **Public repo** (e.g. `gh repo view --json visibility`, `glab repo view`): an attached video is world-readable. Interactive: get an explicit go-ahead before any upload. Non-interactive: never upload; use `Video: recorded, pending attachment (public repo — needs a human check)`.
+- **Public repo** (e.g. `gh repo view --json visibility`, `glab repo view`): an attached video is world-readable. Upload only with the go-ahead given at the plan gate (§2). Without it, never upload; use `Video: recorded, pending attachment (public repo — needs a human check)`.
 
 ## 6. Hand-off (after `create-pr` returns the PR URL)
 

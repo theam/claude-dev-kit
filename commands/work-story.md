@@ -17,7 +17,7 @@ The story is worked **in the current directory** — no worktree is created here
 **Plan-approval gate — two separate steps, in this exact order:**
 
 1. **FIRST, print the plan**: write a normal assistant message to the conversation containing the ticket summary and the coding-agent's FULL plan, verbatim. This message is a hard requirement — a selection dialog is NOT a substitute for it, and putting the plan only inside a dialog's option text does not count: the user must be able to read the complete plan in the chat before any question appears.
-2. **THEN, and only after that message is visible**, ask the user to approve, adjust, or cancel (plain question or dialog — either is fine at this point). When the plan's Evidence line says the video is offered and `evidence.video` is `ask`, ask the `video-evidence` question in this same gate. When the video will be recorded and ffmpeg is missing, ask that skill's ffmpeg follow-up here too. On an always/never answer, save `evidence.video` as that skill says.
+2. **THEN, and only after that message is visible**, ask the user to approve, adjust, or cancel (plain question or dialog — either is fine at this point). When the plan's Evidence line says the video is offered and `evidence.video` is `ask`, ask the `video-evidence` question in this same gate. When the video will be recorded, ask that skill's follow-ups here too (ffmpeg missing, public-repo upload go-ahead). On an always/never answer, save `evidence.video` as that skill says.
 
 Never collapse these two steps into one dialog. Only if the arguments contain `--auto-approve` (for automated/pipeline runs), skip the gate and proceed directly — no video question; the stored `evidence.video` applies, per `video-evidence`.
 
