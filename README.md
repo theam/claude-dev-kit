@@ -27,12 +27,13 @@ Give the `coding-agent` a user story ID from your tracker and it orchestrates th
    │
    ├─ issue-fetch         → ticket summary + acceptance criteria + comments
    ├─ figma-fetch         → design context (if the ticket links Figma)
-   ├─ PLAN + user approval (mandatory gate)
+   ├─ PLAN + user approval (mandatory gate; asks about a video when one is offered)
    ├─ implement           → follows the consuming repo's conventions & subagents
    ├─ coverage-check      → touched files meet the project's bar (default ≥ 95%)
    ├─ e2e-generate        → e2e tests (repo's framework) incl. edge cases
    ├─ security-reviewer   → authorization / secrets / input / exposure pass (gate)
    ├─ pr-review → pr-fixer → self-review, then fix the blocking findings
+   ├─ video-evidence      → optional before/after MP4 of the changed flow (never a gate)
    ├─ create-pr           → branch + commit + PR with verification evidence
    ├─ issue-update        → comment PR link on the ticket + move it to review
    └─ follow-ups          → offer to track leftover loose ends as linked tickets
@@ -298,6 +299,7 @@ Full **`/work-story <TICKET>`** flow is ticket-first (it fetches the story and m
 | `figma-fetch` | skill | Frame hierarchy + text content from a Figma URL |
 | `coverage-check` | skill | Runs the repo's coverage command, enforces the project's coverage bar (default 95%) when it has one |
 | `e2e-generate` | skill | Playbook for creating/updating e2e tests |
+| `video-evidence` | skill | Optional before/after MP4 of the changed flow (Playwright/Cypress), handed off to the PR; `evidence.video`: `ask` · `always` · `never` |
 | `create-pr` | skill | Branch, commit, and PR — only after all gates pass |
 | `pr-review` | skill | Review playbook: findings by dimension, verdict, AC check |
 | `fix-pr` | skill | Playbook: findings → fixes → re-verified gates → push |

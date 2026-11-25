@@ -17,11 +17,11 @@ The story is worked **in the current directory** — no worktree is created here
 **Plan-approval gate — two separate steps, in this exact order:**
 
 1. **FIRST, print the plan**: write a normal assistant message to the conversation containing the ticket summary and the coding-agent's FULL plan, verbatim. This message is a hard requirement — a selection dialog is NOT a substitute for it, and putting the plan only inside a dialog's option text does not count: the user must be able to read the complete plan in the chat before any question appears.
-2. **THEN, and only after that message is visible**, ask the user to approve, adjust, or cancel (plain question or dialog — either is fine at this point).
+2. **THEN, and only after that message is visible**, ask the user to approve, adjust, or cancel (plain question or dialog — either is fine at this point). When the plan's Evidence line says the video is offered and `evidence.video` is `ask`, ask the `video-evidence` question in this same gate. When the video will be recorded, ask that skill's follow-ups here too (ffmpeg missing, public-repo upload go-ahead). On an always/never answer, save `evidence.video` as that skill says.
 
-Never collapse these two steps into one dialog. Only if the arguments contain `--auto-approve` (for automated/pipeline runs), skip the gate and proceed directly.
+Never collapse these two steps into one dialog. Only if the arguments contain `--auto-approve` (for automated/pipeline runs), skip the gate and proceed directly — no video question; the stored `evidence.video` applies, per `video-evidence`.
 
-**Phase 2 — execution.** On approval (or auto-approve), continue the SAME coding-agent (resume it with the approval and any user adjustments) so it keeps its context, and let it run the remaining workflow: implement, verify gates, self-review, create the PR, and update the tracker ticket.
+**Phase 2 — execution.** On approval (or auto-approve), continue the SAME coding-agent (resume it with the approval, the video decision, and any user adjustments) so it keeps its context, and let it run the remaining workflow: implement, verify gates, self-review, record the video evidence when chosen, create the PR, and update the tracker ticket.
 
-- Relay the coding-agent's final report to the user: PR URL, verification evidence (unit tests, coverage table, e2e results, lint, security pass), tracker transition applied, and follow-up risks.
+- Relay the coding-agent's final report to the user: PR URL, verification evidence (unit tests, coverage table, e2e results, lint, security pass, video line), the video hand-off instructions when a clip is pending attachment, tracker transition applied, and follow-up risks.
 - If the current directory is a `/launch-story` worktree, remind the user to remove it (`git worktree remove <path>`) once the PR merges.

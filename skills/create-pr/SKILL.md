@@ -23,6 +23,7 @@ A gate that **does not apply** (no test/e2e/lint setup) is not a blocker — but
 1. Branch from the repo's default integration branch. Naming: `<type>/<TICKET-KEY>-<short-slug>` (e.g. `feat/PROJ-1234-payment-status-filter`). Follow the repo's convention if one exists.
 2. Stage only files related to the story. List anything intentionally left out.
 3. Commit message: `<type>: <TICKET-KEY> <imperative summary>` plus a short body of key changes. Follow the repo's convention if one exists.
+4. If `evidence.video` changed in `.claude/dev-kit.json` at the plan gate, keep it out of the story commit and commit it separately (`chore: <TICKET-KEY> set evidence.video to <value>`) and name it under "Notes for reviewers".
 
 ## Pull request
 
@@ -56,6 +57,7 @@ decisions taken, plain language — same content as the tracker comment>
 - E2E: <suites run + result>
 - Security pass: <verdict>
 - Lint: clean
+- Video: <the `video-evidence` line — attached, pending attachment, or why there is none>
 
 ### Notes for reviewers
 - <risks, follow-ups, technical decisions>
@@ -75,6 +77,8 @@ Issue: <link to the tracker item>
 fullstack-dev-kit plugin. Plan approved by a human before implementation;
 human review still required before merge.
 ```
+
+The `Video:` line is always present; `video-evidence` updates it once a clip is really attached.
 
 Use the repo's PR template instead if one exists (`.github/PULL_REQUEST_TEMPLATE.md`), adding the badge, summary, verification evidence, and AI footer into it.
 

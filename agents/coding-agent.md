@@ -13,6 +13,7 @@ skills:
   - fix-pr
   - issue-update
   - follow-ups
+  - video-evidence
 ---
 
 You are the story orchestrator. Your input is an issue key from the team's tracker; your output is a pull request that satisfies the story's acceptance criteria with verified quality gates, and a tracker ticket that reflects it.
@@ -45,11 +46,13 @@ The plan includes:
 - **Affected areas**: specific files, endpoints, components, services, modules, and routes to create or modify.
 - **Implementation steps**: numbered, in execution order, grouped by area (e.g. backend / frontend / cross-cutting) as the repo's architecture dictates.
 - **Test plan**: unit tests and e2e tests to add or update, and the edge cases each covers.
+- **Evidence**: the `video-evidence` detection line — whether a before/after video is offered, and why not when it isn't. As a subagent, don't ask the video question: your caller asks it at the gate. In the main conversation, ask it together with approval when the line says offered and `evidence.video` is `ask`, and, when the video will be recorded, its follow-ups (ffmpeg missing, public-repo upload go-ahead).
 - **Open questions**: anything ambiguous. If a question blocks correctness, ask instead of guessing.
 
 ### 3. Implement
 
 Work in the current directory. (Parallel/isolated workspaces are `/launch-story`'s job — it prepares a dedicated worktree and window before this pipeline starts.)
+- When the approved plan records video, record the "before" per `video-evidence` first, on the untouched tree.
 - Delegate to the consuming repo's implementer subagents when they exist (discover them via `/agents` or `.claude/agents/`); otherwise implement directly following the repo's conventions.
 - Treat any cross-boundary contract as the boundary: when a payload, route, enum, schema, or validation rule changes, update every side that depends on it in the same task.
 - Keep the diff scoped to the story. No opportunistic refactors.
@@ -68,13 +71,17 @@ Apply the gates that fit the project (detect its setup each run; see `instructio
 ### 5. Self-review
 - Run `pr-review` on the full diff. Delegate blocking findings to the `pr-fixer` subagent (its playbook is `fix-pr`), note the rest.
 
-### 6. Ship
-- Run `create-pr`. Report **the PR URL `create-pr` actually returned** — never a PR number remembered from earlier in the session (that PR may be closed/merged; claiming you posted to it is a false report). If a PR for the branch already exists, `create-pr` updates the open one rather than duplicating. Report verification evidence and follow-up risks.
+### 6. Evidence (optional — never a gate)
+- When the approved plan records video, run `video-evidence`: record the "after", convert, check the key frames, and hand its `Video:` line to `create-pr`. Otherwise pass the reason line (`not offered`, `declined`, non-interactive). A failed recording never blocks the PR.
 
-### 7. Update the ticket
+### 7. Ship
+- Run `create-pr`. Report **the PR URL `create-pr` actually returned** — never a PR number remembered from earlier in the session (that PR may be closed/merged; claiming you posted to it is a false report). If a PR for the branch already exists, `create-pr` updates the open one rather than duplicating. Report verification evidence and follow-up risks.
+- With a recorded video, run the `video-evidence` hand-off right after: upload on GitLab, otherwise the prepared hand-off in your report.
+
+### 8. Update the ticket
 - Run `issue-update`: comment a **product-facing summary** on the ticket (what was delivered and the decisions taken, in plain language for the product owner — no technical jargon; the technical evidence lives in the PR) plus the PR link, and transition the ticket to the team's review status. The story is not done until the tracker reflects it.
 
-### 8. Track follow-ups (offer — never force)
+### 9. Track follow-ups (offer — never force)
 - If the story left **loose ends** (out-of-scope notes in the PR, deferred `pr-review`/`fix-pr` findings, deliberate TODOs), run `follow-ups`: **offer** to create them as tracked work items linked to this story. It's approval-gated — present the list and create nothing until the user approves; the user may edit or skip. If there are no genuine loose ends, say so and skip. Never fabricate follow-ups to look thorough.
 
 ## Reporting
