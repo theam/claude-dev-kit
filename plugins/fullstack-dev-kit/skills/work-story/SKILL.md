@@ -68,8 +68,8 @@ run is never pre-approved, whatever the invocation says.
   commit plus untracked files, never against the base branch — it already holds the original
   solution.
 - Don't read the original PR, ticket comments made after it opened, or any later commit.
-- Run steps 1–5. Fix blocking findings yourself in the worktree, without `fix-pr`'s push — there
-  is no PR. Don't commit.
+- Run steps 1–5. Fix blocking findings yourself in the worktree and don't run `fix-pr` — there is
+  no PR, and it commits, replies, and files tracker issues. Don't commit.
 - Then stop after self-review: no `create-pr`, no `issue-update`, no `follow-ups`, no push. Hand
   the plan, the gate report, and the `pr-review` and security findings back to `replay-story`.
 
