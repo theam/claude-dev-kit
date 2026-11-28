@@ -245,6 +245,7 @@ The kit runs `dev-kit-setup`: it detects your tracker, discovers what it can (si
 | Unattended run (no plan gate — pipelines only) | append `--auto-approve` |
 | Review a PR or your current diff | `/fullstack-dev-kit:pr-review #42` |
 | Fix the findings on an existing PR | `/fullstack-dev-kit:fix-pr #42` |
+| Prepare to review a PR yourself (reading order, flow, how to check it) | `/fullstack-dev-kit:guided-review #42` |
 | Anything else | plain language — e.g. *"use the pr-reviewer agent on PR #42"* |
 
 Notes:
@@ -301,11 +302,13 @@ Full **`/work-story <TICKET>`** flow is ticket-first (it fetches the story and m
 | `create-pr` | skill | Branch, commit, and PR — only after all gates pass |
 | `pr-review` | skill | Review playbook: findings by dimension, verdict, AC check |
 | `fix-pr` | skill | Playbook: findings → fixes → re-verified gates → push |
+| `guided-review` | skill | Prepares a human reviewer: reading order, what to skim, the flow, how to check it, questions for the author. Never approves or posts |
 | `instructions/` | rules | Always-on, language-agnostic: secure coding, testing standards |
 | `/work-story` | command | Entry point: `/work-story PROJ-1234` |
 | `/plan-definition` | command | Entry point: `/plan-definition <idea \| brief>` (define before backlog) |
 | `/plan-backlog` | command | Entry point: `/plan-backlog <idea \| brief.pdf>` |
 | `/delegate-backlog` | command | Entry point: `/delegate-backlog <issues>` (async fan-out to the configured provider + review) |
+| `/guided-review` | command | Entry point: `/guided-review <PR>` (guide your own review of a PR) |
 | `/launch-story` | command | Creates a story worktree and opens a new VS Code window on it |
 
 ## Relationship to project repos
