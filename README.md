@@ -27,7 +27,7 @@ Give the `coding-agent` a user story ID from your tracker and it orchestrates th
    │
    ├─ issue-fetch         → ticket summary + acceptance criteria + comments
    ├─ figma-fetch         → design context (if the ticket links Figma)
-   ├─ PLAN + user approval (mandatory gate)
+   ├─ PLAN + user approval (mandatory gate; size vs budget, split if over)
    ├─ implement           → follows the consuming repo's conventions & subagents
    ├─ coverage-check      → touched files meet the project's bar (default ≥ 95%)
    ├─ e2e-generate        → e2e tests (repo's framework) incl. edge cases
@@ -52,6 +52,7 @@ It's **guided by default** — it elaborates progressively (framing → epics �
 
 - No code before the plan is approved (unless `--auto-approve` for pipelines).
 - Security pass (`security-reviewer`) with no blocking findings.
+- PR size budget: the plan estimates changed lines against `pr.maxChangedLines` in `.claude/dev-kit.json` (default 400; lockfiles, generated files and snapshots excluded) and, when over, proposes a split — stacked PRs on GitHub, or separate stories via `follow-ups`; the PR reports its real size. Advisory, never blocks.
 - PR body carries the verification evidence; the ticket gets the PR link and moves to review.
 
 **Adaptive — enforce the project's *own* standard, detected each run** (the kit never imposes tests or scaffolds a framework on a project that doesn't use one):
@@ -298,7 +299,7 @@ Full **`/work-story <TICKET>`** flow is ticket-first (it fetches the story and m
 | `figma-fetch` | skill | Frame hierarchy + text content from a Figma URL |
 | `coverage-check` | skill | Runs the repo's coverage command, enforces the project's coverage bar (default 95%) when it has one |
 | `e2e-generate` | skill | Playbook for creating/updating e2e tests |
-| `create-pr` | skill | Branch, commit, and PR — only after all gates pass |
+| `create-pr` | skill | Branch, commit, and PR — only after all gates pass; reports the PR's size against `pr.maxChangedLines` |
 | `pr-review` | skill | Review playbook: findings by dimension, verdict, AC check |
 | `fix-pr` | skill | Playbook: findings → fixes → re-verified gates → push |
 | `instructions/` | rules | Always-on, language-agnostic: secure coding, testing standards |

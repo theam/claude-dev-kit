@@ -18,7 +18,8 @@ Close the loop: when a story finishes, the loose ends it surfaced should be **tr
 Collect follow-ups from the story just finished, from where they were already surfaced:
 - the **"Out of scope / follow-ups"** list in the `create-pr` PR body,
 - **deferred review findings** from `fix-pr` / `pr-review` (the "defer to a tracked issue" bucket),
-- deliberate **TODOs / known gaps** the implementation left.
+- deliberate **TODOs / known gaps** the implementation left,
+- a **split into separate stories** approved at the plan gate (type **User Story**; created right after approval, not at the end).
 
 **Never invent follow-ups.** If there are none, say so and stop — don't pad a backlog to look thorough.
 
