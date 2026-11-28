@@ -25,6 +25,21 @@ export const SKILL_SOURCES = [
 export const TREE_SOURCES = [{ src: 'instructions', dst: join(PLUGIN_DIR, 'instructions') }];
 
 /*
+ * Single files copied verbatim, at the same relative path. A skill runs these from the
+ * kit root, which on Codex is the bundle — so they ship with it (create-pr runs
+ * scripts/session-cost.mjs). Every file a script imports belongs here too.
+ */
+export const FILE_SOURCES = [
+  'scripts/session-cost.mjs',
+  'scripts/lib/session-usage.mjs',
+  'scripts/lib/pr-cost.mjs',
+  'scripts/lib/model-prices.json',
+].map((f) => ({ src: join(...f.split('/')), dst: join(PLUGIN_DIR, ...f.split('/')) }));
+
+/* The bundle directory that holds only FILE_SOURCES copies: rebuilt whole, checked for orphans. */
+export const BUNDLE_SCRIPTS_DIR = join(PLUGIN_DIR, 'scripts');
+
+/*
  * The manifest pair. Codex reads `.codex-plugin/plugin.json` from inside the bundle;
  * portable clients (Cursor, VS Code, Copilot, …) read the bundle-root `plugin.json`,
  * which is *generated* from it. Same rule as the trees above: the derivation lives here
@@ -171,6 +186,9 @@ export function syncedFilePairs(root) {
       });
     }
   }
+  for (const { src, dst } of FILE_SOURCES) {
+    if (existsSync(join(root, src))) pairs.push({ src: join(root, src), dst: join(root, dst), label: src });
+  }
   return pairs;
 }
 
@@ -186,7 +204,7 @@ export function orphanedBundleFiles(root) {
       if (!expected.has(file)) orphans.push(relative(root, file));
     }
   }
-  for (const { dst } of TREE_SOURCES) {
+  for (const dst of [...TREE_SOURCES.map((t) => t.dst), BUNDLE_SCRIPTS_DIR]) {
     for (const file of walk(join(root, dst))) {
       if (!expected.has(file)) orphans.push(relative(root, file));
     }

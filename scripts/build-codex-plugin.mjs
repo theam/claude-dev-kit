@@ -19,6 +19,8 @@ import { spawnSync } from 'node:child_process';
 import {
   SKILL_SOURCES,
   TREE_SOURCES,
+  FILE_SOURCES,
+  BUNDLE_SCRIPTS_DIR,
   skillDirs,
   skillNameCollisions,
   portableManifestFrom,
@@ -59,6 +61,13 @@ for (const { src, dst } of TREE_SOURCES) {
   rmSync(join(ROOT, dst), { recursive: true, force: true });
   if (existsSync(join(ROOT, src))) cpSync(join(ROOT, src), join(ROOT, dst), { recursive: true });
 }
+// Scripts a skill runs from the kit root (create-pr → scripts/session-cost.mjs). On Codex
+// the kit root is this bundle, so they travel with it.
+rmSync(join(ROOT, BUNDLE_SCRIPTS_DIR), { recursive: true, force: true });
+for (const { src, dst } of FILE_SOURCES) {
+  mkdirSync(dirname(join(ROOT, dst)), { recursive: true });
+  cpSync(join(ROOT, src), join(ROOT, dst));
+}
 
 // 2. Keep the Codex plugin version aligned with the kit version.
 const kitVersion = JSON.parse(readFileSync(join(ROOT, '.claude-plugin', 'plugin.json'), 'utf8')).version;
@@ -88,7 +97,7 @@ writeFileSync(join(PLUGIN, '.cursor-plugin', 'plugin.json'), serializeManifest(c
 mkdirSync(join(ROOT, '.cursor-plugin'), { recursive: true });
 writeFileSync(join(ROOT, '.cursor-plugin', 'marketplace.json'), serializeManifest(cursorMarketplaceFrom(cm)));
 
-console.log(`Codex plugin built: ${n} skills + instructions/ synced, version ${kitVersion} (native + portable + cursor manifests).`);
+console.log(`Codex plugin built: ${n} skills + instructions/ + ${FILE_SOURCES.length} script files synced, version ${kitVersion} (native + portable + cursor manifests).`);
 
 // Validate the freshly-built bundle (structure, enums, self-contained instructions).
 const v = spawnSync(process.execPath, [join(ROOT, 'scripts', 'validate-codex-plugin.mjs')], { stdio: 'inherit' });

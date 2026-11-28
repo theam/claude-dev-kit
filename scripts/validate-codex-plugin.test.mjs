@@ -98,6 +98,20 @@ test('rebuilding after an edit clears the failure', () => {
   });
 });
 
+test('a bundled script edited without rebuilding fails validation', () => {
+  // create-pr runs scripts/session-cost.mjs from the kit root, which on Codex is the
+  // bundle, so the script, its libs and the price table are held to the same rule.
+  inSandbox((dir) => {
+    const probe = join(dir, 'scripts', 'lib', 'model-prices.json');
+    writeFileSync(probe, readFileSync(probe, 'utf8').replace('"as_of"', '"as_of_probe": 1, "as_of"'));
+    const result = validate(dir);
+    assert.equal(result.status, 1, 'validator passed while the bundled price table was stale');
+    assert.match(posix(result.stderr), /scripts\/lib\/model-prices\.json/);
+    assert.equal(build(dir).status, 0, 'builder failed');
+    assert.equal(validate(dir).status, 0, 'validator still failing after a rebuild');
+  });
+});
+
 test('a file deleted upstream is reported instead of lingering in the bundle', () => {
   inSandbox((dir) => {
     const temp = join(dir, 'instructions', 'stacks', '__drift-probe.md');

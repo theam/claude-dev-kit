@@ -298,7 +298,7 @@ Full **`/work-story <TICKET>`** flow is ticket-first (it fetches the story and m
 | `figma-fetch` | skill | Frame hierarchy + text content from a Figma URL |
 | `coverage-check` | skill | Runs the repo's coverage command, enforces the project's coverage bar (default 95%) when it has one |
 | `e2e-generate` | skill | Playbook for creating/updating e2e tests |
-| `create-pr` | skill | Branch, commit, and PR — only after all gates pass |
+| `create-pr` | skill | Branch, commit, and PR — only after all gates pass; the PR gets a Cost section (tokens + estimated cost, computed locally) |
 | `pr-review` | skill | Review playbook: findings by dimension, verdict, AC check |
 | `fix-pr` | skill | Playbook: findings → fixes → re-verified gates → push |
 | `instructions/` | rules | Always-on, language-agnostic: secure coding, testing standards |
