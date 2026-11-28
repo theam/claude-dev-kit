@@ -32,9 +32,20 @@ impose a stack. The always-on rules in `instructions/secure-coding.md` and
 ## 2. Plan — WAIT FOR APPROVAL
 Validate assumptions against the running product when feasible (boot the app / exercise the
 flow) before writing the plan. Then present, **in the chat**, the ticket summary and a full
-plan — Understanding, Affected areas, numbered Implementation steps, Test plan, Open
+plan — Understanding, Affected areas, Size, numbered Implementation steps, Test plan, Open
 questions — and **wait for the user's explicit approval**. Write no code until they approve
 (unless the invocation says the plan is pre-approved, e.g. an automated run).
+- **Size**: estimated files and rough changed lines per area, and the total against
+  `pr.maxChangedLines` (budget and counting rules in `create-pr`). Over budget, propose a split
+  before any code: stacked PRs, each self-contained and green and based on the previous PR's
+  branch (GitHub only for now), or separate stories created through `follow-ups` after
+  approval. The user picks one at the gate, or keeps one PR and the plan records why. A
+  pre-approved plan keeps one PR, and `create-pr` flags the size.
+- An approved stacked split runs one slice at a time: implement, verify, self-review and ship
+  each slice on its own `part-<k>` branch stacked on the previous slice (branching and base
+  rules in `create-pr`), green on its own; run `issue-update` once, after the last slice,
+  listing every PR. An approved split into separate stories is created through `follow-ups`
+  right after approval; work only the first now.
 
 ## 3. Implement
 - Follow the repo's conventions and architecture. Keep the diff scoped to the story — no

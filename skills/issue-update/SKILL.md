@@ -11,7 +11,7 @@ Close the loop: after the code ships, the tracker must reflect it without anyone
 
 - `.claude/dev-kit.json` exists with a `tracker` block (otherwise run `dev-kit-setup` first).
 - The adapter's backend is authenticated (MCP connector authorized, or `gh`/`az` logged in) — otherwise tell the user how to authenticate and stop.
-- A PR URL and a product-facing summary of the delivered work are available from the delivery flow.
+- A PR URL (every PR URL, for a stacked split) and a product-facing summary of the delivered work are available from the delivery flow.
 
 ## 1. Comment the delivery summary
 

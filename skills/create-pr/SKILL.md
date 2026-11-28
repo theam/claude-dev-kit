@@ -20,9 +20,17 @@ A gate that **does not apply** (no test/e2e/lint setup) is not a blocker — but
 
 ## Branch & commit
 
-1. Branch from the repo's default integration branch. Naming: `<type>/<TICKET-KEY>-<short-slug>` (e.g. `feat/PROJ-1234-payment-status-filter`). Follow the repo's convention if one exists.
+1. Branch from the repo's default integration branch. Naming: `<type>/<TICKET-KEY>-<short-slug>` (e.g. `feat/PROJ-1234-payment-status-filter`). Follow the repo's convention if one exists. A stacked slice (an approved split) instead branches from the previous slice's branch and is named `<story-branch>-part-<k>`.
 2. Stage only files related to the story. List anything intentionally left out.
 3. Commit message: `<type>: <TICKET-KEY> <imperative summary>` plus a short body of key changes. Follow the repo's convention if one exists.
+
+## Size budget
+
+The budget is `pr.maxChangedLines` in `.claude/dev-kit.json`, **default 400** when absent. The plan gate estimates against it, and this skill measures against it.
+
+- **Count**: added + deleted lines from `git diff --numstat origin/<base>...HEAD` after a `git fetch`, where `<base>` is the PR's base (the default branch, or the previous PR's branch in a stack). Test files count, and the report shows source and tests separately. A binary file counts as a file with 0 lines.
+- **Excluded** (reported, not counted): lockfiles (e.g. `package-lock.json`, `yarn.lock`, `poetry.lock`, `Cargo.lock`, `go.sum`), files marked `linguist-generated` in `.gitattributes`, paths the repo's `CLAUDE.md` declares generated, and snapshots (`__snapshots__/`, `*.snap`).
+- **Not a gate**: an over-budget PR is never blocked, and never left unflagged.
 
 ## Pull request
 
@@ -30,11 +38,13 @@ A gate that **does not apply** (no test/e2e/lint setup) is not a blocker — but
 
 Open the PR on the configured host (`prHost` in `.claude/dev-kit.json`; default `github`). Branch/commit/push are the same everywhere (plain git); only the "open the PR" call differs:
 
-- **github** — `gh pr create` (`gh` authenticated).
+- **github** — `gh pr create` (`gh` authenticated). A stacked PR (an approved split) is created with `--base <previous PR's branch>`, and its body opens with "Part k of n, based on #<prev>". When the lower PR merges and its branch is deleted, GitHub retargets the next PR; otherwise run `gh pr edit <n> --base <default branch>`. If the lower PR was squash-merged, the upper branch needs `git rebase --onto origin/<default branch> <lower-branch> <upper-branch>` (the lower slice's old tip SHA in place of `<lower-branch>` when that ref is gone or moved) and a force-push: tell the person, and only with their explicit approval push with `--force-with-lease` (never plain `--force`).
 - **bitbucket** — push the branch, then create the PR via the REST API: `POST https://api.bitbucket.org/2.0/repositories/{workspace}/{repo_slug}/pullrequests` with `{title, source:{branch:{name}}, destination:{branch:{name}}}`, authenticated with a Bitbucket app password / access token from the environment (e.g. `BITBUCKET_TOKEN`). The `acli` CLI works too if the team uses it. Derive `{workspace}/{repo_slug}` from the `origin` remote.
 - **gitlab** — `glab mr create` (`glab` authenticated).
 - **azure** — `az repos pr create --source-branch <branch> --target-branch <base> --title <title> --description <body>` (Azure CLI with the `azure-devops` extension, `az login` authenticated; run `az extension add --name azure-devops` once if missing). The org/project/repo come from the `origin` remote or `az devops configure --defaults`.
 - **other/none** — print the branch and the ready-to-paste PR title/body and let the user open it.
+
+Stacked PRs are GitHub-only for now; on the other hosts they are **later**, and the split offered there is separate stories.
 
 The body must include (adapt field names to the host — GitHub/GitLab render Markdown; Bitbucket PR descriptions accept Markdown too):
 
@@ -49,6 +59,10 @@ decisions taken, plain language — same content as the tracker comment>
 
 ### What changed
 - ...
+
+### Size
+<N> changed lines (+a/−d) in <F> files: source <s>, tests <t>; budget <B>; excluded: <what, n lines>
+<Over budget only: "Over budget by <X> lines." plus the plan gate's decision and reason, or "split offered".>
 
 ### How it was verified
 - Unit tests: <command + result>
@@ -85,3 +99,5 @@ Use the repo's PR template instead if one exists (`.github/PULL_REQUEST_TEMPLATE
 ## After creation
 
 **Report only the PR URL/number the create call actually returned** — capture it from `gh pr create`'s output (or read it back with `gh pr view <url> --json number,state,url`), never a number you assumed or remembered. Then report the verification evidence and any follow-up risks explicitly.
+
+Report the size too. Over budget, offer the person a split: keep the PR as is, move the remainder into a stacked follow-on PR (GitHub), or file the remainder as stories via `follow-ups`; edit the Size line with their choice. Build a follow-on PR by adding commits, not by rewriting pushed history (a commit that removes the remainder here, re-added on the follow-on branch); any force-push needs its own explicit approval. When the plan was pre-approved, the PR's Size line is the flag; ask nothing.

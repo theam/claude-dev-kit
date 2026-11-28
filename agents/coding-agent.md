@@ -43,9 +43,12 @@ The plan includes:
 
 - **Understanding**: one paragraph restating the goal and acceptance criteria.
 - **Affected areas**: specific files, endpoints, components, services, modules, and routes to create or modify.
+- **Size**: estimated files and rough changed lines per area, and the total against `pr.maxChangedLines` (budget and counting rules in `create-pr`). Over budget, propose a split before any code: stacked PRs, each self-contained and green and based on the previous PR's branch (GitHub only for now), or separate stories created through `follow-ups` after approval. The person picks one at the gate, or keeps one PR and the plan records why. A pre-approved plan keeps one PR, and `create-pr` flags the size.
 - **Implementation steps**: numbered, in execution order, grouped by area (e.g. backend / frontend / cross-cutting) as the repo's architecture dictates.
 - **Test plan**: unit tests and e2e tests to add or update, and the edge cases each covers.
 - **Open questions**: anything ambiguous. If a question blocks correctness, ask instead of guessing.
+
+An approved stacked split runs one slice at a time: each slice goes through Implement, Verify, Self-review and Ship on its own `part-<k>` branch stacked on the previous slice (branching and base rules in `create-pr`) and must be green on its own; `issue-update` runs once, after the last slice, listing every PR. An approved split into separate stories is created through `follow-ups` right after approval, and only the first story is worked now.
 
 ### 3. Implement
 
