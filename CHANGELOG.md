@@ -9,9 +9,11 @@ a release is only "live" for users once that is bumped and published.
 ## [Unreleased]
 
 ### Added
+- **Story PRs show what they cost (#115).** `create-pr` adds a Cost section: the models used, their input/output/cache tokens (subagents included) and an estimated API-equivalent cost from one dated price table (`scripts/lib/model-prices.json`). It is computed locally by `scripts/session-cost.mjs` from the session transcript (Claude Code or Codex), never sent anywhere, and works with telemetry off. A model missing from the table (including one released after the table's date) shows tokens only under "other models", never under its own name, and the section says when other sessions also worked the branch. `cost` in `.claude/dev-kit.json` sets `full` (default), `tokens` or `off`.
 - **`delegate-backlog` takes its provider from the kit config (#95).** `delegation.provider` is `github-copilot` (the current assignment path) or `self-hosted-action` (a workflow the consuming repo already owns). The kit's contract is verify, enrich, trigger, and read-back: issue text is untrusted, a self-hosted trigger is `workflow_dispatch` from a maintainer and receives the issue number, and a missing provider stops instead of falling through to the other one. The kit ships no workflow, runner, or prompts. A self-hosted run is named `delegate #<issue>` and matches only when `displayTitle` is that name and `createdAt` is after this dispatch. The PR number comes only from the issue's linked PRs. The workflow contract names `contents: write`, `pull-requests: write`, and `issues: read`, and keeps the agent secret in an environment with required reviewers. Codex and Claude are examples of the self-hosted shape, not separate providers.
 
 ### Fixed
+- Telemetry no longer over-counts tokens. Claude Code repeats a message's `usage` on every content-block line, and each line was summed; each API message now counts once. Codex reasoning tokens, already part of `output_tokens`, were added a second time. `tokens_*` drop to their true values from this release on. Telemetry and the PR Cost section share one parser (`scripts/lib/session-usage.mjs`).
 - The telemetry relay accepts `install_id` only when it is a UUID. An email, a path, or any other string is rejected and is not forwarded.
 
 ### Changed

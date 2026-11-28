@@ -60,6 +60,8 @@ decisions taken, plain language — same content as the tracker comment>
 ### Notes for reviewers
 - <risks, follow-ups, technical decisions>
 
+<the Cost section from session-cost.mjs, verbatim — see "Cost section" below>
+
 ### Delivery readiness
 <Include only the lines that apply — skip this whole section for trivial/internal changes; don't pad.>
 - Rollback: safe to revert this PR on its own? Flag anything that isn't.
@@ -81,6 +83,17 @@ Use the repo's PR template instead if one exists (`.github/PULL_REQUEST_TEMPLATE
 **AI traceability metadata**, best effort after creation:
 
 - Add an `ai-generated` label/tag to the PR when the host supports it — GitHub: `gh pr edit <url> --add-label ai-generated` (create it once with `gh label create ai-generated --color 8A2BE2` if missing), then **verify it stuck** with `gh pr view <url> --json labels` — `gh pr edit` can error without applying anything on repos whose org ever used classic Projects; on a miss, apply via REST: `gh api repos/<owner>/<repo>/issues/<pr-number>/labels -f "labels[]=ai-generated"`. Bitbucket/GitLab: skip or use the host's equivalent. If not possible, skip silently — the badge and footer already carry the signal.
+
+**Cost section.** Right before creating the PR, run the kit's cost script from the repo root and paste its output into the body verbatim, where the template shows it. The kit root is two directories above this skill's base directory; on Codex add `--agent codex`:
+
+```bash
+node "<kit root>/scripts/session-cost.mjs"                # Claude Code
+node "<kit root>/scripts/session-cost.mjs" --agent codex  # Codex
+```
+
+It reads this session's transcript and its subagents' on this machine and sends nothing anywhere. It prints the models, their tokens, and an estimated API-equivalent cost from the kit's dated price table, and marks the result **Partial** when other sessions also worked the branch. `cost` in `.claude/dev-kit.json` sets what it prints: `full` (default), `tokens`, or `off` (prints nothing — leave the section out). In a public repo the PR body is public; `tokens` or `off` limit what it shows. Don't edit the numbers, and never add a price for a model the script left as tokens only.
+
+When updating an open PR that already has a Cost section: from the same session, replace it with the new output; from a later session, keep it and add the new output under it as `#### Later session` (without its `### Cost` heading) — a later session's figure must not replace an earlier one.
 
 ## After creation
 

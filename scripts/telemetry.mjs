@@ -32,6 +32,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID, createHash } from 'node:crypto';
 import { countPrCreated } from './lib/pr-detect.mjs';
+import { claudeUsage, codexUsage, usageTotals } from './lib/session-usage.mjs';
 
 const done = () => process.exit(0); // fail-silent, always
 
@@ -163,38 +164,13 @@ try {
     const lines = readFileSync(transcriptPath, 'utf8').split('\n').filter(Boolean);
     if (!lines.some((l) => KIT_MARKERS.some((m) => l.includes(m)))) return; // kit didn't run this session
 
-    const tok = { input: 0, output: 0, cacheRead: 0, cacheCreation: 0 };
-    let firstTs, lastTs;
-    if (agent === 'codex') {
-      // Codex rollout JSONL: `token_count` events carry a CUMULATIVE total_token_usage,
-      // so the LAST one is the session total (summing every line would double-count).
-      let last;
-      for (const line of lines) {
-        let o; try { o = JSON.parse(line); } catch { continue; }
-        const ts = Date.parse(o?.timestamp || '');
-        if (!Number.isNaN(ts)) { firstTs = firstTs ?? ts; lastTs = ts; }
-        if (o?.payload?.type === 'token_count' && o?.payload?.info?.total_token_usage) last = o.payload.info.total_token_usage;
-      }
-      if (last) {
-        const cached = last.cached_input_tokens || 0;
-        tok.cacheRead = cached;
-        tok.input = Math.max(0, (last.input_tokens || 0) - cached); // input_tokens includes the cached portion
-        tok.output = (last.output_tokens || 0) + (last.reasoning_output_tokens || 0);
-        tok.cacheCreation = last.cache_write_input_tokens || 0; // present since codex-cli ~0.147
-      }
-    } else {
-      for (const line of lines) {
-        let o; try { o = JSON.parse(line); } catch { continue; }
-        const ts = Date.parse(o?.timestamp || '');
-        if (!Number.isNaN(ts)) { firstTs = firstTs ?? ts; lastTs = ts; }
-        const u = o?.message?.usage || o?.usage;
-        if (!u) continue;
-        tok.input += u.input_tokens || 0;
-        tok.output += u.output_tokens || 0;
-        tok.cacheRead += u.cache_read_input_tokens || 0;
-        tok.cacheCreation += u.cache_creation_input_tokens || 0;
-      }
-    }
+    // One parser for telemetry and the PR Cost section (lib/session-usage.mjs). Claude
+    // usage is counted once per API message; Codex totals come from the cumulative
+    // token_count events. Only counts and timestamps are read.
+    const u = agent === 'codex' ? codexUsage(lines) : claudeUsage([lines]);
+    const sum = usageTotals(u);
+    const tok = { input: sum.input, output: sum.output, cacheRead: sum.cacheRead, cacheCreation: sum.cacheWrite + sum.cacheWrite1h };
+    const firstTs = u.firstTs, lastTs = u.lastTs;
     if (tok.input + tok.output === 0) return;
 
     let durationBucket;
