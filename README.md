@@ -263,6 +263,20 @@ You don't need a tracker (or a ticket) to use the kit — the ticket integration
 
 Full **`/work-story <TICKET>`** flow is ticket-first (it fetches the story and moves it to review); everything else works ticketless. Teams with no tracker can set `tracker: none` in `dev-kit-setup`.
 
+## Compare it on your own repo
+
+A demo project won't answer your objections; your own merged work can. `/fullstack-dev-kit:replay-story <merged PR>` creates a temporary worktree at the commit that PR started from, runs `work-story` on the same ticket (plan gate as usual), and prints a side-by-side comparison with the original. **Nothing is pushed, no PR is opened, and the ticket is not touched**; the worktree is removed at the end unless you keep it.
+
+To do it by hand: run a task once with your usual prompt and once with `/work-story`, from the same commit. Then compare:
+
+- diff size and scope: files touched, lines, unrelated changes;
+- tests added, and whether they would fail without the change;
+- gates run and their results, and what `pr-review` and the security pass found;
+- which of the original PR's review comments the gates would have caught;
+- time, and tokens when you have them.
+
+One run is an anecdote, the ticket may have changed since, and the original's token cost is usually unknown — the summary says so.
+
 ## Parallel stories — one worktree per story
 
 `/work-story` works **in the current directory**. To work several stories at once, use `/launch-story PROJ-1234` per story: it creates a dedicated git worktree, opens a **new VS Code window on it**, and hands you the `work-story` command to paste there.
@@ -301,8 +315,10 @@ Full **`/work-story <TICKET>`** flow is ticket-first (it fetches the story and m
 | `create-pr` | skill | Branch, commit, and PR — only after all gates pass |
 | `pr-review` | skill | Review playbook: findings by dimension, verdict, AC check |
 | `fix-pr` | skill | Playbook: findings → fixes → re-verified gates → push |
+| `replay-story` | skill | Replay a merged PR's story from its starting commit and compare side by side; never pushes or opens a PR |
 | `instructions/` | rules | Always-on, language-agnostic: secure coding, testing standards |
 | `/work-story` | command | Entry point: `/work-story PROJ-1234` |
+| `/replay-story` | command | Entry point: `/replay-story <merged PR>` (replay + comparison, nothing shipped) |
 | `/plan-definition` | command | Entry point: `/plan-definition <idea \| brief>` (define before backlog) |
 | `/plan-backlog` | command | Entry point: `/plan-backlog <idea \| brief.pdf>` |
 | `/delegate-backlog` | command | Entry point: `/delegate-backlog <issues>` (async fan-out to the configured provider + review) |

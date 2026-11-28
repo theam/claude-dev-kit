@@ -68,6 +68,8 @@ Apply the gates that fit the project (detect its setup each run; see `instructio
 ### 5. Self-review
 - Run `pr-review` on the full diff. Delegate blocking findings to the `pr-fixer` subagent (its playbook is `fix-pr`), note the rest.
 
+**Replay runs.** When invoked by `replay-story`, work only in the worktree it gives you and don't read the original PR or any later commit. Run steps 1–5 (fix blocking findings directly in the worktree — there is no PR), then stop after self-review: no `create-pr`, no `issue-update`, no `follow-ups`, no push. Return the plan, the gate report, and the `pr-review` and security findings as your result.
+
 ### 6. Ship
 - Run `create-pr`. Report **the PR URL `create-pr` actually returned** — never a PR number remembered from earlier in the session (that PR may be closed/merged; claiming you posted to it is a false report). If a PR for the branch already exists, `create-pr` updates the open one rather than duplicating. Report verification evidence and follow-up risks.
 

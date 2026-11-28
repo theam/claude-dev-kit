@@ -60,6 +60,12 @@ applicable** (reason + recommendation) — never silently skip. A `gates` policy
 Run **`pr-review`** on the full diff. Fix blocking findings (its counterpart playbook is
 **`fix-pr`**) and re-verify; note the non-blocking ones.
 
+**Replay runs.** When run by `replay-story`, work only in the worktree it gives you and don't
+read the original PR or any later commit. Run steps 1–5 (fix blocking findings directly in the
+worktree — there is no PR), then stop after self-review: no `create-pr`, no `issue-update`, no
+`follow-ups`, no push. Hand the plan, the gate report, and the `pr-review` and security findings
+back to `replay-story`.
+
 ## 6. Ship
 Run **`create-pr`**. Report **the PR URL `create-pr` actually returned** — never a PR number
 remembered from earlier in the session (it may be closed/merged; claiming you posted to it is a
