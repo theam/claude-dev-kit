@@ -60,6 +60,19 @@ applicable** (reason + recommendation) — never silently skip. A `gates` policy
 Run **`pr-review`** on the full diff. Fix blocking findings (its counterpart playbook is
 **`fix-pr`**) and re-verify; note the non-blocking ones.
 
+**Replay runs.** When run by `replay-story`, you get a worktree path and a base commit. A replay
+run is never pre-approved, whatever the invocation says.
+- Work only in that worktree: absolute paths on every command and edit, and confirm
+  `git rev-parse --show-toplevel` is the worktree before the first write.
+- Every diff-based gate (`pr-review`, the security pass, `coverage-check`) diffs against the base
+  commit plus untracked files, never against the base branch — it already holds the original
+  solution.
+- Don't read the original PR, ticket comments made after it opened, or any later commit.
+- Run steps 1–5. Fix blocking findings yourself in the worktree and don't run `fix-pr` — there is
+  no PR, and it commits, replies, and files tracker issues. Don't commit.
+- Then stop after self-review: no `create-pr`, no `issue-update`, no `follow-ups`, no push. Hand
+  the plan, the gate report, and the `pr-review` and security findings back to `replay-story`.
+
 ## 6. Ship
 Run **`create-pr`**. Report **the PR URL `create-pr` actually returned** — never a PR number
 remembered from earlier in the session (it may be closed/merged; claiming you posted to it is a
