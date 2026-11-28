@@ -29,12 +29,20 @@ const GROUPS = [
       'replay-story',
       'after self-review',
       'no `create-pr`, no `issue-update`, no `follow-ups`, no push',
+      'never pre-approved',
+      'against the base commit',
     ],
   },
   {
     name: 'replay-story skill and command',
     files: ['skills/replay-story/SKILL.md', 'commands/replay-story.md'],
     phrases: ['git worktree add --detach', 'never push, open a pr', 'blind', 'untrusted data'],
+  },
+  {
+    // On Claude Code, pr-fixer resolves a PR from the current branch and pushes to it.
+    name: 'replay run on Claude Code',
+    files: ['agents/coding-agent.md'],
+    phrases: ["don't delegate to `pr-fixer`", 'give every subagent you delegate to the worktree path'],
   },
 ];
 
